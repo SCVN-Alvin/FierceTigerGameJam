@@ -1,0 +1,53 @@
+# Unity project generated folders
+/FierceTigerGameJam/[Ll]ibrary/
+/FierceTigerGameJam/[Tt]emp/
+/FierceTigerGameJam/[Oo]bj/
+/FierceTigerGameJam/[Ll]ogs/
+/FierceTigerGameJam/[Uu]ser[Ss]ettings/
+/FierceTigerGameJam/[Mm]emoryCaptures/
+/FierceTigerGameJam/[Rr]ecordings/
+
+# Builds
+/FierceTigerGameJam/[Bb]uild/
+/FierceTigerGameJam/[Bb]uilds/
+
+# Unity-generated IDE files
+*.csproj
+*.sln
+*.suo
+*.tmp
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+
+# IDE and editor settings
+.vs/
+.idea/
+.vscode/
+*.sln.iml
+
+# Unity-generated metadata and crash files
+sysinfo.txt
+crashlytics-build.properties
+/FierceTigerGameJam/[Aa]ssets/AssetStoreTools*
+
+# Test and profiling output
+/FierceTigerGameJam/[Tt]est[Rr]esults/
+/FierceTigerGameJam/[Cc]aptures/
+
+# Operating system files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Local environment files
+.env
+.env.*
+!.env.example
+
