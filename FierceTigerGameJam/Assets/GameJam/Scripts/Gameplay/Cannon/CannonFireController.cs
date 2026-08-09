@@ -9,6 +9,7 @@ namespace GameJam.Gameplay.Cannon
         [SerializeField] private Transform projectileParent;
         [SerializeField] private Transform fireOrigin;
         [SerializeField] private CannonShotPresenter shotPresenter;
+        [SerializeField] private CannonAimController aimController;
         [SerializeField] private float aimPlaneZ = 20f;
         [SerializeField] private float projectileSpeed = 35f;
         [SerializeField] private float projectileLifetime = 5f;
@@ -22,6 +23,16 @@ namespace GameJam.Gameplay.Cannon
             {
                 targetCamera = Camera.main;
             }
+
+            if (aimController == null)
+            {
+                aimController = GetComponent<CannonAimController>();
+            }
+
+            if (aimController != null)
+            {
+                aimController.Initialize(fireOrigin);
+            }
         }
 
         public bool TryFireAtScreenPoint(Vector2 screenPosition)
@@ -32,12 +43,35 @@ namespace GameJam.Gameplay.Cannon
                 return false;
             }
 
+            if (aimController != null)
+            {
+                if (!aimController.TryAimAtScreenPoint(targetCamera, screenPosition, out AimRejectReason rejectReason))
+                {
+                    LogAimRejected(rejectReason);
+                    return false;
+                }
+
+                Vector3 aimedMuzzlePosition = fireOrigin != null ? fireOrigin.position : transform.position;
+                Vector3 aimedDirection = aimController.GetFireDirection(
+                    aimedMuzzlePosition,
+                    projectileSpeed,
+                    muzzleSpawnOffset);
+
+                if (aimedDirection.sqrMagnitude < MinFireDirectionSqrMagnitude)
+                {
+                    return false;
+                }
+
+                Fire(aimedMuzzlePosition, aimedDirection.normalized);
+                return true;
+            }
+
+            Vector3 muzzlePosition = fireOrigin != null ? fireOrigin.position : transform.position;
             if (!TryGetAimWorldPoint(screenPosition, out Vector3 aimWorldPoint))
             {
                 return false;
             }
 
-            Vector3 muzzlePosition = fireOrigin != null ? fireOrigin.position : transform.position;
             Vector3 fireDirection = aimWorldPoint - muzzlePosition;
             if (fireDirection.sqrMagnitude < MinFireDirectionSqrMagnitude)
             {
@@ -46,6 +80,17 @@ namespace GameJam.Gameplay.Cannon
 
             Fire(muzzlePosition, fireDirection.normalized);
             return true;
+        }
+
+        private static void LogAimRejected(AimRejectReason rejectReason)
+        {
+            if (rejectReason == AimRejectReason.TooLow
+                || rejectReason == AimRejectReason.TooHigh
+                || rejectReason == AimRejectReason.TooLeft
+                || rejectReason == AimRejectReason.TooRight)
+            {
+                Debug.Log($"Aim at the structure. ({rejectReason})");
+            }
         }
 
         private bool TryGetAimWorldPoint(Vector2 screenPosition, out Vector3 aimWorldPoint)
@@ -88,7 +133,7 @@ namespace GameJam.Gameplay.Cannon
             Rigidbody projectileRigidbody = projectileObject.AddComponent<Rigidbody>();
             projectileRigidbody.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
             projectileRigidbody.interpolation = RigidbodyInterpolation.Interpolate;
-            projectileRigidbody.useGravity = false;
+            projectileRigidbody.useGravity = true;
 
             return projectileObject.AddComponent<CannonProjectile>();
         }

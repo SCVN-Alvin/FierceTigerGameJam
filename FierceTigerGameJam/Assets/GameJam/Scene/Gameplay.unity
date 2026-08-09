@@ -369,6 +369,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 2066028391}
+  - {fileID: 2066028401}
   - {fileID: 4100000002}
   - {fileID: 1169101412}
   m_Father: {fileID: 0}
@@ -482,6 +483,7 @@ GameObject:
   - component: {fileID: 1874779023}
   - component: {fileID: 1874779026}
   - component: {fileID: 1874779027}
+  - component: {fileID: 1874779028}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -635,6 +637,29 @@ MonoBehaviour:
   bottomLockPoint: {fileID: 2066028391}
   bottomLockWorldFallback: {x: 0, y: -0.627, z: -3.244}
   bottomLockViewportY: 0.05
+--- !u!114 &1874779028
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1874779022}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 65f367da813242809609904e7cb33a16, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GameJam.Gameplay.Cannon.CannonAimAreaCameraGizmo
+  aimPlane: {fileID: 2066028402}
+  fireZoneFillColor: {r: 0.2, g: 0.85, b: 1, a: 0.32}
+  fireZoneWireColor: {r: 0.2, g: 0.95, b: 1, a: 1}
+  blockedZoneFillColor: {r: 1, g: 0.2, b: 0.12, a: 0.18}
+  blockedZoneWireColor: {r: 1, g: 0.25, b: 0.12, a: 0.8}
+  drawCameraRays: 1
+--- !u!4 &2059440829 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 8840965861166768960, guid: fd03ae5daefa848f3b708019c566d8cb, type: 3}
+  m_PrefabInstance: {fileID: 4100000001}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &2066028390
 GameObject:
   m_ObjectHideFlags: 0
@@ -646,6 +671,7 @@ GameObject:
   - component: {fileID: 2066028391}
   - component: {fileID: 2066028392}
   - component: {fileID: 2066028393}
+  - component: {fileID: 2066028395}
   - component: {fileID: 2066028394}
   m_Layer: 0
   m_Name: CannonInputShooter
@@ -701,6 +727,7 @@ MonoBehaviour:
   projectileParent: {fileID: 2066028391}
   fireOrigin: {fileID: 4100000003}
   shotPresenter: {fileID: 4100000004}
+  aimController: {fileID: 2066028395}
   aimPlaneZ: 20
   projectileSpeed: 35
   projectileLifetime: 5
@@ -718,7 +745,116 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameJam.Gameplay.Wall.StructureRotateController
   structureSpinner: {fileID: 1673055725}
-  dragRotationSpeed: 90
+  dragRotationSpeed: 180
+--- !u!114 &2066028395
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2066028390}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f345cd6bc7a64210904f1e8502c19f39, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GameJam.Gameplay.Cannon.CannonAimController
+  aimPivot: {fileID: 2059440829}
+  aimSpeed: 2
+  minYaw: -90
+  maxYaw: 90
+  defaultAimPlaneHeight: 0.8
+  rotateAimPivotWithAim: 1
+  aimPlane: {fileID: 2066028402}
+--- !u!1 &2066028400
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2066028401}
+  - component: {fileID: 2066028402}
+  m_Layer: 0
+  m_Name: AimPlaneAnchor
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2066028401
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2066028400}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 2.89, z: 2.783}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1145544878}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2066028402
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2066028400}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5a7f1a43de594b8ca71dd173d99345cd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GameJam.Gameplay.Cannon.CannonAimPlaneAnchor
+  planeHalfWidth: 3
+  planeHalfHeight: 4
+  enforceBounds: 1
+  planeFillColor: {r: 0.2, g: 0.85, b: 1, a: 0.28}
+  planeWireColor: {r: 0.2, g: 0.95, b: 1, a: 0.95}
+  drawGizmoAlways: 1
+  previewCamera: {fileID: 1874779024}
+  drawCameraPreviewWhenSelected: 1
+  blockedPreviewFillColor: {r: 1, g: 0.2, b: 0.12, a: 0.18}
+  blockedPreviewWireColor: {r: 1, g: 0.25, b: 0.12, a: 0.8}
+  drawGameViewOverlay: 1
+  gameViewBlockedColor: {r: 1, g: 0.2, b: 0.12, a: 0.18}
+  gameViewFireColor: {r: 0.2, g: 0.85, b: 1, a: 0.28}
+  gameViewLineColor: {r: 0.2, g: 0.95, b: 1, a: 0.95}
+--- !u!1 &3109452001
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3109452002}
+  m_Layer: 0
+  m_Name: CameraController
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &3109452002
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3109452001}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: -0.26000002, z: 1.86}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1874779025}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &4100000001
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -796,39 +932,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c8e4f1a23b5d64788900112233445577, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::GameJam.Gameplay.Cannon.CannonShotPresenter
---- !u!1 &3109452001
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 3109452002}
-  m_Layer: 0
-  m_Name: CameraController
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &3109452002
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3109452001}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: -0.26000002, z: 1.86}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 1874779025}
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_EditorClassIdentifier: 
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
