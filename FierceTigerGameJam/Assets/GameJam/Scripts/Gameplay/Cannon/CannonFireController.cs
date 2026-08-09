@@ -39,7 +39,9 @@ namespace GameJam.Gameplay.Cannon
         {
             if (targetCamera == null)
             {
+#if UNITY_EDITOR
                 Debug.LogWarning($"{nameof(CannonFireController)} needs a camera.");
+#endif
                 return false;
             }
 
@@ -84,6 +86,7 @@ namespace GameJam.Gameplay.Cannon
 
         private static void LogAimRejected(AimRejectReason rejectReason)
         {
+#if UNITY_EDITOR
             if (rejectReason == AimRejectReason.TooLow
                 || rejectReason == AimRejectReason.TooHigh
                 || rejectReason == AimRejectReason.TooLeft
@@ -91,6 +94,7 @@ namespace GameJam.Gameplay.Cannon
             {
                 Debug.Log($"Aim at the structure. ({rejectReason})");
             }
+#endif
         }
 
         private bool TryGetAimWorldPoint(Vector2 screenPosition, out Vector3 aimWorldPoint)

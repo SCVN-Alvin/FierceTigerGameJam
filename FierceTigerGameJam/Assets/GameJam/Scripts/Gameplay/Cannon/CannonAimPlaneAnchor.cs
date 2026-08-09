@@ -7,6 +7,7 @@ namespace GameJam.Gameplay.Cannon
         [SerializeField] private float planeHalfWidth = 3f;
         [SerializeField] private float planeHalfHeight = 4f;
         [SerializeField] private bool enforceBounds = true;
+#if UNITY_EDITOR
         [SerializeField] private Color planeFillColor = new Color(0.2f, 0.85f, 1f, 0.28f);
         [SerializeField] private Color planeWireColor = new Color(0.2f, 0.95f, 1f, 0.95f);
         [SerializeField] private bool drawGizmoAlways = true;
@@ -21,6 +22,7 @@ namespace GameJam.Gameplay.Cannon
 
         private const float NormalGizmoLength = 0.35f;
         private static Texture2D whiteTexture;
+#endif
 
         public float PlaneHalfWidth => planeHalfWidth;
         public float PlaneHalfHeight => planeHalfHeight;
@@ -106,6 +108,7 @@ namespace GameJam.Gameplay.Cannon
             return transform.TransformPoint(new Vector3(localX, localY, 0f));
         }
 
+#if UNITY_EDITOR
         private void OnDrawGizmos()
         {
             if (drawGizmoAlways)
@@ -316,5 +319,6 @@ namespace GameJam.Gameplay.Cannon
                 return whiteTexture;
             }
         }
+#endif
     }
 }

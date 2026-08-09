@@ -5,6 +5,7 @@ namespace GameJam.Gameplay.Cannon
     [RequireComponent(typeof(Camera))]
     public sealed class CannonAimAreaCameraGizmo : MonoBehaviour
     {
+#if UNITY_EDITOR
         [SerializeField] private CannonAimPlaneAnchor aimPlane;
         [SerializeField] private Color fireZoneFillColor = new Color(0.2f, 0.85f, 1f, 0.32f);
         [SerializeField] private Color fireZoneWireColor = new Color(0.2f, 0.95f, 1f, 1f);
@@ -138,5 +139,6 @@ namespace GameJam.Gameplay.Cannon
                 Gizmos.DrawLine(camera.transform.position, corners[i]);
             }
         }
+#endif
     }
 }

@@ -107,7 +107,9 @@ namespace GameJam.Gameplay.Cannon
         {
             if (fireController == null)
             {
+#if UNITY_EDITOR
                 Debug.LogWarning($"{nameof(CannonInputShooter)} needs a {nameof(CannonFireController)}.");
+#endif
                 return;
             }
 
