@@ -369,6 +369,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 2066028391}
+  - {fileID: 4100000002}
   - {fileID: 1169101412}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -465,7 +466,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a1f40a7aed92490c9d46944d642a755f, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::SpinOnAxis
+  m_EditorClassIdentifier: Assembly-CSharp::GameJam.Gameplay.Wall.SpinOnAxis
   rotationCenter: {fileID: 489802509}
   speed: 0
 --- !u!1 &1874779022
@@ -480,6 +481,7 @@ GameObject:
   - component: {fileID: 1874779024}
   - component: {fileID: 1874779023}
   - component: {fileID: 1874779026}
+  - component: {fileID: 1874779027}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -528,9 +530,9 @@ Camera:
     height: 1
   near clip plane: 0.3
   far clip plane: 1000
-  field of view: 60
+  field of view: 22.5
   orthographic: 0
-  orthographic size: 22
+  orthographic size: 5.2
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
@@ -554,13 +556,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1874779022}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1, z: 0}
+  m_LocalRotation: {x: 0.011189763, y: -0, z: -0, w: 0.9999374}
+  m_LocalPosition: {x: 0, y: 1.01, z: -8.74}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_Father: {fileID: 3109452002}
+  m_LocalEulerAnglesHint: {x: 1.282, y: 0, z: 0}
 --- !u!114 &1874779026
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -605,6 +607,34 @@ MonoBehaviour:
     m_VarianceClampScale: 0.9
     m_ContrastAdaptiveSharpening: 0
   m_Version: 2
+--- !u!114 &1874779027
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1874779022}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7b7c4eab1c3d4e55a59e48f38d9f7438, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GameJam.Gameplay.Cameras.GameJamCameraSizeController
+  targetCamera: {fileID: 1874779024}
+  aspectNormalToWide: 1
+  aspectWideUpper: 2.37
+  referenceResolutionPixels: {x: 720, y: 1280}
+  viewSizeNormal: 20
+  viewSizeAtReference: 22.5
+  viewSizeWide: 22.5
+  wideAspectLerpExponent: 1
+  perspectiveCameraZNormal: -8.74
+  ultraTallAspectForMaxPullback: 0.45
+  perspectiveReferenceZExtraPullback: 0.45
+  perspectiveReferenceYDownOffset: 0.32
+  bottomLockEnabled: 1
+  bottomLockPoint: {fileID: 2066028391}
+  bottomLockWorldFallback: {x: 0, y: -0.627, z: -3.244}
+  bottomLockViewportY: 0.05
 --- !u!1 &2066028390
 GameObject:
   m_ObjectHideFlags: 0
@@ -615,6 +645,8 @@ GameObject:
   m_Component:
   - component: {fileID: 2066028391}
   - component: {fileID: 2066028392}
+  - component: {fileID: 2066028393}
+  - component: {fileID: 2066028394}
   m_Layer: 0
   m_Name: CannonInputShooter
   m_TagString: Untagged
@@ -648,22 +680,159 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 39edbda1608b46daaf5fa4474f5329cb, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::GameJam.Gameplay.CannonInputShooter
+  m_EditorClassIdentifier: Assembly-CSharp::GameJam.Gameplay.Cannon.CannonInputShooter
+  fireController: {fileID: 2066028393}
+  structureRotateController: {fileID: 2066028394}
+  dragStartThresholdPixels: 12
+--- !u!114 &2066028393
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2066028390}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b52b1a9e89cc42f08c4689f8ce8f1c2d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GameJam.Gameplay.Cannon.CannonFireController
   targetCamera: {fileID: 1874779024}
   projectilePrefab: {fileID: 1359961924258760206, guid: 140345a4f95e149f48a356e5eb806f5d, type: 3}
   projectileParent: {fileID: 2066028391}
-  fireOrigin: {fileID: 2066028391}
-  firePlaneZ: 20
+  fireOrigin: {fileID: 4100000003}
+  shotPresenter: {fileID: 4100000004}
+  aimPlaneZ: 20
   projectileSpeed: 35
   projectileLifetime: 5
-  fireDirection: {x: 0, y: 0, z: 1}
-  wallSpinner: {fileID: 1673055725}
-  dragStartThresholdPixels: 12
+  muzzleSpawnOffset: 0.28
+--- !u!114 &2066028394
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2066028390}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dfe595570b024f34b0a895d1854345cb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GameJam.Gameplay.Wall.StructureRotateController
+  structureSpinner: {fileID: 1673055725}
   dragRotationSpeed: 90
+--- !u!1001 &4100000001
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 1145544878}
+    m_Modifications:
+    - target: {fileID: 357004454952062757, guid: fd03ae5daefa848f3b708019c566d8cb, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 357004454952062757, guid: fd03ae5daefa848f3b708019c566d8cb, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -0.19
+      objectReference: {fileID: 0}
+    - target: {fileID: 357004454952062757, guid: fd03ae5daefa848f3b708019c566d8cb, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -4.33
+      objectReference: {fileID: 0}
+    - target: {fileID: 357004454952062757, guid: fd03ae5daefa848f3b708019c566d8cb, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 357004454952062757, guid: fd03ae5daefa848f3b708019c566d8cb, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 357004454952062757, guid: fd03ae5daefa848f3b708019c566d8cb, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 357004454952062757, guid: fd03ae5daefa848f3b708019c566d8cb, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 357004454952062757, guid: fd03ae5daefa848f3b708019c566d8cb, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 357004454952062757, guid: fd03ae5daefa848f3b708019c566d8cb, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 357004454952062757, guid: fd03ae5daefa848f3b708019c566d8cb, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6409795507839588656, guid: fd03ae5daefa848f3b708019c566d8cb, type: 3}
+      propertyPath: m_Name
+      value: Slingshot
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: fd03ae5daefa848f3b708019c566d8cb, type: 3}
+--- !u!4 &4100000002 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 357004454952062757, guid: fd03ae5daefa848f3b708019c566d8cb, type: 3}
+  m_PrefabInstance: {fileID: 4100000001}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &4100000003 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 5627002687054128869, guid: fd03ae5daefa848f3b708019c566d8cb, type: 3}
+  m_PrefabInstance: {fileID: 4100000001}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &4100000004 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 8812345678901234567, guid: fd03ae5daefa848f3b708019c566d8cb, type: 3}
+  m_PrefabInstance: {fileID: 4100000001}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c8e4f1a23b5d64788900112233445577, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GameJam.Gameplay.Cannon.CannonShotPresenter
+--- !u!1 &3109452001
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3109452002}
+  m_Layer: 0
+  m_Name: CameraController
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &3109452002
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3109452001}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: -0.26000002, z: 1.86}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1874779025}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
-  - {fileID: 1874779025}
+  - {fileID: 3109452002}
   - {fileID: 57543160}
   - {fileID: 1145544878}

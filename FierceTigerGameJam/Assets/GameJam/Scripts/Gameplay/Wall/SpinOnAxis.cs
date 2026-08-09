@@ -1,26 +1,29 @@
 using UnityEngine;
 
-public class SpinOnAxis : MonoBehaviour
+namespace GameJam.Gameplay.Wall
 {
-    [SerializeField] private Transform rotationCenter;
-    [SerializeField] private float speed;
-
-    public void SetSpeed(float value)
+    public class SpinOnAxis : MonoBehaviour
     {
-        speed = value;
-    }
+        [SerializeField] private Transform rotationCenter;
+        [SerializeField] private float speed;
 
-    private void Update()
-    {
-        if (rotationCenter == null || Mathf.Approximately(speed, 0f))
+        public void SetSpeed(float value)
         {
-            return;
+            speed = value;
         }
 
-        transform.RotateAround(
-            rotationCenter.position,
-            Vector3.up,              // green world Y axis
-            speed * Time.deltaTime
-        );
+        private void Update()
+        {
+            if (rotationCenter == null || Mathf.Approximately(speed, 0f))
+            {
+                return;
+            }
+
+            transform.RotateAround(
+                rotationCenter.position,
+                Vector3.up,
+                speed * Time.deltaTime
+            );
+        }
     }
 }
