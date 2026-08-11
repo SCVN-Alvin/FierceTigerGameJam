@@ -13,6 +13,12 @@ namespace GameJam.Gameplay
             PrepareBlocks();
         }
 
+        public void PrepareBlocks(Transform root)
+        {
+            blocksRoot = root;
+            PrepareBlocks();
+        }
+
         [ContextMenu("Prepare Blocks")]
         public void PrepareBlocks()
         {

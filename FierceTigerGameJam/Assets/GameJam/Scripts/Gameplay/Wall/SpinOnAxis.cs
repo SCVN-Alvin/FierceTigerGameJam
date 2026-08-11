@@ -12,6 +12,11 @@ namespace GameJam.Gameplay.Wall
             speed = value;
         }
 
+        public void SetRotationCenter(Transform center)
+        {
+            rotationCenter = center;
+        }
+
         private void Update()
         {
             if (rotationCenter == null || Mathf.Approximately(speed, 0f))
