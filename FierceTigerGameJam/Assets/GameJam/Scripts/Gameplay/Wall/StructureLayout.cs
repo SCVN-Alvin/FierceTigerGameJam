@@ -5,7 +5,7 @@ namespace GameJam.Gameplay.Wall
     [DisallowMultipleComponent]
     public sealed class StructureLayout : MonoBehaviour
     {
-        private const string CenterObjectName = "Structure Center";
+        public const string CenterObjectName = "Structure Center";
 
         [SerializeField] private Transform structureCenter;
 

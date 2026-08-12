@@ -52,7 +52,19 @@ namespace GameJam.Gameplay.Wall
             structureInstance.transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
             structureInstance.transform.localScale = Vector3.one;
 
-            if (structureInstance.TryGetComponent(out StructureLayout structureLayout))
+            if (structureInstance.TryGetComponent(out KnockdownTableLayout tableLayout))
+            {
+                if (tableLayout.TryGetSpawnLocalPositionFromCenter(out Vector3 spawnLocalPosition))
+                {
+                    structureInstance.transform.localPosition = spawnLocalPosition;
+                }
+
+                if (parent.TryGetComponent(out SpinOnAxis spinner))
+                {
+                    spinner.SetRotationCenter(tableLayout.StructureCenter);
+                }
+            }
+            else if (structureInstance.TryGetComponent(out StructureLayout structureLayout))
             {
                 if (structureLayout.TryGetSpawnLocalPositionFromCenter(out Vector3 spawnLocalPosition))
                 {
@@ -65,9 +77,15 @@ namespace GameJam.Gameplay.Wall
                 }
             }
 
-            if (physicsSetup != null)
+            if (physicsSetup != null && structureInstance != null)
             {
-                physicsSetup.PrepareBlocks(structureInstance.transform);
+                Transform physicsRoot = structureInstance.transform;
+                if (structureInstance.TryGetComponent(out KnockdownTableLayout resolvedTableLayout))
+                {
+                    physicsRoot = resolvedTableLayout.BlocksRoot;
+                }
+
+                physicsSetup.PrepareBlocks(physicsRoot);
             }
         }
 

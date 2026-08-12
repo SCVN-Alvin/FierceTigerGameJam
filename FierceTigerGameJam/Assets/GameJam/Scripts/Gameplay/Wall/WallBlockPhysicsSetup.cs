@@ -1,4 +1,5 @@
 using UnityEngine;
+using GameJam.Gameplay.Wall;
 
 namespace GameJam.Gameplay
 {
@@ -23,14 +24,29 @@ namespace GameJam.Gameplay
         public void PrepareBlocks()
         {
             Transform root = blocksRoot != null ? blocksRoot : transform;
+            KnockdownBlockAuthoring[] authoredBlocks = root.GetComponentsInChildren<KnockdownBlockAuthoring>(includeInactiveBlocks);
+
+            if (authoredBlocks.Length > 0)
+            {
+                for (int i = 0; i < authoredBlocks.Length; i++)
+                {
+                    GameObject block = authoredBlocks[i].gameObject;
+                    EnsureCollider(block);
+                    EnsureRigidbody(block, authoredBlocks[i]);
+                    EnsureKnockdownBlock(block, authoredBlocks[i]);
+                }
+
+                return;
+            }
+
             MeshRenderer[] renderers = root.GetComponentsInChildren<MeshRenderer>(includeInactiveBlocks);
 
             for (int i = 0; i < renderers.Length; i++)
             {
                 GameObject block = renderers[i].gameObject;
                 EnsureCollider(block);
-                EnsureRigidbody(block);
-                EnsureKnockdownBlock(block);
+                EnsureRigidbody(block, null);
+                EnsureKnockdownBlock(block, null);
             }
         }
 
@@ -57,22 +73,32 @@ namespace GameJam.Gameplay
             }
         }
 
-        private void EnsureRigidbody(GameObject block)
+        private void EnsureRigidbody(GameObject block, KnockdownBlockAuthoring authoring)
         {
             if (!block.TryGetComponent(out Rigidbody blockRigidbody))
             {
                 blockRigidbody = block.AddComponent<Rigidbody>();
             }
 
+            if (authoring != null)
+            {
+                blockRigidbody.mass = authoring.Mass;
+            }
+
             blockRigidbody.isKinematic = true;
             blockRigidbody.useGravity = false;
         }
 
-        private void EnsureKnockdownBlock(GameObject block)
+        private void EnsureKnockdownBlock(GameObject block, KnockdownBlockAuthoring authoring)
         {
-            if (!block.TryGetComponent(out KnockdownBlock _))
+            if (!block.TryGetComponent(out KnockdownBlock knockdownBlock))
             {
-                block.AddComponent<KnockdownBlock>();
+                knockdownBlock = block.AddComponent<KnockdownBlock>();
+            }
+
+            if (authoring != null)
+            {
+                knockdownBlock.ApplyAuthoring(authoring);
             }
         }
     }
