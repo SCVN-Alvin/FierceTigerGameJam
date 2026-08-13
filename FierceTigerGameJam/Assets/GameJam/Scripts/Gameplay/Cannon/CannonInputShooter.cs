@@ -6,6 +6,7 @@ namespace GameJam.Gameplay.Cannon
 {
     public class CannonInputShooter : MonoBehaviour
     {
+        [SerializeField] private GridKnockdownCannonFireController gridFireController;
         [SerializeField] private CannonFireController fireController;
         [SerializeField] private StructureRotateController structureRotateController;
 
@@ -20,6 +21,11 @@ namespace GameJam.Gameplay.Cannon
 
         private void Awake()
         {
+            if (gridFireController == null)
+            {
+                gridFireController = GetComponent<GridKnockdownCannonFireController>();
+            }
+
             if (fireController == null)
             {
                 fireController = GetComponent<CannonFireController>();
@@ -105,10 +111,16 @@ namespace GameJam.Gameplay.Cannon
 
         public void FireAtScreenPosition(Vector2 screenPosition)
         {
+            if (gridFireController != null)
+            {
+                gridFireController.TryFireAtScreenPoint(screenPosition);
+                return;
+            }
+
             if (fireController == null)
             {
 #if UNITY_EDITOR
-                Debug.LogWarning($"{nameof(CannonInputShooter)} needs a {nameof(CannonFireController)}.");
+                Debug.LogWarning($"{nameof(CannonInputShooter)} needs a fire controller.");
 #endif
                 return;
             }

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using GameJam.Gameplay.Wall;
 
@@ -7,16 +8,26 @@ namespace GameJam.Gameplay
     [RequireComponent(typeof(Rigidbody))]
     public class KnockdownBlock : MonoBehaviour
     {
+        public enum SupportCascadeMode
+        {
+            Disabled,
+            OneLevel,
+            ColumnAbove
+        }
+
         [SerializeField] private bool startAsleep = true;
         [SerializeField] private float mass = 1f;
         [SerializeField] private float angularDrag = 0.05f;
         [SerializeField] private float linearDrag = 0f;
         [SerializeField] private float collisionActivationVelocity = 1.5f;
         [SerializeField] private bool allowCollisionCascade;
-        [SerializeField] private bool allowSupportCascade = true;
+        [SerializeField] private SupportCascadeMode supportCascadeMode = SupportCascadeMode.ColumnAbove;
+        [SerializeField] private float supportReleaseImpulse = 0.35f;
         [SerializeField] private bool countsTowardKnockdown = true;
         [SerializeField] private Vector3Int logicalSize = Vector3Int.one;
         [SerializeField] private Vector2Int gridPosition;
+
+        private const float HalfCellOffset = 0.5f;
 
         private Rigidbody blockRigidbody;
         private bool isActivated;
@@ -48,6 +59,10 @@ namespace GameJam.Gameplay
             countsTowardKnockdown = authoring.CountsTowardKnockdown;
             logicalSize = authoring.LogicalSize;
             mass = authoring.Mass;
+            allowCollisionCascade = authoring.AllowCollisionCascade;
+            collisionActivationVelocity = authoring.CollisionActivationVelocity;
+            supportCascadeMode = authoring.SupportCascadeMode;
+            supportReleaseImpulse = authoring.SupportReleaseImpulse;
             gridPosition = authoring.GridPosition;
 
             if (blockRigidbody == null)
@@ -78,7 +93,7 @@ namespace GameJam.Gameplay
             blockRigidbody.isKinematic = false;
             blockRigidbody.useGravity = true;
             blockRigidbody.WakeUp();
-            ReleaseSupportedBlockAbove();
+            ReleaseSupportedBlocksAbove();
         }
 
         private void OnCollisionEnter(Collision collision)
@@ -116,9 +131,9 @@ namespace GameJam.Gameplay
             blockRigidbody.collisionDetectionMode = CollisionDetectionMode.Continuous;
         }
 
-        private void ReleaseSupportedBlockAbove()
+        private void ReleaseSupportedBlocksAbove()
         {
-            if (!allowSupportCascade)
+            if (supportCascadeMode == SupportCascadeMode.Disabled)
             {
                 return;
             }
@@ -129,8 +144,7 @@ namespace GameJam.Gameplay
                 return;
             }
 
-            KnockdownBlock nextBlock = null;
-            int nextGridY = int.MaxValue;
+            List<KnockdownBlock> supportedBlocks = new List<KnockdownBlock>();
             for (int i = 0; i < parent.childCount; i++)
             {
                 Transform child = parent.GetChild(i);
@@ -145,29 +159,85 @@ namespace GameJam.Gameplay
                     continue;
                 }
 
-                if (candidate.GridPosition.x != gridPosition.x)
+                if (!IsSupportedAbove(candidate))
                 {
                     continue;
                 }
 
-                if (candidate.GridPosition.y <= gridPosition.y)
-                {
-                    continue;
-                }
-
-                if (candidate.GridPosition.y >= nextGridY)
-                {
-                    continue;
-                }
-
-                nextGridY = candidate.GridPosition.y;
-                nextBlock = candidate;
+                supportedBlocks.Add(candidate);
             }
 
-            if (nextBlock != null)
+            supportedBlocks.Sort((left, right) => left.GridPosition.y.CompareTo(right.GridPosition.y));
+
+            if (supportCascadeMode == SupportCascadeMode.OneLevel)
             {
-                nextBlock.Activate();
+                if (supportedBlocks.Count > 0)
+                {
+                    supportedBlocks[0].ActivateFromSupportRelease(this);
+                }
+
+                return;
             }
+
+            for (int i = 0; i < supportedBlocks.Count; i++)
+            {
+                supportedBlocks[i].ActivateFromSupportRelease(this);
+            }
+        }
+
+        private bool IsSupportedAbove(KnockdownBlock candidate)
+        {
+            if (candidate.GridPosition.y <= gridPosition.y)
+            {
+                return false;
+            }
+
+            return RangesOverlap(
+                gridPosition.x,
+                Mathf.Max(1, logicalSize.x),
+                candidate.GridPosition.x,
+                Mathf.Max(1, candidate.LogicalSize.x));
+        }
+
+        private static bool RangesOverlap(int leftStart, int leftSize, int rightStart, int rightSize)
+        {
+            float leftMin = leftStart - HalfCellOffset;
+            float leftMax = leftStart + leftSize - HalfCellOffset;
+            float rightMin = rightStart - HalfCellOffset;
+            float rightMax = rightStart + rightSize - HalfCellOffset;
+            return leftMin < rightMax && rightMin < leftMax;
+        }
+
+        private void ActivateFromSupportRelease(KnockdownBlock releasedBy)
+        {
+            if (isActivated)
+            {
+                return;
+            }
+
+            isActivated = true;
+            blockRigidbody.isKinematic = false;
+            blockRigidbody.useGravity = true;
+            blockRigidbody.WakeUp();
+            ApplySupportReleaseImpulse(releasedBy);
+        }
+
+        private void ApplySupportReleaseImpulse(KnockdownBlock releasedBy)
+        {
+            if (blockRigidbody == null || supportReleaseImpulse <= 0f)
+            {
+                return;
+            }
+
+            Vector3 direction = transform.position - (releasedBy != null ? releasedBy.transform.position : transform.position);
+            direction.y = 0f;
+            if (direction.sqrMagnitude < 0.0001f)
+            {
+                direction = transform.right;
+            }
+
+            Vector3 impulse = (direction.normalized + Vector3.up * 0.25f).normalized * supportReleaseImpulse;
+            blockRigidbody.AddForce(impulse, ForceMode.Impulse);
         }
     }
 }
