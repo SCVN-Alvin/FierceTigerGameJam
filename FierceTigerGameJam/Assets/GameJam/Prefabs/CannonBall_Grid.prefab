@@ -154,6 +154,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameJam.Gameplay.Cannon.GridKnockdownCannonProjectile
   impactForce: 18
+  impactRadius: 0.2
+  minimumFalloff: 0.2
+  neighborImpulseMultiplier: 0.2
   upwardForce: 0.25
   hittableLayers:
     serializedVersion: 2

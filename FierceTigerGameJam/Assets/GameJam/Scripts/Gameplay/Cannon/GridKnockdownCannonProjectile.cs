@@ -1,5 +1,6 @@
 using UnityEngine;
 using GameJam.Gameplay;
+using System.Collections.Generic;
 
 namespace GameJam.Gameplay.Cannon
 {
@@ -8,6 +9,9 @@ namespace GameJam.Gameplay.Cannon
     public sealed class GridKnockdownCannonProjectile : MonoBehaviour
     {
         [SerializeField] private float impactForce = 18f;
+        [SerializeField] private float impactRadius = 0.65f;
+        [SerializeField] private float minimumFalloff = 0.2f;
+        [SerializeField] private float neighborImpulseMultiplier = 0.65f;
         [SerializeField] private float upwardForce = 0.25f;
         [SerializeField] private LayerMask hittableLayers = ~0;
         [SerializeField] private bool destroyOnImpact = true;
@@ -21,6 +25,15 @@ namespace GameJam.Gameplay.Cannon
             projectileRigidbody = GetComponent<Rigidbody>();
             projectileCollider = GetComponent<Collider>();
             projectileRigidbody.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
+        }
+
+        private void OnValidate()
+        {
+            impactForce = Mathf.Max(0f, impactForce);
+            impactRadius = Mathf.Max(0f, impactRadius);
+            minimumFalloff = Mathf.Clamp01(minimumFalloff);
+            neighborImpulseMultiplier = Mathf.Max(0f, neighborImpulseMultiplier);
+            upwardForce = Mathf.Max(0f, upwardForce);
         }
 
         public void Launch(Vector3 direction, float speed, float lifetime)
@@ -65,12 +78,48 @@ namespace GameJam.Gameplay.Cannon
             Vector3 impulseDirection = projectileRigidbody.linearVelocity.sqrMagnitude > 0.01f
                 ? projectileRigidbody.linearVelocity.normalized
                 : transform.forward;
-            Vector3 force = (impulseDirection + Vector3.up * upwardForce).normalized * impactForce;
-            block.Knock(contact.point, force, ForceMode.Impulse);
+            KnockBlocks(contact.point, impulseDirection, block);
 
             if (destroyOnImpact)
             {
                 Destroy(gameObject);
+            }
+        }
+
+        private void KnockBlocks(Vector3 impactPoint, Vector3 impulseDirection, KnockdownBlock directlyHitBlock)
+        {
+            Vector3 forceDirection = (impulseDirection + Vector3.up * upwardForce).normalized;
+            HashSet<KnockdownBlock> processedBlocks = new HashSet<KnockdownBlock>();
+
+            if (directlyHitBlock != null)
+            {
+                processedBlocks.Add(directlyHitBlock);
+                directlyHitBlock.Knock(impactPoint, forceDirection * impactForce, ForceMode.Impulse);
+            }
+
+            if (impactRadius <= 0f)
+            {
+                return;
+            }
+
+            Collider[] hits = Physics.OverlapSphere(
+                impactPoint,
+                impactRadius,
+                hittableLayers,
+                QueryTriggerInteraction.Ignore);
+
+            for (int i = 0; i < hits.Length; i++)
+            {
+                KnockdownBlock nearbyBlock = hits[i].GetComponentInParent<KnockdownBlock>();
+                if (nearbyBlock == null || !processedBlocks.Add(nearbyBlock))
+                {
+                    continue;
+                }
+
+                float distance = Vector3.Distance(impactPoint, nearbyBlock.transform.position);
+                float falloff = Mathf.Clamp01(1f - (distance / impactRadius));
+                float impulseScale = Mathf.Max(minimumFalloff, falloff) * neighborImpulseMultiplier;
+                nearbyBlock.Knock(impactPoint, forceDirection * (impactForce * impulseScale), ForceMode.Impulse);
             }
         }
 
