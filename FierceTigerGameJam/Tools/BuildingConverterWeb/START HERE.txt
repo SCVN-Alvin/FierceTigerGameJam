@@ -1,0 +1,18 @@
+SMASH BUILDER — CÁCH MỞ TRÊN MAC
+
+1. Giải nén toàn bộ file ZIP thành một folder.
+2. KHÔNG mở index.html.
+3. Double-click “Start Smash Builder.command”.
+4. Giữ cửa sổ Terminal đó mở trong suốt lúc dùng tool.
+
+Nếu macOS chặn file .command:
+- Right-click “Start Smash Builder.command” → Open → Open.
+
+Nếu Safari báo không kết nối được 127.0.0.1:4173 / localhost:4173:
+- Local server chưa chạy hoặc cửa sổ Terminal đã bị đóng.
+- Chạy lại “Start Smash Builder.command”.
+
+127.0.0.1 và localhost đều chỉ chính máy Mac đang dùng, không phải server
+bên ngoài. Model GLB được xử lý trong browser và không bị upload.
+
+Lần mở đầu cần có Internet để tải thư viện 3D đã khóa phiên bản từ CDN.

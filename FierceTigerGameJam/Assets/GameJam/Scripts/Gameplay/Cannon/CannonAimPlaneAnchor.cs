@@ -28,6 +28,13 @@ namespace GameJam.Gameplay.Cannon
         public float PlaneHalfHeight => planeHalfHeight;
         public Vector3 PlaneNormal => -transform.forward;
 
+        public void ConfigureBounds(float halfWidth, float halfHeight, bool shouldEnforceBounds)
+        {
+            planeHalfWidth = Mathf.Max(0.1f, halfWidth);
+            planeHalfHeight = Mathf.Max(0.1f, halfHeight);
+            enforceBounds = shouldEnforceBounds;
+        }
+
         public bool TryGetAimWorldPoint(Camera camera, Vector2 screenPosition, out Vector3 worldTarget)
         {
             return TryGetAimWorldPoint(camera, screenPosition, out worldTarget, out _);
@@ -46,7 +53,24 @@ namespace GameJam.Gameplay.Cannon
                 return false;
             }
 
-            Ray ray = camera.ScreenPointToRay(screenPosition);
+            Ray cameraRay = camera.ScreenPointToRay(screenPosition);
+            RaycastHit[] structureHits = Physics.RaycastAll(
+                cameraRay,
+                1000f,
+                ~0,
+                QueryTriggerInteraction.Ignore);
+            System.Array.Sort(structureHits, (left, right) => left.distance.CompareTo(right.distance));
+            for (int i = 0; i < structureHits.Length; i++)
+            {
+                if (structureHits[i].collider.GetComponentInParent<GameJam.Gameplay.Wall.SmashBlock>() != null)
+                {
+                    worldTarget = structureHits[i].point;
+                    rejectReason = AimRejectReason.None;
+                    return true;
+                }
+            }
+
+            Ray ray = cameraRay;
             Plane aimPlane = new Plane(-transform.forward, transform.position);
             if (!aimPlane.Raycast(ray, out float distance))
             {

@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Convert building GLB models into Smash Down block structures for Unity." />
+    <title>Smash Builder — GLB to Unity FBX</title>
+    <link rel="stylesheet" href="./styles.css?v=9" />
+    <link rel="preconnect" href="https://esm.sh" />
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://esm.sh/three@0.184.0",
+          "three/addons/": "https://esm.sh/three@0.184.0/examples/jsm/",
+          "@comfyorg/fbx-exporter-three": "https://esm.sh/@comfyorg/fbx-exporter-three@1.0.1?external=three"
+        }
+      }
+    </script>
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <div class="brand">
+          <div class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></div>
+          <div>
+            <h1>SMASH BUILDER</h1>
+            <p>GLB → destructible block structure</p>
+          </div>
+        </div>
+        <div class="privacy-badge"><span></span> Local processing — files stay on this Mac</div>
+      </header>
+
+      <main class="workspace">
+        <aside class="control-panel">
+          <section class="panel-section source-section">
+            <div class="section-heading">
+              <span class="step-number">01</span>
+              <div><h2>Source building</h2><p>Upload one GLB model</p></div>
+            </div>
+            <label id="source-drop" class="drop-zone source-drop" for="source-input">
+              <input id="source-input" type="file" accept=".glb,model/gltf-binary" />
+              <span class="upload-icon">⇧</span>
+              <strong id="source-title">Drop GLB here</strong>
+              <small id="source-meta">or click to browse</small>
+            </label>
+            <div id="source-stats" class="stat-grid hidden">
+              <div><span>Triangles</span><strong id="stat-triangles">—</strong></div>
+              <div><span>Materials</span><strong id="stat-materials">—</strong></div>
+              <div><span>Dimensions</span><strong id="stat-dimensions">—</strong></div>
+            </div>
+          </section>
+
+          <section class="panel-section">
+            <div class="section-heading compact">
+              <span class="step-number">02</span>
+              <div><h2>Block kit</h2><p>Measured automatically from FBX</p></div>
+            </div>
+            <div class="asset-list">
+              <article class="asset-card brick" data-asset="brick">
+                <div class="asset-swatch"></div>
+                <div class="asset-info"><strong>Brick</strong><span id="brick-size">Loading default…</span></div>
+                <label class="replace-button">Replace<input id="brick-input" type="file" accept=".fbx" /></label>
+              </article>
+              <article class="asset-card concrete" data-asset="concrete">
+                <div class="asset-swatch"></div>
+                <div class="asset-info"><strong>Concrete</strong><span id="concrete-size">Loading default…</span></div>
+                <label class="replace-button">Replace<input id="concrete-input" type="file" accept=".fbx" /></label>
+              </article>
+              <article class="asset-card glass" data-asset="glass">
+                <div class="asset-swatch"></div>
+                <div class="asset-info"><strong>Glass</strong><span id="glass-size">Loading default…</span></div>
+                <label class="replace-button">Replace<input id="glass-input" type="file" accept=".fbx" /></label>
+              </article>
+            </div>
+          </section>
+
+          <section class="panel-section settings-section">
+            <div class="section-heading compact">
+              <span class="step-number">03</span>
+              <div><h2>Build settings</h2><p>Surface shell optimized for smash gameplay</p></div>
+            </div>
+            <div class="field-row three-cols">
+              <label>Cell X<input id="cell-x" type="number" value="0.1" min="0.005" step="0.01" /></label>
+              <label>Cell Y<input id="cell-y" type="number" value="0.1" min="0.005" step="0.01" /></label>
+              <label>Cell Z<input id="cell-z" type="number" value="0.1" min="0.005" step="0.01" /></label>
+            </div>
+            <div class="field-row two-cols">
+              <label>Block gap (locked)<input id="block-gap" type="number" value="0" min="0" max="0" step="0" disabled /></label>
+              <label>Block budget<input id="block-budget" type="number" value="6000" min="100" max="30000" step="100" /></label>
+            </div>
+            <label class="range-field">
+              <span><span>Surface density</span><output id="density-output">1.5×</output></span>
+              <input id="density" type="range" min="0.5" max="2" step="0.1" value="1.5" />
+            </label>
+            <label class="text-field">Detail keywords
+              <textarea id="detail-keywords" rows="2">door,handle,knob,hinge,frame,trim,sign,pipe,railing,stair,balcony,awning</textarea>
+            </label>
+            <label class="toggle-row"><input id="ground-align" type="checkbox" checked /><span></span>Center model and align its base to Y = 0</label>
+            <label class="toggle-row locked-toggle"><input id="fit-assets" type="checkbox" disabled /><span></span>Brick wall — horizontal running bond with staggered rows</label>
+              <label class="toggle-row"><input id="keep-details" type="checkbox" checked /><span></span>Keep doors and unmatched colors as separate meshes</label>
+          </section>
+
+          <section id="mapping-section" class="panel-section mapping-section hidden">
+            <div class="section-heading compact">
+              <span class="step-number">04</span>
+              <div><h2>Material mapping</h2><p>Review automatic detection before building</p></div>
+            </div>
+            <div id="material-map" class="material-map"></div>
+          </section>
+
+          <div class="build-actions">
+            <button id="build-button" class="primary-button" disabled><span>Build smash structure</span><b>→</b></button>
+            <p id="build-hint">Upload a GLB and wait for the block kit.</p>
+          </div>
+        </aside>
+
+        <section class="viewport-panel">
+          <div class="viewport-toolbar">
+            <div class="view-toggle" role="group" aria-label="View mode">
+              <button id="view-source" class="active">Source</button>
+              <button id="view-result" disabled>Converted</button>
+            </div>
+            <div class="toolbar-actions">
+              <button id="frame-button" title="Frame model">Frame</button>
+              <button id="grid-button" class="active" title="Toggle grid">Grid</button>
+              <button id="wire-button" title="Toggle wireframe">Wire</button>
+            </div>
+          </div>
+          <div id="viewport" class="viewport">
+            <div id="empty-state" class="empty-state">
+              <div class="empty-building" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
+              <h2>Your building preview appears here</h2>
+              <p>Upload a GLB to inspect materials and generate a destructible block shell.</p>
+            </div>
+            <div id="progress-overlay" class="progress-overlay hidden">
+              <div class="spinner"></div>
+              <strong id="progress-title">Analyzing geometry…</strong>
+              <span id="progress-text">Preparing mesh data</span>
+              <div class="progress-track"><i id="progress-bar"></i></div>
+            </div>
+            <div class="viewport-legend">
+              <span><i class="brick-dot"></i>Brick</span>
+              <span><i class="concrete-dot"></i>Concrete</span>
+              <span><i class="glass-dot"></i>Glass</span>
+              <span><i class="detail-dot"></i>Details</span>
+            </div>
+          </div>
+          <footer class="result-bar">
+            <div class="result-summary">
+              <span id="result-status">No structure generated</span>
+              <strong id="result-count">0 blocks</strong>
+            </div>
+            <div class="export-actions">
+              <button id="download-json" disabled>Layer JSON</button>
+              <button id="download-fbx" class="export-button" disabled>Download Unity FBX</button>
+            </div>
+          </footer>
+        </section>
+      </main>
+    </div>
+
+    <div id="toast" class="toast" role="status"></div>
+    <div id="boot-error" class="boot-error hidden" role="alert">
+      <strong>Smash Builder chưa khởi động được.</strong>
+      <span id="boot-error-message">Hãy mở bằng “Start Smash Builder.command”, không mở trực tiếp index.html.</span>
+    </div>
+    <script type="module">
+      if (window.location.protocol === "file:") {
+        const panel = document.querySelector("#boot-error");
+        const message = document.querySelector("#boot-error-message");
+        if (message) message.textContent = "Bạn đang mở index.html trực tiếp. Hãy đóng tab này, giải nén toàn bộ folder rồi double-click “Start Smash Builder.command” và giữ cửa sổ Terminal mở trong lúc dùng.";
+        panel?.classList.remove("hidden");
+      } else {
+        import("./app.js?v=14").catch((error) => {
+        console.error("Smash Builder startup failed", error);
+        const panel = document.querySelector("#boot-error");
+        const message = document.querySelector("#boot-error-message");
+        if (message) message.textContent = `${error?.message || error} — không tải được thư viện 3D. Kiểm tra mạng rồi refresh trang.`;
+        panel?.classList.remove("hidden");
+        });
+      }
+    </script>
+  </body>
+</html>

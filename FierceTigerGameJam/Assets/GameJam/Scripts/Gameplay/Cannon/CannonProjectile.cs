@@ -1,4 +1,6 @@
 using UnityEngine;
+using GameJam.Gameplay.Wall;
+using System.Collections.Generic;
 
 namespace GameJam.Gameplay
 {
@@ -7,16 +9,19 @@ namespace GameJam.Gameplay
     public class CannonProjectile : MonoBehaviour
     {
         [SerializeField] private float impactForce = 18f;
+        [SerializeField] private float impactRadius = 2.25f;
         [SerializeField] private float upwardForce = 0.25f;
         [SerializeField] private LayerMask hittableLayers = ~0;
         [SerializeField] private bool destroyOnImpact = true;
 
         private Rigidbody projectileRigidbody;
+        private Collider projectileCollider;
         private bool hasHit;
 
         private void Awake()
         {
             projectileRigidbody = GetComponent<Rigidbody>();
+            projectileCollider = GetComponent<Collider>();
             projectileRigidbody.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
         }
 
@@ -28,6 +33,7 @@ namespace GameJam.Gameplay
             }
 
             projectileRigidbody.linearVelocity = direction.normalized * speed;
+            IgnoreSpawnOverlaps();
 
             if (lifetime > 0f)
             {
@@ -35,10 +41,54 @@ namespace GameJam.Gameplay
             }
         }
 
+        private void IgnoreSpawnOverlaps()
+        {
+            if (projectileCollider == null)
+            {
+                projectileCollider = GetComponent<Collider>();
+            }
+
+            if (projectileCollider == null)
+            {
+                return;
+            }
+
+            Bounds bounds = projectileCollider.bounds;
+            float overlapRadius = Mathf.Max(bounds.extents.x, bounds.extents.y, bounds.extents.z) * 0.98f;
+            Collider[] overlaps = Physics.OverlapSphere(
+                bounds.center,
+                overlapRadius,
+                hittableLayers,
+                QueryTriggerInteraction.Ignore);
+
+            for (int i = 0; i < overlaps.Length; i++)
+            {
+                Collider other = overlaps[i];
+                if (other == null || other == projectileCollider)
+                {
+                    continue;
+                }
+
+                Physics.IgnoreCollision(projectileCollider, other, true);
+            }
+        }
+
         private void OnCollisionEnter(Collision collision)
         {
             if (hasHit)
             {
+                return;
+            }
+
+            SmashBlock directlyHitBlock = collision.collider.GetComponentInParent<SmashBlock>();
+            KnockdownBlock directlyHitLegacyBlock = collision.collider.GetComponentInParent<KnockdownBlock>();
+            if (directlyHitBlock == null && directlyHitLegacyBlock == null)
+            {
+                if (projectileCollider != null && collision.collider != null)
+                {
+                    Physics.IgnoreCollision(projectileCollider, collision.collider, true);
+                }
+
                 return;
             }
 
@@ -55,7 +105,7 @@ namespace GameJam.Gameplay
                 ? projectileRigidbody.linearVelocity.normalized
                 : transform.forward;
 
-            KnockBlock(collision, contact.point, impulseDirection);
+            KnockBlocks(contact.point, impulseDirection, directlyHitBlock);
 
             if (destroyOnImpact)
             {
@@ -63,21 +113,40 @@ namespace GameJam.Gameplay
             }
         }
 
-        private void KnockBlock(Collision collision, Vector3 impactPoint, Vector3 impulseDirection)
+        private void KnockBlocks(Vector3 impactPoint, Vector3 impulseDirection, SmashBlock directlyHitBlock)
         {
-            if (collision == null)
-            {
-                return;
-            }
+            Collider[] hits = Physics.OverlapSphere(impactPoint, impactRadius, hittableLayers, QueryTriggerInteraction.Ignore);
+            HashSet<SmashBlock> processedSmashBlocks = new HashSet<SmashBlock>();
 
-            KnockdownBlock block = collision.collider.GetComponentInParent<KnockdownBlock>();
-            if (block == null)
+            for (int i = 0; i < hits.Length; i++)
             {
-                return;
-            }
+                SmashBlock smashBlock = hits[i].GetComponentInParent<SmashBlock>();
+                if (smashBlock != null)
+                {
+                    if (!processedSmashBlocks.Add(smashBlock))
+                    {
+                        continue;
+                    }
 
-            Vector3 force = (impulseDirection + Vector3.up * upwardForce).normalized * impactForce;
-            block.Knock(impactPoint, force, ForceMode.Impulse);
+                    float smashDistance = Vector3.Distance(impactPoint, smashBlock.transform.position);
+                    float smashFalloff = Mathf.Clamp01(1f - smashDistance / impactRadius);
+                    Vector3 smashForce = (impulseDirection + Vector3.up * upwardForce).normalized * impactForce;
+                    bool allowFracture = smashBlock == directlyHitBlock;
+                    smashBlock.Knock(impactPoint, smashForce, Mathf.Max(0.2f, smashFalloff), allowFracture);
+                    continue;
+                }
+
+                KnockdownBlock block = hits[i].GetComponentInParent<KnockdownBlock>();
+                if (block == null)
+                {
+                    continue;
+                }
+
+                float distance = Vector3.Distance(impactPoint, block.transform.position);
+                float falloff = Mathf.Clamp01(1f - distance / impactRadius);
+                Vector3 force = (impulseDirection + Vector3.up * upwardForce).normalized * (impactForce * Mathf.Max(0.2f, falloff));
+                block.Knock(impactPoint, force, ForceMode.Impulse);
+            }
         }
     }
 }
