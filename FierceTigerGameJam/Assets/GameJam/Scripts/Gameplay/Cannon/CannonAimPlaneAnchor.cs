@@ -62,7 +62,11 @@ namespace GameJam.Gameplay.Cannon
             System.Array.Sort(structureHits, (left, right) => left.distance.CompareTo(right.distance));
             for (int i = 0; i < structureHits.Length; i++)
             {
-                if (structureHits[i].collider.GetComponentInParent<GameJam.Gameplay.Wall.SmashBlock>() != null)
+                Collider hitCollider = structureHits[i].collider;
+                GameJam.Gameplay.KnockdownBlock knockdownBlock =
+                    hitCollider.GetComponentInParent<GameJam.Gameplay.KnockdownBlock>();
+                if (hitCollider.GetComponentInParent<GameJam.Gameplay.Wall.SmashBlock>() != null
+                    || (knockdownBlock != null && !knockdownBlock.IsActivated))
                 {
                     worldTarget = structureHits[i].point;
                     rejectReason = AimRejectReason.None;

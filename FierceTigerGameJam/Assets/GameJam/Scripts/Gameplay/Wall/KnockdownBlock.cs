@@ -7,13 +7,20 @@ namespace GameJam.Gameplay
     [RequireComponent(typeof(Rigidbody))]
     public class KnockdownBlock : MonoBehaviour
     {
+        public enum SupportCascadeMode
+        {
+            Disabled,
+            OneLevel,
+            ColumnAbove
+        }
+
         [SerializeField] private bool startAsleep = true;
         [SerializeField] private float mass = 1f;
         [SerializeField] private float angularDrag = 0.05f;
         [SerializeField] private float linearDrag = 0f;
         [SerializeField] private float collisionActivationVelocity = 1.5f;
         [SerializeField] private bool allowCollisionCascade;
-        [SerializeField] private bool allowSupportCascade = true;
+        [SerializeField] private SupportCascadeMode supportCascadeMode = SupportCascadeMode.OneLevel;
         [SerializeField] private bool countsTowardKnockdown = true;
         [SerializeField] private Vector3Int logicalSize = Vector3Int.one;
         [SerializeField] private Vector2Int gridPosition;
@@ -78,7 +85,7 @@ namespace GameJam.Gameplay
             blockRigidbody.isKinematic = false;
             blockRigidbody.useGravity = true;
             blockRigidbody.WakeUp();
-            ReleaseSupportedBlockAbove();
+            ReleaseSupportedBlocksAbove();
         }
 
         private void OnCollisionEnter(Collision collision)
@@ -116,9 +123,9 @@ namespace GameJam.Gameplay
             blockRigidbody.collisionDetectionMode = CollisionDetectionMode.Continuous;
         }
 
-        private void ReleaseSupportedBlockAbove()
+        private void ReleaseSupportedBlocksAbove()
         {
-            if (!allowSupportCascade)
+            if (supportCascadeMode == SupportCascadeMode.Disabled)
             {
                 return;
             }
@@ -166,8 +173,28 @@ namespace GameJam.Gameplay
 
             if (nextBlock != null)
             {
-                nextBlock.Activate();
+                if (supportCascadeMode == SupportCascadeMode.ColumnAbove)
+                {
+                    nextBlock.Activate();
+                }
+                else
+                {
+                    nextBlock.ActivateWithoutSupportCascade();
+                }
             }
+        }
+
+        private void ActivateWithoutSupportCascade()
+        {
+            if (isActivated)
+            {
+                return;
+            }
+
+            isActivated = true;
+            blockRigidbody.isKinematic = false;
+            blockRigidbody.useGravity = true;
+            blockRigidbody.WakeUp();
         }
     }
 }

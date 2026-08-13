@@ -53,40 +53,40 @@ namespace GameJam.Gameplay.Wall
 
         private void Reset()
         {
-            // ResolveReferences();
+            ResolveReferences();
         }
 
         private void OnValidate()
         {
-            // ResolveReferences();
+            ResolveReferences();
         }
 
         private void ResolveReferences()
         {
-            // if (structureCenter == null)
-            // {
-            //     Transform foundCenter = transform.Find(StructureLayout.CenterObjectName);
-            //     if (foundCenter != null)
-            //     {
-            //         structureCenter = foundCenter;
-            //     }
-            // }
-            //
-            // if (blockStackFloorPivot == null)
-            // {
-            //     Transform foundPivot = transform.Find(BlockStackFloorPivot.name);
-            //     if (foundPivot != null)
-            //     {
-            //         blockStackFloorPivot = foundPivot;
-            //     }
-            // }
-            //
-            // if (blocksRoot == null)
-            // {
-            //     Transform pivot = blockStackFloorPivot != null ? blockStackFloorPivot : transform;
-            //     Transform foundBlocksRoot = pivot.Find(DefaultBlocksRootName);
-            //     blocksRoot = foundBlocksRoot != null ? foundBlocksRoot : pivot;
-            // }
+            if (structureCenter == null)
+            {
+                Transform foundCenter = transform.Find(StructureLayout.CenterObjectName);
+                if (foundCenter != null)
+                {
+                    structureCenter = foundCenter;
+                }
+            }
+
+            if (blockStackFloorPivot == null)
+            {
+                BlockStackFloorPivot foundPivot = GetComponentInChildren<BlockStackFloorPivot>(true);
+                if (foundPivot != null)
+                {
+                    blockStackFloorPivot = foundPivot.transform;
+                }
+            }
+
+            if (blocksRoot == null)
+            {
+                Transform pivot = blockStackFloorPivot != null ? blockStackFloorPivot : transform;
+                Transform foundBlocksRoot = pivot.Find(DefaultBlocksRootName);
+                blocksRoot = foundBlocksRoot != null ? foundBlocksRoot : pivot;
+            }
         }
     }
 }
