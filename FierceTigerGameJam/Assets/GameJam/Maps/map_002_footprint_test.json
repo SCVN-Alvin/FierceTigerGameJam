@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "id": "map_002_footprint_test",
+  "grid": {
+    "width": 5,
+    "height": 4,
+    "cellSize": 0.25,
+    "layerDepth": 0.25
+  },
+  "layers": [
+    {
+      "level": 0,
+      "blocks": [
+        { "id": "flat_2x1", "type": "brick_2x1", "position": { "x": 0, "y": 0 }, "rotation": 0 },
+        { "id": "fill_2_0", "type": "concrete_1x1", "position": { "x": 2, "y": 0 }, "rotation": 0 },
+        { "id": "upright_2x1", "type": "brick_2x1", "position": { "x": 3, "y": 0 }, "rotation": 90 },
+        { "id": "fill_4_0", "type": "concrete_1x1", "position": { "x": 4, "y": 0 }, "rotation": 0 },
+
+        { "id": "overlap_flat", "type": "brick_2x1", "position": { "x": 1, "y": 0 }, "rotation": 0 },
+        { "id": "overlap_upright", "type": "brick_2x1", "position": { "x": 3, "y": 1 }, "rotation": 90 },
+
+        { "id": "spanner", "type": "brick_2x1", "position": { "x": 0, "y": 1 }, "rotation": 0 },
+        { "id": "cap_2_1", "type": "glass_1x1", "position": { "x": 2, "y": 1 }, "rotation": 0 },
+        { "id": "cap_4_1", "type": "glass_1x1", "position": { "x": 4, "y": 1 }, "rotation": 0 },
+
+        { "id": "out_of_bounds", "type": "brick_2x1", "position": { "x": 4, "y": 2 }, "rotation": 0 },
+
+        { "id": "blocker_1_3", "type": "concrete_1x1", "position": { "x": 1, "y": 3 }, "rotation": 0 },
+        { "id": "partial_reject", "type": "brick_2x1", "position": { "x": 0, "y": 3 }, "rotation": 0 },
+        { "id": "claims_freed_cell", "type": "glass_1x1", "position": { "x": 0, "y": 3 }, "rotation": 0 }
+      ]
+    }
+  ]
+}

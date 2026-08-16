@@ -25,7 +25,9 @@ namespace GameJam.Gameplay
         [SerializeField] private float supportReleaseImpulse = 0.35f;
         [SerializeField] private bool countsTowardKnockdown = true;
         [SerializeField] private Vector3Int logicalSize = Vector3Int.one;
-        [SerializeField] private Vector2Int gridPosition;
+
+        [Tooltip("Cell coordinate as (column x, layer level y, row z).")]
+        [SerializeField] private Vector3Int gridPosition;
 
         private const float HalfCellOffset = 0.5f;
 
@@ -35,7 +37,7 @@ namespace GameJam.Gameplay
         public bool IsActivated => isActivated;
         public bool CountsTowardKnockdown => countsTowardKnockdown;
         public Vector3Int LogicalSize => logicalSize;
-        public Vector2Int GridPosition => gridPosition;
+        public Vector3Int GridPosition => gridPosition;
 
         private void Awake()
         {
@@ -192,11 +194,18 @@ namespace GameJam.Gameplay
                 return false;
             }
 
+            // A block only holds up what sits directly over its footprint, so both the column
+            // and the depth row have to overlap.
             return RangesOverlap(
-                gridPosition.x,
-                Mathf.Max(1, logicalSize.x),
-                candidate.GridPosition.x,
-                Mathf.Max(1, candidate.LogicalSize.x));
+                       gridPosition.x,
+                       Mathf.Max(1, logicalSize.x),
+                       candidate.GridPosition.x,
+                       Mathf.Max(1, candidate.LogicalSize.x))
+                   && RangesOverlap(
+                       gridPosition.z,
+                       Mathf.Max(1, logicalSize.z),
+                       candidate.GridPosition.z,
+                       Mathf.Max(1, candidate.LogicalSize.z));
         }
 
         private static bool RangesOverlap(int leftStart, int leftSize, int rightStart, int rightSize)

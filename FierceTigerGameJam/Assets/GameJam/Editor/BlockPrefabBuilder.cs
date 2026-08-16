@@ -20,7 +20,10 @@ namespace GameJam.EditorTools
     public static class BlockPrefabBuilder
     {
         private const string OutputFolder = "Assets/GameJam/Prefabs/Blocks";
-        private const string MeshFolder = "Assets/GameJam/Prefabs/Blocks/Meshes";
+        private const string MeshFolderName = "Meshes";
+
+        /// <summary>Where earlier runs wrote every block before they were split by material.</summary>
+        private const string LegacyMeshFolder = "Assets/GameJam/Prefabs/Blocks/Meshes";
         private const string MaterialFolder = "Assets/GameJam/Materials";
         private const string GlassMaterialPath = "Assets/GameJam/Materials/M_Glass.mat";
         private const string UrpLitShaderName = "Universal Render Pipeline/Lit";
@@ -50,9 +53,15 @@ namespace GameJam.EditorTools
         private struct BlockSpec
         {
             public string BlockName;
+
+            /// <summary>Subfolder of the blocks folder this prefab is written to, e.g. "Brick".</summary>
+            public string Category;
             public string ModelPath;
             public string[] ShardNames;
             public string MaterialPathOverride;
+
+            /// <summary>Cells the block covers. The block is sized to this many grid cells.</summary>
+            public Vector3Int LogicalSize;
             public float Mass;
             public bool AllowCollisionCascade;
             public float CollisionActivationVelocity;
@@ -66,6 +75,7 @@ namespace GameJam.EditorTools
             new BlockSpec
             {
                 BlockName = "Block_Brick",
+                Category = "Brick",
                 ModelPath = "Assets/GameJam/FBX/Brick.fbx",
                 ShardNames = BrickBlockShardNames,
                 MaterialPathOverride = null,
@@ -79,6 +89,7 @@ namespace GameJam.EditorTools
             new BlockSpec
             {
                 BlockName = "Block_Glass",
+                Category = "Glass",
                 ModelPath = "Assets/GameJam/FBX/Glass.fbx",
                 MaterialPathOverride = GlassMaterialPath,
                 Mass = 0.6f,
@@ -91,6 +102,7 @@ namespace GameJam.EditorTools
             new BlockSpec
             {
                 BlockName = "Block_Concrete",
+                Category = "Concrete",
                 ModelPath = "Assets/GameJam/FBX/concrete.fbx",
                 MaterialPathOverride = null,
                 Mass = 2f,
@@ -98,6 +110,23 @@ namespace GameJam.EditorTools
                 CollisionActivationVelocity = 2.5f,
                 SupportCascadeMode = KnockdownBlock.SupportCascadeMode.ColumnAbove,
                 SupportReleaseImpulse = 0.25f,
+                CountsTowardKnockdown = true,
+            },
+            // Mock-up: the same brick art stretched across two cells, so the map loader's
+            // multi-cell footprint and rotation can be exercised before real 2x1 art lands.
+            new BlockSpec
+            {
+                BlockName = "Block_Brick_2x1",
+                Category = "Brick",
+                ModelPath = "Assets/GameJam/FBX/Brick.fbx",
+                ShardNames = BrickBlockShardNames,
+                MaterialPathOverride = null,
+                LogicalSize = new Vector3Int(2, 1, 1),
+                Mass = 2.4f,
+                AllowCollisionCascade = true,
+                CollisionActivationVelocity = 1.75f,
+                SupportCascadeMode = KnockdownBlock.SupportCascadeMode.ColumnAbove,
+                SupportReleaseImpulse = 0.35f,
                 CountsTowardKnockdown = true,
             },
         };
@@ -117,10 +146,6 @@ namespace GameJam.EditorTools
         private static void BuildAll(bool combineVisualMesh)
         {
             EnsureFolder(OutputFolder);
-            if (combineVisualMesh)
-            {
-                EnsureFolder(MeshFolder);
-            }
 
             Vector3 targetBlockSize = ResolveTargetBlockSize();
             Debug.Log($"{nameof(BlockPrefabBuilder)} target block size {targetBlockSize:F6} (from {BlockSizeReferencePrefab}).");
@@ -157,7 +182,11 @@ namespace GameJam.EditorTools
             }
 
             string suffix = combineVisualMesh ? string.Empty : "_Fractured";
-            string prefabPath = $"{OutputFolder}/{spec.BlockName}{suffix}.prefab";
+            string blockFolder = ResolveBlockFolder(spec);
+            EnsureFolder(blockFolder);
+
+            string prefabPath = $"{blockFolder}/{spec.BlockName}{suffix}.prefab";
+            MigrateLegacyAsset($"{OutputFolder}/{spec.BlockName}{suffix}.prefab", prefabPath);
 
             GameObject root = new GameObject(spec.BlockName + suffix);
             try
@@ -206,7 +235,9 @@ namespace GameJam.EditorTools
                     }
                 }
 
-                Vector3 fitScale = ResolveFitScale(sourceBounds.size, targetBlockSize);
+                Vector3Int logicalSize = ResolveLogicalSize(spec);
+                Vector3 targetSize = Vector3.Scale(targetBlockSize, new Vector3(logicalSize.x, logicalSize.y, logicalSize.z));
+                Vector3 fitScale = ResolveFitScale(sourceBounds.size, targetSize);
                 visual.transform.localScale = fitScale;
                 visual.transform.localPosition = -Vector3.Scale(sourceBounds.center, fitScale);
 
@@ -220,7 +251,7 @@ namespace GameJam.EditorTools
                     + $"collider size {blockCollider.size:F6}");
 
                 KnockdownBlockAuthoring authoring = root.AddComponent<KnockdownBlockAuthoring>();
-                ApplyAuthoringValues(authoring, spec);
+                ApplyAuthoringValues(authoring, spec, logicalSize);
 
                 PrefabUtility.SaveAsPrefabAsset(root, prefabPath);
                 return prefabPath;
@@ -329,7 +360,17 @@ namespace GameJam.EditorTools
             combinedMesh.RecalculateBounds();
             combinedMesh.Optimize();
 
-            string meshPath = $"{MeshFolder}/{spec.BlockName}_Mesh.asset";
+            string meshFolder = ResolveMeshFolder(spec);
+            EnsureFolder(meshFolder);
+
+            string meshPath = $"{meshFolder}/{spec.BlockName}_Mesh.asset";
+            string legacyMeshPath = $"{LegacyMeshFolder}/{spec.BlockName}_Mesh.asset";
+            if (legacyMeshPath != meshPath)
+            {
+                // The mesh is regenerated every run, so the stale copy is just clutter.
+                AssetDatabase.DeleteAsset(legacyMeshPath);
+            }
+
             AssetDatabase.DeleteAsset(meshPath);
             AssetDatabase.CreateAsset(combinedMesh, meshPath);
 
@@ -407,7 +448,50 @@ namespace GameJam.EditorTools
             return true;
         }
 
-        private static void ApplyAuthoringValues(KnockdownBlockAuthoring authoring, BlockSpec spec)
+        private static string ResolveBlockFolder(BlockSpec spec)
+        {
+            return string.IsNullOrEmpty(spec.Category) ? OutputFolder : $"{OutputFolder}/{spec.Category}";
+        }
+
+        private static string ResolveMeshFolder(BlockSpec spec)
+        {
+            return $"{ResolveBlockFolder(spec)}/{MeshFolderName}";
+        }
+
+        /// <summary>
+        /// Earlier runs wrote every block into one flat folder. Moving the prefab rather than
+        /// writing a new one keeps its GUID, so a block database already pointing at it, and any
+        /// scene or structure prefab using it, keeps working across the reorganisation.
+        /// </summary>
+        private static void MigrateLegacyAsset(string legacyPath, string newPath)
+        {
+            if (legacyPath == newPath
+                || AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(legacyPath) == null
+                || AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(newPath) != null)
+            {
+                return;
+            }
+
+            string error = AssetDatabase.MoveAsset(legacyPath, newPath);
+            if (string.IsNullOrEmpty(error))
+            {
+                Debug.Log($"{nameof(BlockPrefabBuilder)} moved {legacyPath} to {newPath}.");
+                return;
+            }
+
+            Debug.LogWarning($"{nameof(BlockPrefabBuilder)} could not move {legacyPath} to {newPath}: {error}");
+        }
+
+        /// <summary>Defaults an unset spec to a single cell.</summary>
+        private static Vector3Int ResolveLogicalSize(BlockSpec spec)
+        {
+            return new Vector3Int(
+                Mathf.Max(1, spec.LogicalSize.x),
+                Mathf.Max(1, spec.LogicalSize.y),
+                Mathf.Max(1, spec.LogicalSize.z));
+        }
+
+        private static void ApplyAuthoringValues(KnockdownBlockAuthoring authoring, BlockSpec spec, Vector3Int logicalSize)
         {
             SerializedObject serializedAuthoring = new SerializedObject(authoring);
             serializedAuthoring.FindProperty("countsTowardKnockdown").boolValue = spec.CountsTowardKnockdown;
@@ -416,8 +500,8 @@ namespace GameJam.EditorTools
             serializedAuthoring.FindProperty("collisionActivationVelocity").floatValue = spec.CollisionActivationVelocity;
             serializedAuthoring.FindProperty("supportCascadeMode").enumValueIndex = (int)spec.SupportCascadeMode;
             serializedAuthoring.FindProperty("supportReleaseImpulse").floatValue = spec.SupportReleaseImpulse;
-            serializedAuthoring.FindProperty("logicalSize").vector3IntValue = Vector3Int.one;
-            serializedAuthoring.FindProperty("gridPosition").vector2IntValue = Vector2Int.zero;
+            serializedAuthoring.FindProperty("logicalSize").vector3IntValue = logicalSize;
+            serializedAuthoring.FindProperty("gridPosition").vector3IntValue = Vector3Int.zero;
             serializedAuthoring.ApplyModifiedPropertiesWithoutUndo();
         }
 

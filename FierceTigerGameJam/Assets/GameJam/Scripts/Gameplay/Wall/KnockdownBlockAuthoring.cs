@@ -13,7 +13,9 @@ namespace GameJam.Gameplay.Wall
         [SerializeField] private KnockdownBlock.SupportCascadeMode supportCascadeMode = KnockdownBlock.SupportCascadeMode.ColumnAbove;
         [SerializeField] private float supportReleaseImpulse = 0.35f;
         [SerializeField] private Vector3Int logicalSize = Vector3Int.one;
-        [SerializeField] private Vector2Int gridPosition;
+
+        [Tooltip("Cell coordinate as (column x, layer level y, row z).")]
+        [SerializeField] private Vector3Int gridPosition;
 
         public bool CountsTowardKnockdown => countsTowardKnockdown;
         public float Mass => mass;
@@ -22,11 +24,23 @@ namespace GameJam.Gameplay.Wall
         public KnockdownBlock.SupportCascadeMode SupportCascadeMode => supportCascadeMode;
         public float SupportReleaseImpulse => supportReleaseImpulse;
         public Vector3Int LogicalSize => logicalSize;
-        public Vector2Int GridPosition => gridPosition;
+        public Vector3Int GridPosition => gridPosition;
 
-        public void SetGridPosition(Vector2Int value)
+        public void SetGridPosition(Vector3Int value)
         {
             gridPosition = value;
+        }
+
+        /// <summary>
+        /// Set by the map builder so a rotated block reports the cells it actually covers;
+        /// the support cascade reads this to decide what a block is holding up.
+        /// </summary>
+        public void SetLogicalSize(Vector3Int value)
+        {
+            logicalSize = new Vector3Int(
+                Mathf.Max(1, value.x),
+                Mathf.Max(1, value.y),
+                Mathf.Max(1, value.z));
         }
 
         private void OnValidate()
