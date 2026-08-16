@@ -19,6 +19,7 @@ public sealed class KnockdownLayoutMapAuthoringEditor : Editor
         serializedObject.Update();
 
         EditorGUILayout.PropertyField(serializedObject.FindProperty("mapJson"));
+        EditorGUILayout.PropertyField(serializedObject.FindProperty("mapSelection"));
         EditorGUILayout.PropertyField(serializedObject.FindProperty("blockDatabase"));
         EditorGUILayout.PropertyField(serializedObject.FindProperty("structureRoot"));
         EditorGUILayout.PropertyField(serializedObject.FindProperty("physicsSetup"));

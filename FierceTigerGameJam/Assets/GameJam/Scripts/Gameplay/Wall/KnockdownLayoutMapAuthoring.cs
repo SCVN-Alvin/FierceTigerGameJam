@@ -19,7 +19,12 @@ namespace GameJam.Gameplay.Wall
     {
         public const string GeneratedBlocksRootName = "GeneratedLayoutBlocks";
 
+        [Tooltip("Fallback used when no map selection is assigned or nothing is selected yet, so "
+                 + "the scene can still be opened and played on its own.")]
         [SerializeField] private TextAsset mapJson;
+
+        [Tooltip("When set, the selected map wins over the fallback and choosing a map rebuilds.")]
+        [SerializeField] private MapSelection mapSelection;
         [SerializeField] private BlockDatabase blockDatabase;
         [Tooltip("Everything generated is parented here. Left empty, the spinner's transform is "
                  + "used so the map sits inside whatever rotates it.")]
@@ -38,7 +43,7 @@ namespace GameJam.Gameplay.Wall
         private const float RotationEpsilon = 0.01f;
 
         public BlockDatabase BlockDatabase => blockDatabase;
-        public TextAsset MapJson => mapJson;
+        public TextAsset MapJson => ResolveMapJson();
         public Transform StructureRoot => ResolveStructureRoot();
 
         private void Start()
@@ -47,6 +52,37 @@ namespace GameJam.Gameplay.Wall
             {
                 BuildMap();
             }
+        }
+
+        private void OnEnable()
+        {
+            if (mapSelection != null)
+            {
+                mapSelection.SelectionChanged += HandleSelectionChanged;
+            }
+        }
+
+        private void OnDisable()
+        {
+            if (mapSelection != null)
+            {
+                mapSelection.SelectionChanged -= HandleSelectionChanged;
+            }
+        }
+
+        private void HandleSelectionChanged(MapInfo map)
+        {
+            BuildMap();
+        }
+
+        /// <summary>
+        /// The selection wins when it has a map, otherwise the serialized asset stands in so the
+        /// scene still builds something when opened directly.
+        /// </summary>
+        private TextAsset ResolveMapJson()
+        {
+            MapInfo selected = mapSelection != null ? mapSelection.Selected : null;
+            return selected != null && selected.MapJson != null ? selected.MapJson : mapJson;
         }
 
         [ContextMenu("Build Map")]
@@ -197,18 +233,19 @@ namespace GameJam.Gameplay.Wall
         public bool TryParseMap(out KnockdownMapDefinition map)
         {
             map = null;
-            if (mapJson == null)
+            TextAsset source = ResolveMapJson();
+            if (source == null)
             {
                 Debug.LogError($"{nameof(KnockdownLayoutMapAuthoring)} needs a map JSON asset.", this);
                 return false;
             }
 
-            if (KnockdownMapDefinition.TryParse(mapJson.text, out map, out string error))
+            if (KnockdownMapDefinition.TryParse(source.text, out map, out string error))
             {
                 return true;
             }
 
-            Debug.LogError($"{mapJson.name}: {error}", this);
+            Debug.LogError($"{source.name}: {error}", this);
             return false;
         }
 
