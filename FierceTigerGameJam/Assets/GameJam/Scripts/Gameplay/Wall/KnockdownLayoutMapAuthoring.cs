@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -20,17 +21,25 @@ namespace GameJam.Gameplay.Wall
 
         [SerializeField] private TextAsset mapJson;
         [SerializeField] private BlockDatabase blockDatabase;
-        [SerializeField] private Transform blocksRoot;
+        [Tooltip("Everything generated is parented here. Left empty, the spinner's transform is "
+                 + "used so the map sits inside whatever rotates it.")]
+        [FormerlySerializedAs("blocksRoot")]
+        [SerializeField] private Transform structureRoot;
         [SerializeField] private WallBlockPhysicsSetup physicsSetup;
         [SerializeField] private bool centerGrid = true;
         [SerializeField] private bool buildOnStart = true;
+
+        [Tooltip("Creates a \"Structure Center\" marker at the middle of the built map and points "
+                 + "the spinner at it. Left empty, the spinner is looked up from the parents.")]
+        [SerializeField] private bool createStructureCenter = true;
+        [SerializeField] private SpinOnAxis structureSpinner;
 
         private const float RightAngleDegrees = 90f;
         private const float RotationEpsilon = 0.01f;
 
         public BlockDatabase BlockDatabase => blockDatabase;
         public TextAsset MapJson => mapJson;
-        public Transform BlocksRoot => ResolveBlocksRoot();
+        public Transform StructureRoot => ResolveStructureRoot();
 
         private void Start()
         {
@@ -54,14 +63,14 @@ namespace GameJam.Gameplay.Wall
                 return;
             }
 
-            Transform parent = ResolveBlocksRoot();
+            Transform parent = ResolveStructureRoot();
             if (parent == null)
             {
                 Debug.LogError($"{nameof(KnockdownLayoutMapAuthoring)} could not resolve a blocks root.", this);
                 return;
             }
 
-            Transform generatedRoot = EnsureGeneratedBlocksRoot(parent);
+            Transform generatedRoot = EnsureGeneratedChild(parent, GeneratedBlocksRootName);
             ClearGeneratedBlocks(generatedRoot);
 
             Vector3 origin = ResolveGridOrigin(map);
@@ -90,13 +99,18 @@ namespace GameJam.Gameplay.Wall
                 physicsSetup.PrepareBlocks(generatedRoot);
             }
 
+            if (createStructureCenter)
+            {
+                SetupStructureCenter(parent, generatedRoot, map);
+            }
+
             Debug.Log($"Built map \"{map.id}\" with {spawned} block(s) under {generatedRoot.name}.", this);
         }
 
         [ContextMenu("Clear Map")]
         public void ClearMap()
         {
-            Transform parent = ResolveBlocksRoot();
+            Transform parent = ResolveStructureRoot();
             if (parent == null)
             {
                 return;
@@ -107,6 +121,77 @@ namespace GameJam.Gameplay.Wall
             {
                 ClearGeneratedBlocks(generatedRoot);
             }
+        }
+
+        /// <summary>
+        /// Places a "Structure Center" marker at the middle of what was actually built and hands
+        /// it to the spinner, which rotates around a vertical axis through that point.
+        /// </summary>
+        private void SetupStructureCenter(Transform parent, Transform generatedRoot, KnockdownMapDefinition map)
+        {
+            Transform center = EnsureGeneratedChild(parent, StructureLayout.CenterObjectName);
+            center.SetLocalPositionAndRotation(
+                ResolveStructureCenterLocalPosition(parent, generatedRoot, map),
+                Quaternion.identity);
+            center.localScale = Vector3.one;
+
+            SpinOnAxis spinner = ResolveSpinner();
+            if (spinner != null)
+            {
+                spinner.SetRotationCenter(center);
+                return;
+            }
+
+            Debug.LogWarning(
+                $"{nameof(KnockdownLayoutMapAuthoring)} built a structure center but found no "
+                + $"{nameof(SpinOnAxis)} to drive, so the map will not rotate.",
+                this);
+        }
+
+        /// <summary>
+        /// Measured from the blocks that actually landed, so a map that only fills part of its
+        /// grid still spins about its own middle rather than the grid's.
+        /// </summary>
+        private Vector3 ResolveStructureCenterLocalPosition(
+            Transform parent,
+            Transform generatedRoot,
+            KnockdownMapDefinition map)
+        {
+            Renderer[] renderers = generatedRoot.GetComponentsInChildren<Renderer>(true);
+            if (renderers.Length > 0)
+            {
+                Bounds bounds = renderers[0].bounds;
+                for (int i = 1; i < renderers.Length; i++)
+                {
+                    bounds.Encapsulate(renderers[i].bounds);
+                }
+
+                return parent.InverseTransformPoint(bounds.center);
+            }
+
+            // Nothing was placed, so fall back to the middle of the declared grid.
+            Vector3 origin = ResolveGridOrigin(map);
+            return new Vector3(
+                origin.x + ((map.grid.width - 1) * 0.5f * map.grid.cellSize),
+                map.grid.height * 0.5f * map.grid.cellSize,
+                origin.z + (map.MaxLevel() * 0.5f * map.grid.layerDepth));
+        }
+
+        private SpinOnAxis ResolveSpinner()
+        {
+            if (structureSpinner != null)
+            {
+                return structureSpinner;
+            }
+
+            // The spinner normally sits on a child root, so look down before looking up.
+            structureSpinner = GetComponentInChildren<SpinOnAxis>(true);
+            if (structureSpinner == null)
+            {
+                structureSpinner = GetComponentInParent<SpinOnAxis>();
+            }
+
+            return structureSpinner;
         }
 
         public bool TryParseMap(out KnockdownMapDefinition map)
@@ -327,11 +412,15 @@ namespace GameJam.Gameplay.Wall
             return Instantiate(prefab, parent);
         }
 
-        private Transform ResolveBlocksRoot()
+        /// <summary>
+        /// Prefers the spinner's transform when nothing is assigned: SpinOnAxis rotates itself,
+        /// so anything generated outside it would sit still while the rest of the map turns.
+        /// </summary>
+        private Transform ResolveStructureRoot()
         {
-            if (blocksRoot != null)
+            if (structureRoot != null)
             {
-                return blocksRoot;
+                return structureRoot;
             }
 
             KnockdownTableLayout tableLayout = GetComponent<KnockdownTableLayout>();
@@ -340,24 +429,48 @@ namespace GameJam.Gameplay.Wall
                 tableLayout = GetComponentInParent<KnockdownTableLayout>();
             }
 
-            blocksRoot = tableLayout != null ? tableLayout.BlocksRoot : transform;
-            return blocksRoot;
-        }
-
-        private static Transform EnsureGeneratedBlocksRoot(Transform parent)
-        {
-            Transform existing = parent.Find(GeneratedBlocksRootName);
-            if (existing != null)
+            if (tableLayout != null)
             {
-                return existing;
+                structureRoot = tableLayout.BlocksRoot;
+                return structureRoot;
             }
 
-            GameObject rootObject = new GameObject(GeneratedBlocksRootName);
-            Transform rootTransform = rootObject.transform;
-            rootTransform.SetParent(parent, false);
-            rootTransform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
-            rootTransform.localScale = Vector3.one;
-            return rootTransform;
+            SpinOnAxis spinner = ResolveSpinner();
+            structureRoot = spinner != null ? spinner.transform : transform;
+            return structureRoot;
+        }
+
+        /// <summary>
+        /// Returns the named child of the root, adopting one that an earlier build left elsewhere
+        /// under this component. Without that, changing the root would strand the previous
+        /// GeneratedLayoutBlocks and Structure Center outside whatever now rotates.
+        /// </summary>
+        private Transform EnsureGeneratedChild(Transform parent, string childName)
+        {
+            Transform existing = parent.Find(childName) ?? FindStrayChild(parent, childName);
+            if (existing == null)
+            {
+                existing = new GameObject(childName).transform;
+            }
+
+            existing.SetParent(parent, false);
+            existing.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
+            existing.localScale = Vector3.one;
+            return existing;
+        }
+
+        private Transform FindStrayChild(Transform parent, string childName)
+        {
+            for (int i = 0; i < transform.childCount; i++)
+            {
+                Transform child = transform.GetChild(i);
+                if (child != parent && child.name == childName)
+                {
+                    return child;
+                }
+            }
+
+            return null;
         }
 
         private static void ClearGeneratedBlocks(Transform generatedRoot)
