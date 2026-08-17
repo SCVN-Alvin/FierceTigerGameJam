@@ -45,6 +45,7 @@ namespace GameJam.Gameplay.Wall
         public BlockDatabase BlockDatabase => blockDatabase;
         public TextAsset MapJson => ResolveMapJson();
         public Transform StructureRoot => ResolveStructureRoot();
+        public SpinOnAxis StructureSpinner => ResolveSpinner();
 
         private void Start()
         {

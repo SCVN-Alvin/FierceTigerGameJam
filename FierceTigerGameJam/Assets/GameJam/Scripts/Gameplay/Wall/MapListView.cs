@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
@@ -26,6 +27,8 @@ namespace GameJam.Gameplay.Wall
         [SerializeField] private bool useHorizontalLayout = true;
         [SerializeField] private float buttonSpacing = 16f;
         [SerializeField] private RectOffset layoutPadding;
+
+        private const string ButtonNamePrefix = "MapButton_";
 
         private readonly List<Button> spawnedButtons = new List<Button>();
 
@@ -83,9 +86,9 @@ namespace GameJam.Gameplay.Wall
         }
 
         /// <summary>
-        /// Lays the buttons out in a row with real gaps between them. Any vertical group already
-        /// on the container is switched off first: two layout groups on one object fight over the
-        /// same children and the result depends on component order.
+        /// Puts real gaps between the buttons. LayoutGroup is [DisallowMultipleComponent], so a
+        /// group the container already carries is the one that has to be configured - adding a
+        /// second one next to it silently returns null rather than throwing.
         /// </summary>
         private void EnsureLayout(Transform parent)
         {
@@ -94,27 +97,60 @@ namespace GameJam.Gameplay.Wall
                 return;
             }
 
-            VerticalLayoutGroup vertical = parent.GetComponent<VerticalLayoutGroup>();
-            if (vertical != null && vertical.enabled)
+            HorizontalOrVerticalLayoutGroup group = ResolveLayoutGroup(parent);
+            if (group == null)
             {
-                vertical.enabled = false;
+                return;
             }
 
-            HorizontalLayoutGroup horizontal = parent.GetComponent<HorizontalLayoutGroup>();
-            if (horizontal == null)
-            {
-                horizontal = parent.gameObject.AddComponent<HorizontalLayoutGroup>();
-            }
+            group.enabled = true;
+            group.spacing = buttonSpacing;
+            group.childAlignment = TextAnchor.MiddleCenter;
 
-            horizontal.spacing = buttonSpacing;
-            horizontal.padding = layoutPadding;
-            horizontal.childAlignment = TextAnchor.MiddleCenter;
+            // Left alone when unset: Unity gives the group a zero RectOffset of its own, and
+            // assigning null here only moves the failure into the layout pass.
+            if (layoutPadding != null)
+            {
+                group.padding = layoutPadding;
+            }
 
             // Buttons keep the size their prefab defines rather than being stretched to fill.
-            horizontal.childForceExpandWidth = false;
-            horizontal.childForceExpandHeight = false;
-            horizontal.childControlWidth = false;
-            horizontal.childControlHeight = false;
+            group.childForceExpandWidth = false;
+            group.childForceExpandHeight = false;
+            group.childControlWidth = false;
+            group.childControlHeight = false;
+        }
+
+        private HorizontalOrVerticalLayoutGroup ResolveLayoutGroup(Transform parent)
+        {
+            HorizontalOrVerticalLayoutGroup group = parent.GetComponent<HorizontalOrVerticalLayoutGroup>();
+            if (group == null)
+            {
+                // A grid group would block the add the same way, and swapping one out from under
+                // whoever authored it is not this component's call.
+                LayoutGroup blocking = parent.GetComponent<LayoutGroup>();
+                if (blocking != null)
+                {
+                    Debug.LogWarning(
+                        $"{name}: {parent.name} already has a {blocking.GetType().Name}, so the buttons are "
+                        + "laid out by that instead. Replace it with a Horizontal Layout Group to get a row.",
+                        this);
+                    return null;
+                }
+
+                return parent.gameObject.AddComponent<HorizontalLayoutGroup>();
+            }
+
+            if (!(group is HorizontalLayoutGroup))
+            {
+                Debug.LogWarning(
+                    $"{name}: {parent.name} has a {group.GetType().Name}, so the buttons stay in a column and "
+                    + $"{nameof(buttonSpacing)} is applied to it. Replace it with a Horizontal Layout Group on "
+                    + "the prefab to lay them out in a row.",
+                    this);
+            }
+
+            return group;
         }
 
         private Button CreateButton(Transform parent, MapInfo map)
@@ -123,7 +159,7 @@ namespace GameJam.Gameplay.Wall
                 ? Instantiate(buttonPrefab, parent)
                 : CreateDefaultButton(parent);
 
-            button.gameObject.name = $"MapButton_{map.Id}";
+            button.gameObject.name = ButtonNamePrefix + map.Id;
             SetLabel(button, map.DisplayName);
             return button;
         }
@@ -205,23 +241,54 @@ namespace GameJam.Gameplay.Wall
             }
         }
 
+        /// <summary>
+        /// Removes only what this view spawned. The container usually holds authored children too
+        /// - a background, a title - and wiping every child would delete those the first time the
+        /// list is rebuilt. Buttons left over from an earlier rebuild are matched by name, since
+        /// the tracking list does not survive an assembly reload.
+        /// </summary>
         private void ClearButtons()
         {
+            for (int i = 0; i < spawnedButtons.Count; i++)
+            {
+                DestroyButton(spawnedButtons[i] != null ? spawnedButtons[i].gameObject : null);
+            }
+
+            spawnedButtons.Clear();
+
             Transform parent = container != null ? container : transform;
             for (int i = parent.childCount - 1; i >= 0; i--)
             {
                 GameObject child = parent.GetChild(i).gameObject;
-                if (Application.isPlaying)
+                if (child.name.StartsWith(ButtonNamePrefix, StringComparison.Ordinal))
                 {
-                    Destroy(child);
-                }
-                else
-                {
-                    DestroyImmediate(child);
+                    DestroyButton(child);
                 }
             }
+        }
 
-            spawnedButtons.Clear();
+        /// <summary>
+        /// Unparented before being destroyed: Destroy only takes effect at the end of the frame,
+        /// and until then the layout group would still lay out the old buttons alongside the new
+        /// ones spawned right after this.
+        /// </summary>
+        private static void DestroyButton(GameObject buttonObject)
+        {
+            if (buttonObject == null)
+            {
+                return;
+            }
+
+            buttonObject.transform.SetParent(null, false);
+
+            if (Application.isPlaying)
+            {
+                Destroy(buttonObject);
+            }
+            else
+            {
+                DestroyImmediate(buttonObject);
+            }
         }
     }
 }

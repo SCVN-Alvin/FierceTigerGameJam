@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5783796198208036707}
   - component: {fileID: 4272460827471939592}
-  - component: {fileID: 6508624507745955672}
+  - component: {fileID: 3621503003984794080}
   m_Layer: 5
   m_Name: Root
   m_TagString: Untagged
@@ -45,7 +45,7 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1091127300455181433}
   m_CullTransparentMesh: 1
---- !u!114 &6508624507745955672
+--- !u!114 &3621503003984794080
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -54,15 +54,15 @@ MonoBehaviour:
   m_GameObject: {fileID: 1091127300455181433}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 59f8146938fff824cb5fd77236b75775, type: 3}
+  m_Script: {fileID: 11500000, guid: 30649d3a9faa99c48a7b1166b86bf2a0, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.VerticalLayoutGroup
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.HorizontalLayoutGroup
   m_Padding:
     m_Left: 0
     m_Right: 0
     m_Top: 0
     m_Bottom: 0
-  m_ChildAlignment: 4
+  m_ChildAlignment: 0
   m_Spacing: 0
   m_ChildForceExpandWidth: 1
   m_ChildForceExpandHeight: 1
@@ -121,7 +121,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameJam.Gameplay.Wall.MapListView
   mapSelection: {fileID: 11400000, guid: 4a9040d203d9b4e0d95e653e89e423d5, type: 2}
-  container: {fileID: 2918516431879678483}
+  container: {fileID: 5783796198208036707}
   buttonPrefab: {fileID: 7726336894909943902, guid: 41d1987eeb8024f63884a30767f9c4aa, type: 3}
   normalColor: {r: 1, g: 1, b: 1, a: 1}
   selectedColor: {r: 0.55, g: 0.85, b: 1, a: 1}
+  useHorizontalLayout: 1
+  buttonSpacing: 16
+  layoutPadding:
+    m_Left: 0
+    m_Right: 0
+    m_Top: 0
+    m_Bottom: 0
