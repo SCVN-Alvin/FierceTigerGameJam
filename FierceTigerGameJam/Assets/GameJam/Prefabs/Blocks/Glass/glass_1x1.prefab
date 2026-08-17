@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 9130496670441704243}
   - component: {fileID: 2087582983976456671}
   - component: {fileID: 1818088309027437736}
+  - component: {fileID: 2306438086477379612}
   m_Layer: 0
   m_Name: glass_1x1
   m_TagString: Untagged
@@ -75,6 +76,27 @@ MonoBehaviour:
   supportReleaseImpulse: 0.5
   logicalSize: {x: 1, y: 1, z: 1}
   gridPosition: {x: 0, y: 0, z: 0}
+--- !u!114 &2306438086477379612
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2387664125528167900}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d7597f644d66043b9ba0ece252b32233, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GameJam.Gameplay.Wall.BreakableBlock
+  maxHitPoints: 1
+  minimumImpactSpeed: 1.2
+  damagePerImpactSpeed: 1.5
+  maxDamagePerImpact: 5
+  shatteredPrefab: {fileID: 4293522797996099035, guid: 300fc87f08d3c425ea90a12fa849f3dd, type: 3}
+  breakEffectPrefab: {fileID: 0}
+  shardOutwardSpeed: 1.2
+  shardDirectionalSpeed: 1.8
+  shardSpin: 4
 --- !u!1 &7913794757767399915
 GameObject:
   m_ObjectHideFlags: 0
@@ -115,7 +137,7 @@ MeshFilter:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7913794757767399915}
-  m_Mesh: {fileID: 4300000, guid: dfd53a623a4b1470388426399599aa9a, type: 2}
+  m_Mesh: {fileID: 4300000, guid: c3436b891b7604e7dabe7d513fecbebd, type: 2}
 --- !u!23 &3766049556979062244
 MeshRenderer:
   m_ObjectHideFlags: 0

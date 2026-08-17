@@ -519,6 +519,8 @@ MonoBehaviour:
   mapSelectionRoot: {fileID: 552168510651471238}
   gameplayRoot: {fileID: 1145544877}
   backButton: {fileID: 163155017}
+  aimController: {fileID: 0}
+  structureSpinner: {fileID: 0}
 --- !u!1 &392217155
 GameObject:
   m_ObjectHideFlags: 0

@@ -1,5 +1,6 @@
 using UnityEngine;
 using GameJam.Gameplay;
+using GameJam.Gameplay.Wall;
 using System.Collections.Generic;
 
 namespace GameJam.Gameplay.Cannon
@@ -15,6 +16,13 @@ namespace GameJam.Gameplay.Cannon
         [SerializeField] private float upwardForce = 0.25f;
         [SerializeField] private LayerMask hittableLayers = ~0;
         [SerializeField] private bool destroyOnImpact = true;
+
+        [Header("Damage")]
+        [Tooltip("Hit points taken off the block that was hit directly.")]
+        [SerializeField] private float directHitDamage = 3f;
+
+        [Tooltip("Hit points taken off blocks in the blast radius, before distance falloff.")]
+        [SerializeField] private float splashDamage = 1f;
 
         private Rigidbody projectileRigidbody;
         private Collider projectileCollider;
@@ -34,6 +42,8 @@ namespace GameJam.Gameplay.Cannon
             minimumFalloff = Mathf.Clamp01(minimumFalloff);
             neighborImpulseMultiplier = Mathf.Max(0f, neighborImpulseMultiplier);
             upwardForce = Mathf.Max(0f, upwardForce);
+            directHitDamage = Mathf.Max(0f, directHitDamage);
+            splashDamage = Mathf.Max(0f, splashDamage);
         }
 
         public void Launch(Vector3 direction, float speed, float lifetime)
@@ -86,6 +96,12 @@ namespace GameJam.Gameplay.Cannon
             }
         }
 
+        /// <summary>
+        /// Damage here is a flat number rather than something derived from the impact speed. The
+        /// ball is launched at around a hundred metres per second, so any speed-derived figure
+        /// would sail past every material's threshold and shatter the whole blast radius on every
+        /// shot; how hard a cannonball hits is a tuning decision, not a physics reading.
+        /// </summary>
         private void KnockBlocks(Vector3 impactPoint, Vector3 impulseDirection, KnockdownBlock directlyHitBlock)
         {
             Vector3 forceDirection = (impulseDirection + Vector3.up * upwardForce).normalized;
@@ -95,6 +111,10 @@ namespace GameJam.Gameplay.Cannon
             {
                 processedBlocks.Add(directlyHitBlock);
                 directlyHitBlock.Knock(impactPoint, forceDirection * impactForce, ForceMode.Impulse);
+
+                // Knocked before it is damaged: breaking destroys the block, and the shove is
+                // what the debris inherits its velocity from.
+                Damage(directlyHitBlock, directHitDamage, impactPoint, forceDirection);
             }
 
             if (impactRadius <= 0f)
@@ -120,6 +140,20 @@ namespace GameJam.Gameplay.Cannon
                 float falloff = Mathf.Clamp01(1f - (distance / impactRadius));
                 float impulseScale = Mathf.Max(minimumFalloff, falloff) * neighborImpulseMultiplier;
                 nearbyBlock.Knock(impactPoint, forceDirection * (impactForce * impulseScale), ForceMode.Impulse);
+
+                Damage(
+                    nearbyBlock,
+                    splashDamage * Mathf.Max(minimumFalloff, falloff),
+                    impactPoint,
+                    forceDirection);
+            }
+        }
+
+        private static void Damage(KnockdownBlock block, float damage, Vector3 impactPoint, Vector3 direction)
+        {
+            if (block != null && block.TryGetComponent(out BreakableBlock breakable))
+            {
+                breakable.ApplyDamage(damage, impactPoint, direction);
             }
         }
 
