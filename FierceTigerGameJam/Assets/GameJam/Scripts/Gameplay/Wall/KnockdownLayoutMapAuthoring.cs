@@ -1,4 +1,7 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -6,193 +9,456 @@ using UnityEditor;
 
 namespace GameJam.Gameplay.Wall
 {
+    /// <summary>
+    /// Builds a knockdown structure from a map JSON file. Each layer is a vertical XY slice:
+    /// position.x runs along the grid width and position.y upward from the floor, while the
+    /// layer's level is its Z index, one layerDepth further back per step.
+    /// </summary>
     [DisallowMultipleComponent]
     public sealed class KnockdownLayoutMapAuthoring : MonoBehaviour
     {
         public const string GeneratedBlocksRootName = "GeneratedLayoutBlocks";
 
-        [SerializeField] private int width = 5;
-        [SerializeField] private int height = 5;
-        [SerializeField] private GameObject blockPrefab;
-        [SerializeField] private Transform blocksRoot;
-        [SerializeField] private Vector2 cellSize = Vector2.one;
+        [Tooltip("Fallback used when no map selection is assigned or nothing is selected yet, so "
+                 + "the scene can still be opened and played on its own.")]
+        [SerializeField] private TextAsset mapJson;
+
+        [Tooltip("When set, the selected map wins over the fallback and choosing a map rebuilds.")]
+        [SerializeField] private MapSelection mapSelection;
+        [SerializeField] private BlockDatabase blockDatabase;
+        [Tooltip("Everything generated is parented here. Left empty, the spinner's transform is "
+                 + "used so the map sits inside whatever rotates it.")]
+        [FormerlySerializedAs("blocksRoot")]
+        [SerializeField] private Transform structureRoot;
+        [SerializeField] private WallBlockPhysicsSetup physicsSetup;
         [SerializeField] private bool centerGrid = true;
-        [SerializeField, HideInInspector] private int serializedWidth = 5;
-        [SerializeField, HideInInspector] private int serializedHeight = 5;
-        [SerializeField, HideInInspector] private bool[] occupiedCells = new bool[25];
+        [SerializeField] private bool buildOnStart = true;
 
-        public int Width => width;
-        public int Height => height;
-        public GameObject BlockPrefab => blockPrefab;
-        public Transform BlocksRoot => ResolveBlocksRoot();
-        public Vector2 CellSize => cellSize;
-        public bool CenterGrid => centerGrid;
+        [Tooltip("Creates a \"Structure Center\" marker at the middle of the built map and points "
+                 + "the spinner at it. Left empty, the spinner is looked up from the parents.")]
+        [SerializeField] private bool createStructureCenter = true;
+        [SerializeField] private SpinOnAxis structureSpinner;
 
-        public bool IsCellOccupied(int x, int y)
+        private const float RightAngleDegrees = 90f;
+        private const float RotationEpsilon = 0.01f;
+
+        public BlockDatabase BlockDatabase => blockDatabase;
+        public TextAsset MapJson => ResolveMapJson();
+        public Transform StructureRoot => ResolveStructureRoot();
+        public SpinOnAxis StructureSpinner => ResolveSpinner();
+
+        private void Start()
         {
-            if (!IsInside(x, y) || occupiedCells == null)
+            if (buildOnStart)
+            {
+                BuildMap();
+            }
+        }
+
+        private void OnEnable()
+        {
+            if (mapSelection != null)
+            {
+                mapSelection.SelectionChanged += HandleSelectionChanged;
+            }
+        }
+
+        private void OnDisable()
+        {
+            if (mapSelection != null)
+            {
+                mapSelection.SelectionChanged -= HandleSelectionChanged;
+            }
+        }
+
+        private void HandleSelectionChanged(MapInfo map)
+        {
+            BuildMap();
+        }
+
+        /// <summary>
+        /// The selection wins when it has a map, otherwise the serialized asset stands in so the
+        /// scene still builds something when opened directly.
+        /// </summary>
+        private TextAsset ResolveMapJson()
+        {
+            MapInfo selected = mapSelection != null ? mapSelection.Selected : null;
+            return selected != null && selected.MapJson != null ? selected.MapJson : mapJson;
+        }
+
+        [ContextMenu("Build Map")]
+        public void BuildMap()
+        {
+            if (!TryParseMap(out KnockdownMapDefinition map))
+            {
+                return;
+            }
+
+            if (blockDatabase == null)
+            {
+                Debug.LogError($"{nameof(KnockdownLayoutMapAuthoring)} needs a block database.", this);
+                return;
+            }
+
+            Transform parent = ResolveStructureRoot();
+            if (parent == null)
+            {
+                Debug.LogError($"{nameof(KnockdownLayoutMapAuthoring)} could not resolve a blocks root.", this);
+                return;
+            }
+
+            Transform generatedRoot = EnsureGeneratedChild(parent, GeneratedBlocksRootName);
+            ClearGeneratedBlocks(generatedRoot);
+
+            Vector3 origin = ResolveGridOrigin(map);
+            HashSet<Vector3Int> occupiedCells = new HashSet<Vector3Int>();
+            int spawned = 0;
+
+            for (int layerIndex = 0; layerIndex < map.layers.Length; layerIndex++)
+            {
+                KnockdownMapLayer layer = map.layers[layerIndex];
+                if (layer?.blocks == null)
+                {
+                    continue;
+                }
+
+                for (int blockIndex = 0; blockIndex < layer.blocks.Length; blockIndex++)
+                {
+                    if (TrySpawnBlock(map.grid, layer, layer.blocks[blockIndex], generatedRoot, origin, occupiedCells))
+                    {
+                        spawned++;
+                    }
+                }
+            }
+
+            if (physicsSetup != null)
+            {
+                physicsSetup.PrepareBlocks(generatedRoot);
+            }
+
+            if (createStructureCenter)
+            {
+                SetupStructureCenter(parent, generatedRoot, map);
+            }
+
+            Debug.Log($"Built map \"{map.id}\" with {spawned} block(s) under {generatedRoot.name}.", this);
+        }
+
+        [ContextMenu("Clear Map")]
+        public void ClearMap()
+        {
+            Transform parent = ResolveStructureRoot();
+            if (parent == null)
+            {
+                return;
+            }
+
+            Transform generatedRoot = parent.Find(GeneratedBlocksRootName);
+            if (generatedRoot != null)
+            {
+                ClearGeneratedBlocks(generatedRoot);
+            }
+        }
+
+        /// <summary>
+        /// Places a "Structure Center" marker at the middle of what was actually built and hands
+        /// it to the spinner, which rotates around a vertical axis through that point.
+        /// </summary>
+        private void SetupStructureCenter(Transform parent, Transform generatedRoot, KnockdownMapDefinition map)
+        {
+            Transform center = EnsureGeneratedChild(parent, StructureLayout.CenterObjectName);
+            center.SetLocalPositionAndRotation(
+                ResolveStructureCenterLocalPosition(parent, generatedRoot, map),
+                Quaternion.identity);
+            center.localScale = Vector3.one;
+
+            SpinOnAxis spinner = ResolveSpinner();
+            if (spinner != null)
+            {
+                spinner.SetRotationCenter(center);
+                return;
+            }
+
+            Debug.LogWarning(
+                $"{nameof(KnockdownLayoutMapAuthoring)} built a structure center but found no "
+                + $"{nameof(SpinOnAxis)} to drive, so the map will not rotate.",
+                this);
+        }
+
+        /// <summary>
+        /// Measured from the blocks that actually landed, so a map that only fills part of its
+        /// grid still spins about its own middle rather than the grid's.
+        /// </summary>
+        private Vector3 ResolveStructureCenterLocalPosition(
+            Transform parent,
+            Transform generatedRoot,
+            KnockdownMapDefinition map)
+        {
+            Renderer[] renderers = generatedRoot.GetComponentsInChildren<Renderer>(true);
+            if (renderers.Length > 0)
+            {
+                Bounds bounds = renderers[0].bounds;
+                for (int i = 1; i < renderers.Length; i++)
+                {
+                    bounds.Encapsulate(renderers[i].bounds);
+                }
+
+                return parent.InverseTransformPoint(bounds.center);
+            }
+
+            // Nothing was placed, so fall back to the middle of the declared grid.
+            Vector3 origin = ResolveGridOrigin(map);
+            return new Vector3(
+                origin.x + ((map.grid.width - 1) * 0.5f * map.grid.cellSize),
+                map.grid.height * 0.5f * map.grid.cellSize,
+                origin.z + (map.MaxLevel() * 0.5f * map.grid.layerDepth));
+        }
+
+        private SpinOnAxis ResolveSpinner()
+        {
+            if (structureSpinner != null)
+            {
+                return structureSpinner;
+            }
+
+            // The spinner normally sits on a child root, so look down before looking up.
+            structureSpinner = GetComponentInChildren<SpinOnAxis>(true);
+            if (structureSpinner == null)
+            {
+                structureSpinner = GetComponentInParent<SpinOnAxis>();
+            }
+
+            return structureSpinner;
+        }
+
+        public bool TryParseMap(out KnockdownMapDefinition map)
+        {
+            map = null;
+            TextAsset source = ResolveMapJson();
+            if (source == null)
+            {
+                Debug.LogError($"{nameof(KnockdownLayoutMapAuthoring)} needs a map JSON asset.", this);
+                return false;
+            }
+
+            if (KnockdownMapDefinition.TryParse(source.text, out map, out string error))
+            {
+                return true;
+            }
+
+            Debug.LogError($"{source.name}: {error}", this);
+            return false;
+        }
+
+        private bool TrySpawnBlock(
+            KnockdownMapGrid grid,
+            KnockdownMapLayer layer,
+            KnockdownMapBlock block,
+            Transform generatedRoot,
+            Vector3 origin,
+            HashSet<Vector3Int> occupiedCells)
+        {
+            if (block?.position == null)
+            {
+                Debug.LogWarning($"A block on level {layer.level} has no position and was skipped.", this);
+                return false;
+            }
+
+            string blockId = string.IsNullOrEmpty(block.id) ? "<no id>" : block.id;
+            if (!blockDatabase.TryGetPrefab(block.type, out GameObject prefab))
+            {
+                Debug.LogError($"Block {blockId} uses type \"{block.type}\", which the block database does not map to a prefab.", this);
+                return false;
+            }
+
+            if (!IsQuarterTurnMultiple(block.rotation))
+            {
+                Debug.LogError(
+                    $"Block {blockId} has rotation {block.rotation}, which is not a multiple of 90. "
+                    + "Rotation selects a footprint orientation, so only 0, 90, 180 and 270 are meaningful.",
+                    this);
+                return false;
+            }
+
+            Vector3Int footprint = ResolveFootprint(prefab, block.rotation);
+            if (!TryReserveCells(grid, layer.level, block, blockId, footprint, occupiedCells))
             {
                 return false;
             }
 
-            int index = GetIndex(x, y);
-            return index >= 0 && index < occupiedCells.Length && occupiedCells[index];
-        }
-
-        public void SetCellOccupied(int x, int y, bool occupied)
-        {
-            EnsureGridCapacity();
-            if (!IsInside(x, y))
+            GameObject instance = InstantiateBlock(prefab, generatedRoot);
+            if (instance == null)
             {
-                return;
+                return false;
             }
 
-            occupiedCells[GetIndex(x, y)] = occupied;
-        }
+            instance.name = $"{block.type}_{blockId}";
+            instance.transform.SetLocalPositionAndRotation(
+                ResolveLocalPosition(grid, layer.level, block.position, footprint, origin),
+                ResolveVisualRotation(block.rotation));
+            instance.transform.localScale = Vector3.one;
 
-        public void ToggleCell(int x, int y)
-        {
-            SetCellOccupied(x, y, !IsCellOccupied(x, y));
-        }
-
-        public void ResizeGrid(int newWidth, int newHeight)
-        {
-            newWidth = Mathf.Max(1, newWidth);
-            newHeight = Mathf.Max(1, newHeight);
-
-            bool[] previous = occupiedCells;
-            int previousWidth = width;
-            int previousHeight = height;
-
-            width = newWidth;
-            height = newHeight;
-            occupiedCells = new bool[width * height];
-
-            if (previous == null)
+            if (instance.TryGetComponent(out KnockdownBlockAuthoring authoring))
             {
-                return;
+                // The cascade reads (column, height, depth), which is exactly the cell address.
+                authoring.SetGridPosition(new Vector3Int(block.position.x, block.position.y, layer.level));
+                authoring.SetLogicalSize(footprint);
+            }
+            else
+            {
+                Debug.LogWarning($"Prefab for type \"{block.type}\" has no {nameof(KnockdownBlockAuthoring)}, so block {blockId} will not cascade.", this);
             }
 
-            int copyWidth = Mathf.Min(previousWidth, width);
-            int copyHeight = Mathf.Min(previousHeight, height);
-            for (int y = 0; y < copyHeight; y++)
+            return true;
+        }
+
+        /// <summary>
+        /// Cells the block covers, in grid space. The block turns within its own XY slice, so
+        /// a 90 or 270 degree turn swaps width and height and leaves depth alone.
+        /// </summary>
+        public static Vector3Int ResolveFootprint(GameObject prefab, float rotation)
+        {
+            Vector3Int size = Vector3Int.one;
+            if (prefab.TryGetComponent(out KnockdownBlockAuthoring authoring))
             {
-                for (int x = 0; x < copyWidth; x++)
+                size = authoring.LogicalSize;
+            }
+
+            size.x = Mathf.Max(1, size.x);
+            size.y = Mathf.Max(1, size.y);
+            size.z = Mathf.Max(1, size.z);
+
+            return IsQuarterTurned(rotation) ? new Vector3Int(size.y, size.x, size.z) : size;
+        }
+
+        private static bool IsQuarterTurned(float rotation)
+        {
+            float wrapped = Mathf.Repeat(rotation, 2f * RightAngleDegrees);
+            return Mathf.Abs(wrapped - RightAngleDegrees) < RotationEpsilon;
+        }
+
+        private static bool IsQuarterTurnMultiple(float rotation)
+        {
+            return Mathf.Abs(Mathf.Repeat(rotation, RightAngleDegrees)) < RotationEpsilon;
+        }
+
+        /// <summary>
+        /// Turns the mesh within its layer so it covers the same cells the footprint claims.
+        /// Blocks that occupy a single cell look the same at every rotation.
+        /// </summary>
+        private static Quaternion ResolveVisualRotation(float rotation)
+        {
+            return Quaternion.Euler(0f, 0f, rotation);
+        }
+
+        private bool TryReserveCells(
+            KnockdownMapGrid grid,
+            int level,
+            KnockdownMapBlock block,
+            string blockId,
+            Vector3Int footprint,
+            HashSet<Vector3Int> occupiedCells)
+        {
+            // Every cell is checked before any is claimed, so a block that gets rejected leaves
+            // no partial reservation behind to block whatever comes next.
+            List<Vector3Int> wanted = new List<Vector3Int>(footprint.x * footprint.y * footprint.z);
+
+            for (int offsetX = 0; offsetX < footprint.x; offsetX++)
+            {
+                for (int offsetY = 0; offsetY < footprint.y; offsetY++)
                 {
-                    occupiedCells[GetIndex(x, y)] = previous[(y * previousWidth) + x];
+                    int cellX = block.position.x + offsetX;
+                    int cellY = block.position.y + offsetY;
+
+                    if (cellX < 0 || cellX >= grid.width || cellY < 0 || cellY >= grid.height)
+                    {
+                        Debug.LogError(
+                            $"Block {blockId} covers cell ({cellX}, {cellY}) on level {level}, "
+                            + $"which is outside the {grid.width}x{grid.height} grid. Skipped.",
+                            this);
+                        return false;
+                    }
+
+                    // A block deeper than one cell also claims the layers behind it.
+                    for (int offsetZ = 0; offsetZ < footprint.z; offsetZ++)
+                    {
+                        Vector3Int cell = new Vector3Int(cellX, cellY, level + offsetZ);
+                        if (occupiedCells.Contains(cell))
+                        {
+                            Debug.LogWarning(
+                                $"Block {blockId} wants cell ({cellX}, {cellY}) on level {cell.z}, "
+                                + "which is already taken. Skipped.",
+                                this);
+                            return false;
+                        }
+
+                        wanted.Add(cell);
+                    }
                 }
             }
-        }
 
-        public void ClearLayout()
-        {
-            EnsureGridCapacity();
-            for (int i = 0; i < occupiedCells.Length; i++)
+            for (int i = 0; i < wanted.Count; i++)
             {
-                occupiedCells[i] = false;
+                occupiedCells.Add(wanted[i]);
             }
+
+            return true;
         }
 
-        public void GenerateBlocks()
+        /// <summary>
+        /// Centres the slice across X and the layer stack across Z. Y is left alone so the
+        /// structure always stands on the floor rather than straddling it.
+        /// </summary>
+        private Vector3 ResolveGridOrigin(KnockdownMapDefinition map)
+        {
+            if (!centerGrid)
+            {
+                return Vector3.zero;
+            }
+
+            return new Vector3(
+                -((map.grid.width - 1) * map.grid.cellSize) * 0.5f,
+                0f,
+                -(map.MaxLevel() * map.grid.layerDepth) * 0.5f);
+        }
+
+        /// <summary>
+        /// Block pivots are centred, so a block is offset by half its own footprint. Row 0 of
+        /// every layer sits with its base on the floor.
+        /// </summary>
+        private static Vector3 ResolveLocalPosition(
+            KnockdownMapGrid grid,
+            int level,
+            KnockdownMapCell position,
+            Vector3Int footprint,
+            Vector3 origin)
+        {
+            return new Vector3(
+                origin.x + (position.x + ((footprint.x - 1) * 0.5f)) * grid.cellSize,
+                (position.y + (footprint.y * 0.5f)) * grid.cellSize,
+                origin.z + (level + ((footprint.z - 1) * 0.5f)) * grid.layerDepth);
+        }
+
+        private static GameObject InstantiateBlock(GameObject prefab, Transform parent)
         {
 #if UNITY_EDITOR
-            Transform parent = ResolveBlocksRoot();
-            if (blockPrefab == null || parent == null)
+            if (!Application.isPlaying)
             {
-                return;
+                return (GameObject)PrefabUtility.InstantiatePrefab(prefab, parent);
             }
-
-            EnsureGridCapacity();
-
-            Transform generatedRoot = EnsureGeneratedBlocksRoot(parent);
-            ClearGeneratedBlocks(generatedRoot);
-
-            Vector3 originOffset = Vector3.zero;
-            if (centerGrid)
-            {
-                originOffset.x = -((width - 1) * cellSize.x) * 0.5f;
-                originOffset.y = -((height - 1) * cellSize.y) * 0.5f;
-            }
-
-            for (int y = 0; y < height; y++)
-            {
-                for (int x = 0; x < width; x++)
-                {
-                    if (!IsCellOccupied(x, y))
-                    {
-                        continue;
-                    }
-
-                    GameObject instance = (GameObject)PrefabUtility.InstantiatePrefab(blockPrefab, generatedRoot);
-                    if (instance == null)
-                    {
-                        continue;
-                    }
-
-                    instance.name = $"{blockPrefab.name}_{x}_{y}";
-                    Transform instanceTransform = instance.transform;
-                    instanceTransform.localPosition = new Vector3(
-                        originOffset.x + (x * cellSize.x),
-                        originOffset.y + (y * cellSize.y),
-                        0f);
-                    instanceTransform.localRotation = Quaternion.identity;
-
-                    if (!instance.TryGetComponent(out KnockdownBlockAuthoring authoring))
-                    {
-                        authoring = instance.AddComponent<KnockdownBlockAuthoring>();
-                    }
-
-                    authoring.SetGridPosition(new Vector2Int(x, y));
-                    EditorUtility.SetDirty(instance);
-                }
-            }
-
-            EditorUtility.SetDirty(generatedRoot.gameObject);
-            EditorUtility.SetDirty(gameObject);
 #endif
+            return Instantiate(prefab, parent);
         }
 
-        private void Reset()
+        /// <summary>
+        /// Prefers the spinner's transform when nothing is assigned: SpinOnAxis rotates itself,
+        /// so anything generated outside it would sit still while the rest of the map turns.
+        /// </summary>
+        private Transform ResolveStructureRoot()
         {
-            ResolveBlocksRoot();
-            serializedWidth = width;
-            serializedHeight = height;
-            EnsureGridCapacity();
-        }
-
-        private void OnValidate()
-        {
-            width = Mathf.Max(1, width);
-            height = Mathf.Max(1, height);
-            cellSize.x = Mathf.Max(0.01f, cellSize.x);
-            cellSize.y = Mathf.Max(0.01f, cellSize.y);
-            ResolveBlocksRoot();
-            if (serializedWidth != width || serializedHeight != height)
+            if (structureRoot != null)
             {
-                ResizeGrid(width, height);
-            }
-
-            serializedWidth = width;
-            serializedHeight = height;
-            EnsureGridCapacity();
-        }
-
-        private void EnsureGridCapacity()
-        {
-            int targetLength = Mathf.Max(1, width * height);
-            if (occupiedCells != null && occupiedCells.Length == targetLength)
-            {
-                return;
-            }
-
-            occupiedCells = new bool[targetLength];
-        }
-
-        private Transform ResolveBlocksRoot()
-        {
-            if (blocksRoot != null)
-            {
-                return blocksRoot;
+                return structureRoot;
             }
 
             KnockdownTableLayout tableLayout = GetComponent<KnockdownTableLayout>();
@@ -203,57 +469,62 @@ namespace GameJam.Gameplay.Wall
 
             if (tableLayout != null)
             {
-                blocksRoot = tableLayout.BlocksRoot;
-            }
-            else
-            {
-                blocksRoot = transform;
+                structureRoot = tableLayout.BlocksRoot;
+                return structureRoot;
             }
 
-            return blocksRoot;
+            SpinOnAxis spinner = ResolveSpinner();
+            structureRoot = spinner != null ? spinner.transform : transform;
+            return structureRoot;
         }
 
-        private Transform EnsureGeneratedBlocksRoot(Transform parent)
+        /// <summary>
+        /// Returns the named child of the root, adopting one that an earlier build left elsewhere
+        /// under this component. Without that, changing the root would strand the previous
+        /// GeneratedLayoutBlocks and Structure Center outside whatever now rotates.
+        /// </summary>
+        private Transform EnsureGeneratedChild(Transform parent, string childName)
         {
-            Transform existing = parent.Find(GeneratedBlocksRootName);
-            if (existing != null)
+            Transform existing = parent.Find(childName) ?? FindStrayChild(parent, childName);
+            if (existing == null)
             {
-                return existing;
+                existing = new GameObject(childName).transform;
             }
 
-            GameObject rootObject = new GameObject(GeneratedBlocksRootName);
-            Transform rootTransform = rootObject.transform;
-            rootTransform.SetParent(parent, false);
-            rootTransform.localPosition = Vector3.zero;
-            rootTransform.localRotation = Quaternion.identity;
-            rootTransform.localScale = Vector3.one;
-            return rootTransform;
+            existing.SetParent(parent, false);
+            existing.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
+            existing.localScale = Vector3.one;
+            return existing;
         }
 
-        private void ClearGeneratedBlocks(Transform generatedRoot)
+        private Transform FindStrayChild(Transform parent, string childName)
+        {
+            for (int i = 0; i < transform.childCount; i++)
+            {
+                Transform child = transform.GetChild(i);
+                if (child != parent && child.name == childName)
+                {
+                    return child;
+                }
+            }
+
+            return null;
+        }
+
+        private static void ClearGeneratedBlocks(Transform generatedRoot)
         {
             for (int i = generatedRoot.childCount - 1; i >= 0; i--)
             {
-                Transform child = generatedRoot.GetChild(i);
+                GameObject child = generatedRoot.GetChild(i).gameObject;
                 if (Application.isPlaying)
                 {
-                    Destroy(child.gameObject);
+                    Destroy(child);
                 }
                 else
                 {
-                    DestroyImmediate(child.gameObject);
+                    DestroyImmediate(child);
                 }
             }
-        }
-
-        private bool IsInside(int x, int y)
-        {
-            return x >= 0 && x < width && y >= 0 && y < height;
-        }
-
-        private int GetIndex(int x, int y)
-        {
-            return (y * width) + x;
         }
     }
 }

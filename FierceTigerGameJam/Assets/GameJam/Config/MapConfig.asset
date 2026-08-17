@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1f494d805475f4667ab0488a0cc2c260, type: 3}
+  m_Name: MapConfig
+  m_EditorClassIdentifier: Assembly-CSharp::GameJam.Gameplay.Wall.MapConfig
+  maps:
+  - id: 1
+    displayName: Map_1
+    mapJson: {fileID: 4900000, guid: 06a6583a18c024036ac847b25bbbd2c4, type: 3}
+  - id: 2
+    displayName: Map_2
+    mapJson: {fileID: 4900000, guid: 7ae482fad75094f7982d62572115fe79, type: 3}

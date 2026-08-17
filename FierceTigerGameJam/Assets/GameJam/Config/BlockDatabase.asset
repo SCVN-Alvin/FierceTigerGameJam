@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e73cd4355884a4a4e8750964086c7b2d, type: 3}
+  m_Name: BlockDatabase
+  m_EditorClassIdentifier: Assembly-CSharp::GameJam.Gameplay.Wall.BlockDatabase
+  entries:
+  - type: concrete_1x1
+    prefab: {fileID: 8273714671908165584, guid: da190a6e154f34d8892b4f22d6d3ebfc, type: 3}
+  - type: brick_1x1
+    prefab: {fileID: 6583969056837762699, guid: c750fe06265124e6a8af1f60e0f5250b, type: 3}
+  - type: glass_1x1
+    prefab: {fileID: 2387664125528167900, guid: 140f33e86a568470b9a2622d91cfea49, type: 3}
+  - type: brick_2x1
+    prefab: {fileID: 7269983298211945928, guid: 2a0c1d88634c24e949b0f2898b5f124e, type: 3}

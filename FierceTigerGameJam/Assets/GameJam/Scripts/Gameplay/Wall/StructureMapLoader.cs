@@ -3,6 +3,8 @@ using GameJam.Gameplay;
 
 namespace GameJam.Gameplay.Wall
 {
+    [DisallowMultipleComponent]
+    [RequireComponent(typeof(WallBlockPhysicsSetup))]
     public sealed class StructureMapLoader : MonoBehaviour
     {
         [SerializeField] private GameObject structurePrefab;
@@ -54,27 +56,11 @@ namespace GameJam.Gameplay.Wall
 
             if (structureInstance.TryGetComponent(out KnockdownTableLayout tableLayout))
             {
-                if (tableLayout.TryGetSpawnLocalPositionFromCenter(out Vector3 spawnLocalPosition))
-                {
-                    structureInstance.transform.localPosition = spawnLocalPosition;
-                }
-
-                if (parent.TryGetComponent(out SpinOnAxis spinner))
-                {
-                    spinner.SetRotationCenter(tableLayout.StructureCenter);
-                }
+                SetupLoadedTable(parent, tableLayout);
             }
             else if (structureInstance.TryGetComponent(out StructureLayout structureLayout))
             {
-                if (structureLayout.TryGetSpawnLocalPositionFromCenter(out Vector3 spawnLocalPosition))
-                {
-                    structureInstance.transform.localPosition = spawnLocalPosition;
-                }
-
-                if (parent.TryGetComponent(out SpinOnAxis spinner))
-                {
-                    spinner.SetRotationCenter(structureLayout.StructureCenter);
-                }
+                SetupLegacyStructure(parent, structureLayout);
             }
 
             if (physicsSetup != null && structureInstance != null)
@@ -87,6 +73,49 @@ namespace GameJam.Gameplay.Wall
 
                 physicsSetup.PrepareBlocks(physicsRoot);
             }
+        }
+
+        private void SetupLoadedTable(Transform parent, KnockdownTableLayout tableLayout)
+        {
+            if (tableLayout.TryGetSpawnLocalPositionFromCenter(out Vector3 spawnLocalPosition))
+            {
+                structureInstance.transform.localPosition = spawnLocalPosition;
+            }
+
+            SpinOnAxis spinner = ResolveSpinner(parent);
+            if (spinner != null)
+            {
+                spinner.SetRotationCenter(tableLayout.StructureCenter);
+            }
+        }
+
+        private void SetupLegacyStructure(Transform parent, StructureLayout structureLayout)
+        {
+            if (structureLayout.TryGetSpawnLocalPositionFromCenter(out Vector3 spawnLocalPosition))
+            {
+                structureInstance.transform.localPosition = spawnLocalPosition;
+            }
+
+            SpinOnAxis spinner = ResolveSpinner(parent);
+            if (spinner != null)
+            {
+                spinner.SetRotationCenter(structureLayout.StructureCenter);
+            }
+        }
+
+        private SpinOnAxis ResolveSpinner(Transform parent)
+        {
+            if (parent != null && parent.TryGetComponent(out SpinOnAxis parentSpinner))
+            {
+                return parentSpinner;
+            }
+
+            if (structureRoot != null && structureRoot.TryGetComponent(out SpinOnAxis rootSpinner))
+            {
+                return rootSpinner;
+            }
+
+            return GetComponent<SpinOnAxis>();
         }
 
         private void ClearStructureRoot(Transform parent)
