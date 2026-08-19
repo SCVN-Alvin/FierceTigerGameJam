@@ -1,6 +1,7 @@
 #if UNITY_EDITOR
 using System.Collections.Generic;
 using GameJam.Gameplay.Flow;
+using GameJam.Gameplay.Playfield;
 using GameJam.Gameplay.Wall;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -87,9 +88,13 @@ namespace GameJam.EditorTools
                 return SystemHeader;
             }
 
+            // The backdrop, the ground and the volume that catches what falls off are all
+            // environment: they are built once and never change while playing.
             if (root.GetComponentInChildren<Light>(true) != null
                 || root.GetComponentInChildren<ReflectionProbe>(true) != null
-                || root.GetComponentInChildren<LightProbeGroup>(true) != null)
+                || root.GetComponentInChildren<LightProbeGroup>(true) != null
+                || root.GetComponentInChildren<FallBreakZone>(true) != null
+                || root.GetComponentInChildren<SpriteRenderer>(true) != null)
             {
                 return StaticHeader;
             }
