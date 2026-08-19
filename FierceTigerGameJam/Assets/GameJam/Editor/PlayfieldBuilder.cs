@@ -27,8 +27,17 @@ namespace GameJam.EditorTools
         private const string SpriteShaderName = "Sprites/Default";
         private const string UrpLitShaderName = "Universal Render Pipeline/Lit";
 
-        /// <summary>Drawn behind everything: queue, sorting order and renderer priority all agree.</summary>
-        private const int BackdropRenderQueue = 1000;
+        /// <summary>
+        /// Drawn in the transparent queue, after the skybox. The reference project puts its
+        /// backdrop at 1000, in the background range, which works there only because that scene
+        /// has no skybox material at all. Here the skybox pass runs after the opaque range that
+        /// 1000 belongs to, and the sprite writes no depth, so a background-queue backdrop is
+        /// painted straight over and vanishes.
+        ///
+        /// Clearing the skybox would fix it too, but ambient light is derived from the skybox in
+        /// this scene, so that would flatten the lighting on everything to fix the sky.
+        /// </summary>
+        private const int BackdropRenderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent;
         private const int BackdropSortingOrder = -200;
 
         /// <summary>
@@ -120,6 +129,15 @@ namespace GameJam.EditorTools
             Material existing = AssetDatabase.LoadAssetAtPath<Material>(BackdropMaterialPath);
             if (existing != null)
             {
+                // Applied on every run: a material left over from an earlier build carries the
+                // old queue, and the backdrop would stay invisible.
+                if (existing.renderQueue != BackdropRenderQueue)
+                {
+                    existing.renderQueue = BackdropRenderQueue;
+                    EditorUtility.SetDirty(existing);
+                    Debug.Log($"{nameof(PlayfieldBuilder)} moved the backdrop material to render queue {BackdropRenderQueue}.");
+                }
+
                 return existing;
             }
 
