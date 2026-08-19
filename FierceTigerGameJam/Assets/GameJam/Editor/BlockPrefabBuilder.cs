@@ -29,6 +29,7 @@ namespace GameJam.EditorTools
         private const string UrpLitShaderName = "Universal Render Pipeline/Lit";
         private const string VisualChildName = "Visual";
         private const string ShatteredSuffix = "_Shattered";
+        private const string PanelSuffix = "_Panel";
         private const float MinBoundsExtent = 0.0001f;
         private const string BlockSizeReferencePrefab = "Assets/GameJam/Prefabs/Cube.prefab";
 
@@ -89,6 +90,38 @@ namespace GameJam.EditorTools
             /// </summary>
             public Vector3Int ShardChunks;
         }
+
+        /// <summary>
+        /// Single-mesh wall art, used to draw a whole run of blocks at once. Matched to blocks by
+        /// Category, so brick blocks get the brick wall.
+        /// </summary>
+        private struct WallPanelSpec
+        {
+            public string Category;
+            public string ModelPath;
+            public string MaterialPathOverride;
+        }
+
+        private static readonly WallPanelSpec[] WallPanels =
+        {
+            new WallPanelSpec
+            {
+                Category = "Brick",
+                ModelPath = "Assets/GameJam/FBX/Brick_Wall.fbx",
+            },
+            new WallPanelSpec
+            {
+                Category = "Concrete",
+                ModelPath = "Assets/GameJam/FBX/Concrete_Wall.fbx",
+            },
+            new WallPanelSpec
+            {
+                // Glass_Wall.fbx ships without embedded textures, so it borrows the block material.
+                Category = "Glass",
+                ModelPath = "Assets/GameJam/FBX/Glass_Wall.fbx",
+                MaterialPathOverride = GlassMaterialPath,
+            },
+        };
 
         private static readonly BlockSpec[] Specs =
         {
@@ -196,6 +229,17 @@ namespace GameJam.EditorTools
             Vector3 targetBlockSize = ResolveTargetBlockSize();
             Debug.Log($"{nameof(BlockPrefabBuilder)} target block size {targetBlockSize:F6} (from {BlockSizeReferencePrefab}).");
 
+            // Panels first: the database is told about them once every block is known.
+            Dictionary<string, GameObject> panelsByCategory = new Dictionary<string, GameObject>();
+            for (int i = 0; i < WallPanels.Length; i++)
+            {
+                GameObject panel = BuildWallPanel(WallPanels[i], targetBlockSize);
+                if (panel != null)
+                {
+                    panelsByCategory[WallPanels[i].Category] = panel;
+                }
+            }
+
             List<string> built = new List<string>();
             for (int i = 0; i < Specs.Length; i++)
             {
@@ -213,10 +257,71 @@ namespace GameJam.EditorTools
                 }
             }
 
+            AssignWallPanels(panelsByCategory);
+
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
 
             Debug.Log($"Built {built.Count} block prefab(s):\n{string.Join("\n", built)}");
+        }
+
+        /// <summary>
+        /// Points every block database entry at the panel for its material, so a rebuild wires
+        /// itself up rather than leaving the panels to be dragged in by hand and mismatched.
+        /// Entries are matched to specs by type, and specs carry the category the panel was
+        /// built for.
+        /// </summary>
+        private static void AssignWallPanels(Dictionary<string, GameObject> panelsByCategory)
+        {
+            if (panelsByCategory.Count == 0)
+            {
+                return;
+            }
+
+            Dictionary<string, GameObject> panelByType = new Dictionary<string, GameObject>();
+            for (int i = 0; i < Specs.Length; i++)
+            {
+                if (!string.IsNullOrEmpty(Specs[i].Category)
+                    && panelsByCategory.TryGetValue(Specs[i].Category, out GameObject panel))
+                {
+                    panelByType[Specs[i].BlockName] = panel;
+                }
+            }
+
+            string[] databaseGuids = AssetDatabase.FindAssets($"t:{nameof(BlockDatabase)}");
+            for (int i = 0; i < databaseGuids.Length; i++)
+            {
+                string path = AssetDatabase.GUIDToAssetPath(databaseGuids[i]);
+                BlockDatabase database = AssetDatabase.LoadAssetAtPath<BlockDatabase>(path);
+                if (database == null)
+                {
+                    continue;
+                }
+
+                SerializedObject serializedDatabase = new SerializedObject(database);
+                SerializedProperty entries = serializedDatabase.FindProperty("entries");
+                int assigned = 0;
+
+                for (int entry = 0; entry < entries.arraySize; entry++)
+                {
+                    SerializedProperty element = entries.GetArrayElementAtIndex(entry);
+                    string type = element.FindPropertyRelative("type").stringValue;
+                    if (string.IsNullOrEmpty(type) || !panelByType.TryGetValue(type, out GameObject panel))
+                    {
+                        continue;
+                    }
+
+                    element.FindPropertyRelative("wallPanel").objectReferenceValue = panel;
+                    assigned++;
+                }
+
+                if (assigned > 0)
+                {
+                    serializedDatabase.ApplyModifiedPropertiesWithoutUndo();
+                    EditorUtility.SetDirty(database);
+                    Debug.Log($"{nameof(BlockPrefabBuilder)} pointed {assigned} entry(s) in {path} at their wall panel.", database);
+                }
+            }
         }
 
         private static string BuildBlockPrefab(
@@ -322,6 +427,225 @@ namespace GameJam.EditorTools
             {
                 UnityEngine.Object.DestroyImmediate(root);
             }
+        }
+
+        /// <summary>
+        /// Builds a one-cell wall panel out of the single-mesh wall art, so a run of blocks can
+        /// be drawn with a couple of hundred vertices instead of one block mesh per cell.
+        ///
+        /// The panel is normalised to exactly one cell and turned so its thinnest axis lies on Z,
+        /// which is the axis the map's layers are stacked along. Scaling it by a run's width and
+        /// height then gives a wall of the right size, and its UVs are scaled to match so the
+        /// bricks keep their size instead of stretching.
+        /// </summary>
+        private static GameObject BuildWallPanel(WallPanelSpec spec, Vector3 targetBlockSize)
+        {
+            EnsureModelIsReadable(spec.ModelPath);
+
+            GameObject modelAsset = AssetDatabase.LoadAssetAtPath<GameObject>(spec.ModelPath);
+            if (modelAsset == null)
+            {
+                Debug.LogWarning(
+                    $"{nameof(BlockPrefabBuilder)} found no wall art at {spec.ModelPath}, so "
+                    + $"{spec.Category} walls will be drawn by welding block meshes.");
+                return null;
+            }
+
+            string folder = $"{OutputFolder}/{spec.Category}";
+            EnsureFolder(folder);
+
+            string panelName = $"{spec.Category.ToLowerInvariant()}_wall{PanelSuffix}";
+            string prefabPath = $"{folder}/{panelName}.prefab";
+
+            GameObject root = new GameObject(panelName);
+            GameObject visual = null;
+            try
+            {
+                visual = (GameObject)PrefabUtility.InstantiatePrefab(modelAsset);
+                if (visual == null)
+                {
+                    Debug.LogError($"{nameof(BlockPrefabBuilder)} could not instantiate {spec.ModelPath}.");
+                    return null;
+                }
+
+                visual.transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
+                visual.transform.localScale = Vector3.one;
+                PrefabUtility.UnpackPrefabInstance(visual, PrefabUnpackMode.Completely, InteractionMode.AutomatedAction);
+
+                Material material = ResolveOverrideMaterial(spec.MaterialPathOverride) ?? FindFirstMaterial(visual);
+
+                Mesh panelMesh = WeldModel(visual, panelName);
+                if (panelMesh == null)
+                {
+                    Debug.LogError($"{nameof(BlockPrefabBuilder)} found no readable meshes in {spec.ModelPath}.");
+                    return null;
+                }
+
+                Quaternion flatten = ResolvePanelRotation(panelMesh.bounds.size);
+                BakePanelTransform(panelMesh, flatten, targetBlockSize);
+
+                string meshFolder = $"{folder}/{MeshFolderName}";
+                EnsureFolder(meshFolder);
+                panelMesh = SaveMeshInPlace(panelMesh, $"{meshFolder}/{panelName}_Mesh.asset");
+
+                root.AddComponent<MeshFilter>().sharedMesh = panelMesh;
+                root.AddComponent<MeshRenderer>().sharedMaterial = material;
+
+                Debug.Log(
+                    $"{panelName}: {panelMesh.vertexCount} vertices, normalised to one "
+                    + $"{targetBlockSize:F3} cell.");
+
+                PrefabUtility.SaveAsPrefabAsset(root, prefabPath);
+                return AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
+            }
+            finally
+            {
+                if (visual != null)
+                {
+                    UnityEngine.Object.DestroyImmediate(visual);
+                }
+
+                UnityEngine.Object.DestroyImmediate(root);
+            }
+        }
+
+        /// <summary>Welds everything under the model into one mesh, in model space.</summary>
+        private static Mesh WeldModel(GameObject visual, string meshName)
+        {
+            MeshFilter[] filters = visual.GetComponentsInChildren<MeshFilter>(true);
+            List<CombineInstance> combines = new List<CombineInstance>(filters.Length);
+            Matrix4x4 toVisual = visual.transform.worldToLocalMatrix;
+
+            for (int i = 0; i < filters.Length; i++)
+            {
+                Mesh mesh = filters[i].sharedMesh;
+                if (mesh == null)
+                {
+                    continue;
+                }
+
+                for (int subMesh = 0; subMesh < mesh.subMeshCount; subMesh++)
+                {
+                    combines.Add(new CombineInstance
+                    {
+                        mesh = mesh,
+                        subMeshIndex = subMesh,
+                        transform = toVisual * filters[i].transform.localToWorldMatrix,
+                    });
+                }
+            }
+
+            if (combines.Count == 0)
+            {
+                return null;
+            }
+
+            Mesh welded = new Mesh
+            {
+                name = meshName,
+                indexFormat = IndexFormat.UInt32,
+            };
+            welded.CombineMeshes(combines.ToArray(), true, true);
+            welded.RecalculateBounds();
+            return welded;
+        }
+
+        /// <summary>
+        /// Turns the panel so its thinnest axis ends up on Z. A wall is a slab, and the map's
+        /// layers are stacked along Z, so that is the axis its thickness has to sit on whichever
+        /// way the artist happened to build it.
+        /// </summary>
+        private static Quaternion ResolvePanelRotation(Vector3 size)
+        {
+            if (size.z <= size.x && size.z <= size.y)
+            {
+                return Quaternion.identity;
+            }
+
+            // Y about the vertical brings X round to Z; X about the horizontal brings Y round.
+            return size.x <= size.y ? Quaternion.Euler(0f, 90f, 0f) : Quaternion.Euler(90f, 0f, 0f);
+        }
+
+        /// <summary>
+        /// Rotates the panel flat, then scales it into a single cell, baking both into the
+        /// vertices so the prefab needs no transform of its own. Normals are divided by the fit
+        /// rather than multiplied - the inverse transpose - so a panel squashed to a slab is
+        /// still lit as the wall it was modelled as.
+        /// </summary>
+        private static void BakePanelTransform(Mesh mesh, Quaternion rotation, Vector3 targetSize)
+        {
+            Vector3[] vertices = mesh.vertices;
+            Vector3[] normals = mesh.normals;
+            Vector4[] tangents = mesh.tangents;
+
+            for (int i = 0; i < vertices.Length; i++)
+            {
+                vertices[i] = rotation * vertices[i];
+            }
+
+            for (int i = 0; i < normals.Length; i++)
+            {
+                normals[i] = rotation * normals[i];
+            }
+
+            for (int i = 0; i < tangents.Length; i++)
+            {
+                Vector3 rotated = rotation * new Vector3(tangents[i].x, tangents[i].y, tangents[i].z);
+                tangents[i] = new Vector4(rotated.x, rotated.y, rotated.z, tangents[i].w);
+            }
+
+            mesh.vertices = vertices;
+            if (normals.Length > 0)
+            {
+                mesh.normals = normals;
+            }
+
+            if (tangents.Length > 0)
+            {
+                mesh.tangents = tangents;
+            }
+
+            mesh.RecalculateBounds();
+
+            Vector3 fitScale = ResolveFitScale(mesh.bounds.size, targetSize);
+            Vector3 normalScale = new Vector3(
+                1f / Mathf.Max(MinBoundsExtent, fitScale.x),
+                1f / Mathf.Max(MinBoundsExtent, fitScale.y),
+                1f / Mathf.Max(MinBoundsExtent, fitScale.z));
+            Vector3 center = mesh.bounds.center;
+
+            vertices = mesh.vertices;
+            for (int i = 0; i < vertices.Length; i++)
+            {
+                vertices[i] = Vector3.Scale(vertices[i] - center, fitScale);
+            }
+
+            normals = mesh.normals;
+            for (int i = 0; i < normals.Length; i++)
+            {
+                normals[i] = Vector3.Scale(normals[i], normalScale).normalized;
+            }
+
+            tangents = mesh.tangents;
+            for (int i = 0; i < tangents.Length; i++)
+            {
+                Vector3 scaled = Vector3.Scale(
+                    new Vector3(tangents[i].x, tangents[i].y, tangents[i].z), fitScale).normalized;
+                tangents[i] = new Vector4(scaled.x, scaled.y, scaled.z, tangents[i].w);
+            }
+
+            mesh.vertices = vertices;
+            if (normals.Length > 0)
+            {
+                mesh.normals = normals;
+            }
+
+            if (tangents.Length > 0)
+            {
+                mesh.tangents = tangents;
+            }
+
+            mesh.RecalculateBounds();
         }
 
         /// <summary>
@@ -1087,23 +1411,28 @@ namespace GameJam.EditorTools
 
         private static Material ResolveOverrideMaterial(BlockSpec spec)
         {
-            if (string.IsNullOrEmpty(spec.MaterialPathOverride))
+            return ResolveOverrideMaterial(spec.MaterialPathOverride);
+        }
+
+        private static Material ResolveOverrideMaterial(string materialPath)
+        {
+            if (string.IsNullOrEmpty(materialPath))
             {
                 return null;
             }
 
-            Material existing = AssetDatabase.LoadAssetAtPath<Material>(spec.MaterialPathOverride);
+            Material existing = AssetDatabase.LoadAssetAtPath<Material>(materialPath);
             if (existing != null)
             {
                 return existing;
             }
 
-            if (spec.MaterialPathOverride == GlassMaterialPath)
+            if (materialPath == GlassMaterialPath)
             {
                 return CreateGlassMaterial();
             }
 
-            Debug.LogError($"{nameof(BlockPrefabBuilder)} could not find a material at {spec.MaterialPathOverride}.");
+            Debug.LogError($"{nameof(BlockPrefabBuilder)} could not find a material at {materialPath}.");
             return null;
         }
 

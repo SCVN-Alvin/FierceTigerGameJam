@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using GameJam.Gameplay.Wall;
@@ -33,6 +34,13 @@ namespace GameJam.Gameplay
 
         private Rigidbody blockRigidbody;
         private bool isActivated;
+
+        /// <summary>
+        /// Raised the first time the block stops being static, however that happened - struck,
+        /// caught in a blast, or released by the block under it. A wall built from many blocks
+        /// listens for this to know it has been hit.
+        /// </summary>
+        public event Action<KnockdownBlock> Activated;
 
         public bool IsActivated => isActivated;
         public bool CountsTowardKnockdown => countsTowardKnockdown;
@@ -95,6 +103,7 @@ namespace GameJam.Gameplay
             blockRigidbody.isKinematic = false;
             blockRigidbody.useGravity = true;
             blockRigidbody.WakeUp();
+            Activated?.Invoke(this);
             ReleaseSupportedBlocksAbove();
         }
 
@@ -228,6 +237,7 @@ namespace GameJam.Gameplay
             blockRigidbody.isKinematic = false;
             blockRigidbody.useGravity = true;
             blockRigidbody.WakeUp();
+            Activated?.Invoke(this);
             ApplySupportReleaseImpulse(releasedBy);
         }
 

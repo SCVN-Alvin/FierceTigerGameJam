@@ -26,6 +26,26 @@ namespace GameJam.Gameplay.Wall
         public Vector3Int LogicalSize => logicalSize;
         public Vector3Int GridPosition => gridPosition;
 
+        /// <summary>
+        /// Takes the physical character of another block - how it topples, what holds up what -
+        /// but with its own mass. A wall built from many blocks uses this so it behaves like the
+        /// material it is made of while weighing what all of its blocks weigh together.
+        /// </summary>
+        public void CopyTuningFrom(KnockdownBlockAuthoring source, float massOverride)
+        {
+            if (source == null)
+            {
+                return;
+            }
+
+            countsTowardKnockdown = source.countsTowardKnockdown;
+            allowCollisionCascade = source.allowCollisionCascade;
+            collisionActivationVelocity = source.collisionActivationVelocity;
+            supportCascadeMode = source.supportCascadeMode;
+            supportReleaseImpulse = source.supportReleaseImpulse;
+            mass = Mathf.Max(0.01f, massOverride);
+        }
+
         public void SetGridPosition(Vector3Int value)
         {
             gridPosition = value;

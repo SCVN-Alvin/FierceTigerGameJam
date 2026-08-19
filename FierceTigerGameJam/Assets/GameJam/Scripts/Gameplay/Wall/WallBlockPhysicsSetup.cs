@@ -50,6 +50,23 @@ namespace GameJam.Gameplay
             }
         }
 
+        /// <summary>
+        /// Prepares one block that appeared after the map was built - the pieces a wall spawns
+        /// when it comes apart - without walking the whole structure again.
+        /// </summary>
+        public void PrepareBlock(GameObject block)
+        {
+            if (block == null)
+            {
+                return;
+            }
+
+            block.TryGetComponent(out KnockdownBlockAuthoring authoring);
+            EnsureCollider(block);
+            EnsureRigidbody(block, authoring);
+            EnsureKnockdownBlock(block, authoring);
+        }
+
         private void EnsureCollider(GameObject block)
         {
             if (block.TryGetComponent(out Collider _))

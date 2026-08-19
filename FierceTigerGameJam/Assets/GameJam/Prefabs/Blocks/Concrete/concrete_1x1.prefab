@@ -182,7 +182,7 @@ MonoBehaviour:
   minimumImpactSpeed: 3.5
   damagePerImpactSpeed: 0.4
   maxDamagePerImpact: 3
-  shatteredPrefab: {fileID: 8276113732447573125, guid: f65f576452b0440d892cabb4386a51b0, type: 3}
+  shatteredPrefab: {fileID: 0}
   breakEffectPrefab: {fileID: 0}
   shardOutwardSpeed: 1.2
   shardDirectionalSpeed: 1.8
