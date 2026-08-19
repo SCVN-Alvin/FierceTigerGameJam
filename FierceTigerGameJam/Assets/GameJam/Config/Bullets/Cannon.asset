@@ -1,0 +1,41 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b512b60ea1e1e4ca0b9f93bb4341e5d2, type: 3}
+  m_Name: Cannon
+  m_EditorClassIdentifier: Assembly-CSharp::GameJam.Gameplay.Combat.BulletDefinition
+  id: cannon_type
+  displayName: Cannon Ball
+  levels:
+  - displayName: Cannon I
+    damage:
+    - materialId: glass
+      blockDamage: 8
+      wallDamage: 8
+    - materialId: brick
+      blockDamage: 6
+      wallDamage: 5
+    - materialId: concrete
+      blockDamage: 4
+      wallDamage: 2
+    splashShare: 0.4
+  - displayName: Cannon II
+    damage:
+    - materialId: glass
+      blockDamage: 10
+      wallDamage: 10
+    - materialId: brick
+      blockDamage: 8
+      wallDamage: 7
+    - materialId: concrete
+      blockDamage: 7
+      wallDamage: 5
+    splashShare: 0.45
