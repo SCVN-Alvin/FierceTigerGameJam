@@ -19,6 +19,10 @@ namespace GameJam.Gameplay.Wall
     public sealed class BreakableBlock : MonoBehaviour
     {
         [Header("Durability")]
+        [Tooltip("What this block is made of: brick, glass, concrete. Ammunition damage is "
+                 + "authored per material, so this is what decides whether a shot can hurt it.")]
+        [SerializeField] private string materialId;
+
         [SerializeField] private float maxHitPoints = 3f;
 
         [Tooltip("Impacts slower than this do no damage at all. Without a floor here a structure "
@@ -52,6 +56,7 @@ namespace GameJam.Gameplay.Wall
         /// <summary>Raised just before the block is destroyed, whether or not it left debris.</summary>
         public event Action<BreakableBlock> Broken;
 
+        public string MaterialId => materialId;
         public float MaxHitPoints => maxHitPoints;
         public float RemainingHitPoints => remainingHitPoints;
         public bool IsBroken => isBroken;

@@ -1151,6 +1151,10 @@ namespace GameJam.EditorTools
         private static void ApplyBreakableValues(BreakableBlock breakable, BlockSpec spec, GameObject debrisPrefab)
         {
             SerializedObject serializedBreakable = new SerializedObject(breakable);
+            // The material is what ammunition damage is looked up against, and the category the
+            // block was built from is exactly that: brick, glass, concrete.
+            serializedBreakable.FindProperty("materialId").stringValue =
+                string.IsNullOrEmpty(spec.Category) ? string.Empty : spec.Category.ToLowerInvariant();
             serializedBreakable.FindProperty("maxHitPoints").floatValue = Mathf.Max(0.01f, spec.HitPoints);
             serializedBreakable.FindProperty("minimumImpactSpeed").floatValue = spec.MinimumImpactSpeed;
             serializedBreakable.FindProperty("damagePerImpactSpeed").floatValue = spec.DamagePerImpactSpeed;

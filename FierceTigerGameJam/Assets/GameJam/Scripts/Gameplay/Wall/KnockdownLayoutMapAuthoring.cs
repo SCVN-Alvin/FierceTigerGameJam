@@ -679,8 +679,41 @@ namespace GameJam.Gameplay.Wall
             wallAuthoring.SetGridPosition(build.GridPosition);
             wallAuthoring.SetLogicalSize(build.LogicalSize);
 
-            wall.AddComponent<BreakableWall>().Initialize(manifest, physicsSetup);
+            // Durability is summed from the blocks the wall stands for, so a long wall is harder
+            // to bring down than a short one and much harder than a lone block.
+            ResolveWallDurability(build.Blocks, out string wallMaterialId, out float wallHitPoints);
+            wall.AddComponent<BreakableWall>().Initialize(manifest, physicsSetup, wallMaterialId, wallHitPoints);
             return true;
+        }
+
+        /// <summary>
+        /// What the wall is made of and how much punishment it takes, read off the blocks it
+        /// replaces. A wall of mixed materials answers to the first block in it, since a shot has
+        /// to hit something definite.
+        /// </summary>
+        private static void ResolveWallDurability(List<PlacedBlock> blocks, out string materialId, out float hitPoints)
+        {
+            materialId = null;
+            hitPoints = 0f;
+
+            for (int i = 0; i < blocks.Count; i++)
+            {
+                if (blocks[i].Prefab == null || !blocks[i].Prefab.TryGetComponent(out BreakableBlock breakable))
+                {
+                    continue;
+                }
+
+                hitPoints += breakable.MaxHitPoints;
+                if (string.IsNullOrEmpty(materialId))
+                {
+                    materialId = breakable.MaterialId;
+                }
+            }
+
+            if (hitPoints <= 0f)
+            {
+                hitPoints = blocks.Count;
+            }
         }
 
         /// <summary>

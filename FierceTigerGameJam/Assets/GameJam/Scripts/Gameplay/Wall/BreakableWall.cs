@@ -31,49 +31,105 @@ namespace GameJam.Gameplay.Wall
             public Vector3Int LogicalSize;
         }
 
+        [Tooltip("What the wall is made of. Ammunition damage is authored per material, and a "
+                 + "wall of mixed materials takes the identity of the first block in it.")]
+        [SerializeField] private string materialId;
+
+        [Tooltip("Taken from the blocks that make it up, so a longer wall is harder to bring "
+                 + "down than a short one and much harder than a lone block.")]
+        [SerializeField] private float maxHitPoints = 1f;
+
+        [Tooltip("Impacts slower than this do nothing, which keeps a wall from grinding itself "
+                 + "down against its neighbours while the structure settles.")]
+        [SerializeField] private float minimumImpactSpeed = 3f;
+
+        [Tooltip("Hit points taken per metre/second of impact above the minimum. This is what "
+                 + "makes a wall come apart when it lands after being toppled.")]
+        [SerializeField] private float damagePerImpactSpeed = 1.5f;
+
         private readonly List<Cell> cells = new List<Cell>();
         private WallBlockPhysicsSetup physicsSetup;
         private KnockdownBlock body;
+        private float remainingHitPoints;
         private bool hasBrokenUp;
 
         public int CellCount => cells.Count;
+        public string MaterialId => materialId;
+        public float MaxHitPoints => maxHitPoints;
+        public float RemainingHitPoints => remainingHitPoints;
+        public bool IsBroken => hasBrokenUp;
 
-        public void Initialize(IEnumerable<Cell> wallCells, WallBlockPhysicsSetup setup)
+        /// <summary>0 while untouched, 1 when the next hit brings it down.</summary>
+        public float DamageFraction => maxHitPoints <= 0f
+            ? 1f
+            : Mathf.Clamp01(1f - (remainingHitPoints / maxHitPoints));
+
+        public void Initialize(IEnumerable<Cell> wallCells, WallBlockPhysicsSetup setup, string wallMaterialId, float hitPoints)
         {
             cells.Clear();
             cells.AddRange(wallCells);
             physicsSetup = setup;
+            materialId = wallMaterialId;
+            maxHitPoints = Mathf.Max(0.01f, hitPoints);
+            remainingHitPoints = maxHitPoints;
+        }
+
+        private void Awake()
+        {
+            if (remainingHitPoints <= 0f)
+            {
+                remainingHitPoints = maxHitPoints;
+            }
         }
 
         /// <summary>
-        /// Subscribed late rather than in Awake: the KnockdownBlock is added by the physics setup
-        /// after the wall has been built, so it does not exist yet when this component wakes.
+        /// Chips the wall, and brings it down when there is nothing left. Ammunition that does no
+        /// damage to this material leaves it completely alone, which is what makes an upgrade an
+        /// unlock rather than a speed-up.
+        /// </summary>
+        public void ApplyDamage(float amount, Vector3 impactPoint, Vector3 impactDirection)
+        {
+            if (hasBrokenUp || amount <= 0f)
+            {
+                return;
+            }
+
+            remainingHitPoints -= amount;
+            if (remainingHitPoints <= 0f)
+            {
+                BreakUp();
+            }
+        }
+
+        /// <summary>
+        /// A wall that has been toppled comes apart when it lands. Without this a knocked wall
+        /// would slide around the floor as one slab forever.
+        /// </summary>
+        private void OnCollisionEnter(Collision collision)
+        {
+            if (hasBrokenUp)
+            {
+                return;
+            }
+
+            float impactSpeed = collision.relativeVelocity.magnitude;
+            if (impactSpeed <= minimumImpactSpeed)
+            {
+                return;
+            }
+
+            ContactPoint contact = collision.GetContact(0);
+            ApplyDamage((impactSpeed - minimumImpactSpeed) * damagePerImpactSpeed, contact.point, -contact.normal);
+        }
+
+        /// <summary>
+        /// Remembers the body the physics setup gave this wall. The wall used to come apart the
+        /// moment that body was activated, but a wall now has hit points: ammunition too weak for
+        /// the material has to be able to shove it without destroying it.
         /// </summary>
         public void Listen(KnockdownBlock knockdownBlock)
         {
-            if (body != null)
-            {
-                body.Activated -= HandleActivated;
-            }
-
             body = knockdownBlock;
-            if (body != null)
-            {
-                body.Activated += HandleActivated;
-            }
-        }
-
-        private void OnDestroy()
-        {
-            if (body != null)
-            {
-                body.Activated -= HandleActivated;
-            }
-        }
-
-        private void HandleActivated(KnockdownBlock knockdownBlock)
-        {
-            BreakUp();
         }
 
         [ContextMenu("Break Up")]
