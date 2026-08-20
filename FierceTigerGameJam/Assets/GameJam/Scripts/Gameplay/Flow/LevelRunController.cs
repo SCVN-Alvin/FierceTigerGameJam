@@ -1,0 +1,298 @@
+using System;
+using System.Collections;
+using GameJam.Config;
+using GameJam.Data;
+using GameJam.Economy;
+using GameJam.Gameplay.Cannon;
+using GameJam.Gameplay.Combat;
+using GameJam.Gameplay.Wall;
+using UnityEngine;
+
+namespace GameJam.Gameplay.Flow
+{
+    /// <summary>
+    /// One attempt at a map, from choosing what ammunition to bring through to being paid for it.
+    ///
+    /// The run ends when the player has no bullets left, not when the last one is fired: the shot
+    /// that empties the inventory may still be bringing half the structure down, and judging it
+    /// immediately would rob the player of the collapse they just paid for.
+    /// </summary>
+    public sealed class LevelRunController : MonoBehaviour
+    {
+        public enum RunState
+        {
+            /// <summary>Before a map is chosen, or between runs.</summary>
+            Idle,
+
+            /// <summary>Choosing what ammunition to bring.</summary>
+            Picking,
+
+            Playing,
+
+            /// <summary>Out of ammunition, waiting for the structure to stop moving.</summary>
+            Settling,
+
+            Finished,
+        }
+
+        [SerializeField] private MapSelection mapSelection;
+        [SerializeField] private MapProgressionConfig progressionConfig;
+        [SerializeField] private BulletInventory bulletInventory;
+        [SerializeField] private LevelProgressTracker progressTracker;
+        [SerializeField] private EconomyService economy;
+        [SerializeField] private GridKnockdownCannonFireController fireController;
+
+        [Header("Settling")]
+        [Tooltip("Always wait at least this long after the last shot, so a collapse that has not "
+                 + "started yet still gets its chance.")]
+        [SerializeField] private float minimumSettleSeconds = 1.3f;
+
+        [Tooltip("Then wait until nothing more has fallen for this long.")]
+        [SerializeField] private float stillnessSeconds = 0.75f;
+
+        [Tooltip("Give up waiting after this, so a block rolling forever cannot hang the run.")]
+        [SerializeField] private float maximumSettleSeconds = 8f;
+
+        /// <summary>Raised with the run's result once it has been judged and paid.</summary>
+        public event Action<RunResult> Finished;
+
+        public event Action<RunState> StateChanged;
+
+        public RunState State { get; private set; } = RunState.Idle;
+
+        /// <summary>How much of this map the player must destroy to pass it.</summary>
+        public float RequiredClearPercent { get; private set; } = 0.8f;
+
+        /// <summary>How many bullets this map lets the player bring, across all types.</summary>
+        public int BulletPickLimit { get; private set; }
+
+        /// <summary>What one attempt came to.</summary>
+        public struct RunResult
+        {
+            public string MapId;
+            public float ClearPercent;
+            public bool Passed;
+            public bool FullyCleared;
+
+            /// <summary>Gold actually handed over for this attempt, zero on a repeat.</summary>
+            public int GoldAwarded;
+        }
+
+        private Coroutine settleRoutine;
+
+        private void OnEnable()
+        {
+            if (bulletInventory != null)
+            {
+                bulletInventory.Emptied += HandleInventoryEmptied;
+            }
+        }
+
+        private void OnDisable()
+        {
+            if (bulletInventory != null)
+            {
+                bulletInventory.Emptied -= HandleInventoryEmptied;
+            }
+        }
+
+        /// <summary>
+        /// Opens the pick for the selected map, reading its budget and its pass bar. Called when
+        /// the player commits to a map and before the structure is built.
+        /// </summary>
+        public void BeginPick()
+        {
+            ResolveMapRules();
+
+            if (bulletInventory != null)
+            {
+                bulletInventory.BeginPick(BulletPickLimit);
+            }
+
+            SetState(RunState.Picking);
+        }
+
+        /// <summary>
+        /// Starts the attempt. The structure must already be built, because what counts as a
+        /// hundred percent is what actually got placed.
+        /// </summary>
+        public void BeginRun()
+        {
+            if (progressTracker != null)
+            {
+                progressTracker.BeginRun();
+            }
+
+            SetState(RunState.Playing);
+
+            // A player who brought nothing has already lost, and nothing will raise Emptied for
+            // them because nothing will ever be spent.
+            if (bulletInventory != null && bulletInventory.IsEmpty)
+            {
+                HandleInventoryEmptied();
+            }
+        }
+
+        /// <summary>Abandons the attempt without judging it, for a Back button mid-run.</summary>
+        public void CancelRun()
+        {
+            StopSettling();
+            SetState(RunState.Idle);
+        }
+
+        private void HandleInventoryEmptied()
+        {
+            if (State != RunState.Playing)
+            {
+                return;
+            }
+
+            StopSettling();
+            settleRoutine = StartCoroutine(SettleThenJudge());
+        }
+
+        /// <summary>
+        /// Waits for the structure to stop changing rather than for a fixed time. Progress not
+        /// moving is exactly the question being asked, so it is a better test of "settled" than
+        /// polling every rigidbody, and it costs nothing extra.
+        /// </summary>
+        private IEnumerator SettleThenJudge()
+        {
+            SetState(RunState.Settling);
+
+            yield return new WaitForSeconds(minimumSettleSeconds);
+
+            float deadline = Time.time + Mathf.Max(0f, maximumSettleSeconds - minimumSettleSeconds);
+            float lastPercent = CurrentClearPercent();
+            float stillSince = Time.time;
+
+            while (Time.time < deadline)
+            {
+                yield return new WaitForSeconds(0.25f);
+
+                float percent = CurrentClearPercent();
+                if (!Mathf.Approximately(percent, lastPercent))
+                {
+                    lastPercent = percent;
+                    stillSince = Time.time;
+                    continue;
+                }
+
+                if (Time.time - stillSince >= stillnessSeconds)
+                {
+                    break;
+                }
+            }
+
+            settleRoutine = null;
+            Judge();
+        }
+
+        private void Judge()
+        {
+            string mapId = ResolveMapId();
+            float clearPercent = CurrentClearPercent();
+
+            RunResult result = new RunResult
+            {
+                MapId = mapId,
+                ClearPercent = clearPercent,
+                Passed = clearPercent >= RequiredClearPercent,
+                FullyCleared = clearPercent >= 1f,
+                GoldAwarded = 0,
+            };
+
+            if (!string.IsNullOrEmpty(mapId))
+            {
+                MapAttemptResult attempt = UserData.Maps.RegisterAttempt(mapId, clearPercent, RequiredClearPercent);
+                result.Passed = attempt.Passed;
+                result.FullyCleared = attempt.FullyCleared;
+                result.GoldAwarded = GrantRewards(mapId, attempt);
+                UserData.Save();
+            }
+
+            SetState(RunState.Finished);
+            Finished?.Invoke(result);
+        }
+
+        /// <summary>
+        /// Pays for what this attempt newly achieved. The claim is recorded only once the gold has
+        /// actually been handed over, so a run interrupted between earning and being paid can
+        /// still be paid next time rather than losing the reward silently.
+        /// </summary>
+        private int GrantRewards(string mapId, MapAttemptResult attempt)
+        {
+            if (economy == null || !TryGetRules(mapId, out MapProgressionConfig.Entry rules))
+            {
+                return 0;
+            }
+
+            int awarded = 0;
+
+            if (attempt.NewlyPassed && economy.TryGrantReward(rules.passMapRewardId, out int passGold))
+            {
+                awarded += passGold;
+                UserData.Maps.MarkPassRewardClaimed(mapId);
+            }
+
+            if (attempt.NewlyCleared && economy.TryGrantReward(rules.clearMapRewardId, out int clearGold))
+            {
+                awarded += clearGold;
+                UserData.Maps.MarkClearRewardClaimed(mapId);
+            }
+
+            return awarded;
+        }
+
+        private void ResolveMapRules()
+        {
+            RequiredClearPercent = 0.8f;
+            BulletPickLimit = 10;
+
+            if (TryGetRules(ResolveMapId(), out MapProgressionConfig.Entry rules))
+            {
+                RequiredClearPercent = rules.requiredClearPercent;
+                BulletPickLimit = rules.bulletPickLimit;
+            }
+        }
+
+        private bool TryGetRules(string mapId, out MapProgressionConfig.Entry rules)
+        {
+            rules = null;
+            return progressionConfig != null
+                && !string.IsNullOrEmpty(mapId)
+                && progressionConfig.TryGetMapRules(mapId, out rules);
+        }
+
+        private string ResolveMapId()
+        {
+            MapInfo map = mapSelection != null ? mapSelection.Selected : null;
+            return map != null ? map.Id : null;
+        }
+
+        private float CurrentClearPercent()
+        {
+            return progressTracker != null ? progressTracker.CalculateClearPercent() : 0f;
+        }
+
+        private void StopSettling()
+        {
+            if (settleRoutine != null)
+            {
+                StopCoroutine(settleRoutine);
+                settleRoutine = null;
+            }
+        }
+
+        private void SetState(RunState next)
+        {
+            if (State == next)
+            {
+                return;
+            }
+
+            State = next;
+            StateChanged?.Invoke(next);
+        }
+    }
+}

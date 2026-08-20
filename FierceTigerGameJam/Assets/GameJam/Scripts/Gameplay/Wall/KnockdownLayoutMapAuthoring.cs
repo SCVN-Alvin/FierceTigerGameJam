@@ -104,6 +104,13 @@ namespace GameJam.Gameplay.Wall
         private const float RightAngleDegrees = 90f;
         private const float RotationEpsilon = 0.01f;
 
+        /// <summary>
+        /// How many blocks the last build placed, counting the blocks a wall stands for rather
+        /// than the wall. This is the denominator clear progress is measured against, so it has
+        /// to be the count the player sees, not the count of objects in the scene.
+        /// </summary>
+        public int PlacedBlockCount { get; private set; }
+
         public BlockDatabase BlockDatabase => blockDatabase;
         public TextAsset MapJson => ResolveMapJson();
         public Transform StructureRoot => ResolveStructureRoot();
@@ -197,6 +204,7 @@ namespace GameJam.Gameplay.Wall
             }
 
             int spawned = placed.Count;
+            PlacedBlockCount = spawned;
             int walls = BuildPlacedBlocks(placed, generatedRoot);
 
             if (physicsSetup != null)
@@ -233,6 +241,8 @@ namespace GameJam.Gameplay.Wall
             {
                 ClearGeneratedBlocks(generatedRoot);
             }
+
+            PlacedBlockCount = 0;
         }
 
         /// <summary>

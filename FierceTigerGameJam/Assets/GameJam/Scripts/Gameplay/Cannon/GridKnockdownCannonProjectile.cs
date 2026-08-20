@@ -59,6 +59,16 @@ namespace GameJam.Gameplay.Cannon
             bulletLevelOverride = Mathf.Max(1, bulletLevelOverride);
         }
 
+        /// <summary>
+        /// Tells the shot what fired it. The player brings a mix of ammunition into a run and
+        /// chooses per shot, so which kind this is cannot be baked into the prefab.
+        /// </summary>
+        public void SetAmmunition(BulletDefinition bullet, int level)
+        {
+            bulletOverride = bullet;
+            bulletLevelOverride = Mathf.Max(1, level);
+        }
+
         public void Launch(Vector3 direction, float speed, float lifetime)
         {
             if (projectileRigidbody == null)
