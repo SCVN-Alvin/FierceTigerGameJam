@@ -19,3 +19,6 @@ MonoBehaviour:
   - id: 2
     displayName: Map_2
     mapJson: {fileID: 4900000, guid: a13cb7943dcef4bdea76152dc42f5be7, type: 3}
+  - id: 3
+    displayName: Map_3
+    mapJson: {fileID: 4900000, guid: acaf6f78bb111423bbd50f6203bd02fc, type: 3}
