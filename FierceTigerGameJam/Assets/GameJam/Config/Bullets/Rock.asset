@@ -1,0 +1,41 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b512b60ea1e1e4ca0b9f93bb4341e5d2, type: 3}
+  m_Name: Rock
+  m_EditorClassIdentifier: Assembly-CSharp::GameJam.Gameplay.Combat.BulletDefinition
+  id: rock_type
+  displayName: Rock
+  levels:
+  - displayName: Rock I
+    damage:
+    - materialId: glass
+      blockDamage: 5
+      wallDamage: 5
+    - materialId: brick
+      blockDamage: 3
+      wallDamage: 1
+    - materialId: concrete
+      blockDamage: 0
+      wallDamage: 0
+    splashShare: 0.3
+  - displayName: Rock II
+    damage:
+    - materialId: glass
+      blockDamage: 6
+      wallDamage: 6
+    - materialId: brick
+      blockDamage: 4
+      wallDamage: 3
+    - materialId: concrete
+      blockDamage: 0
+      wallDamage: 0
+    splashShare: 0.35

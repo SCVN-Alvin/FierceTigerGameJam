@@ -1,3 +1,4 @@
+using GameJam.Gameplay.Combat;
 using UnityEngine;
 
 namespace GameJam.Gameplay.Cannon
@@ -5,6 +6,13 @@ namespace GameJam.Gameplay.Cannon
     public sealed class GridKnockdownCannonFireController : MonoBehaviour
     {
         [SerializeField] private Camera targetCamera;
+        [Tooltip("Optional. The ammunition the player brought into this run. Without one the "
+                 + "cannon fires freely, which is what the scene does before a run is set up.")]
+        [SerializeField] private BulletInventory bulletInventory;
+
+        [Tooltip("Optional. Supplies the ammunition definitions the inventory holds counts of.")]
+        [SerializeField] private BulletLoadout bulletLoadout;
+
         [SerializeField] private GridKnockdownCannonProjectile projectilePrefab;
         [SerializeField] private Transform projectileParent;
         [SerializeField] private Transform fireOrigin;
@@ -35,8 +43,22 @@ namespace GameJam.Gameplay.Cannon
             }
         }
 
+        /// <summary>
+        /// Raised when a shot was refused for want of ammunition, so the UI can say so rather
+        /// than leaving the player tapping at a cannon that quietly does nothing.
+        /// </summary>
+        public event System.Action OutOfAmmunition;
+
         public bool TryFireAtScreenPoint(Vector2 screenPosition)
         {
+            // Checked before aiming so an empty cannon refuses immediately, and spent only at the
+            // moment a shot actually leaves: an aim that fails validation must not cost a bullet.
+            if (!HasAmmunition())
+            {
+                OutOfAmmunition?.Invoke();
+                return false;
+            }
+
             if (targetCamera == null)
             {
 #if UNITY_EDITOR
@@ -111,12 +133,52 @@ namespace GameJam.Gameplay.Cannon
             return false;
         }
 
+        /// <summary>Whether a shot can be paid for. True when no inventory is wired at all.</summary>
+        private bool HasAmmunition()
+        {
+            return bulletInventory == null || !bulletInventory.IsEmpty;
+        }
+
+        /// <summary>
+        /// Which kind this shot spends: what the player has selected if they still have any,
+        /// otherwise whatever is left. Running out of the chosen kind should fall through to the
+        /// rest of the run's ammunition rather than stop the run dead.
+        /// </summary>
+        private BulletDefinition ResolveShotAmmunition()
+        {
+            if (bulletInventory == null || bulletLoadout == null)
+            {
+                return null;
+            }
+
+            BulletDefinition selected = bulletLoadout.Selected;
+            if (selected != null && bulletInventory.GetCount(selected.Id) > 0)
+            {
+                return selected;
+            }
+
+            return bulletLoadout.Find(bulletInventory.FindFirstAvailable());
+        }
+
         private void Fire(Vector3 muzzlePosition, Vector3 direction)
         {
             Vector3 spawnPosition = muzzlePosition + direction * muzzleSpawnOffset;
+            BulletDefinition ammunition = ResolveShotAmmunition();
+            if (ammunition != null && !bulletInventory.TrySpend(ammunition.Id))
+            {
+                return;
+            }
+
             GridKnockdownCannonProjectile projectile = projectilePrefab != null
                 ? Instantiate(projectilePrefab, spawnPosition, Quaternion.LookRotation(direction, Vector3.up), projectileParent)
                 : CreateDefaultProjectile(spawnPosition, direction);
+
+            // Told what fired it before launching, since the damage it deals is looked up from
+            // the ammunition and the very first collision can happen on the next physics step.
+            if (ammunition != null)
+            {
+                projectile.SetAmmunition(ammunition, bulletLoadout.GetLevel(ammunition));
+            }
 
             projectile.Launch(direction, projectileSpeed, projectileLifetime);
             if (shotPresenter != null)

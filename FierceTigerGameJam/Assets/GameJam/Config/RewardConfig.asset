@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4956423c8e41d4b1cb7245a0ec7cfe79, type: 3}
+  m_Name: RewardConfig
+  m_EditorClassIdentifier: Assembly-CSharp::GameJam.Config.RewardConfig
+  entries:
+  - rewardId: pass_map_1
+    gold: 100
+  - rewardId: clear_map_1
+    gold: 250
+  - rewardId: pass_map_2
+    gold: 150
+  - rewardId: clear_map_2
+    gold: 350
+  - rewardId: pass_map_3
+    gold: 200
+  - rewardId: clear_map_3
+    gold: 450

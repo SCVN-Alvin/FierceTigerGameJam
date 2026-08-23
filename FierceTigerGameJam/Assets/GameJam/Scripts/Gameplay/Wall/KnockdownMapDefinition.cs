@@ -134,6 +134,28 @@ namespace GameJam.Gameplay.Wall
         /// at rotation 0, and (2,1) and (2,2) at rotation 90.
         /// </summary>
         public float rotation;
+
+        /// <summary>
+        /// Optional. Names the wall this block belongs to. Blocks sharing a wall are built as one
+        /// body whatever their type or layer, which is how a wall spanning materials or depth is
+        /// described. Left out, the block is grouped automatically with its same-type neighbours.
+        /// </summary>
+        public KnockdownMapWallRef wall;
+
+        /// <summary>The wall this block was assigned to, or null when it was not assigned one.</summary>
+        public string WallId => string.IsNullOrEmpty(wall?.wall_id) ? null : wall.wall_id;
+    }
+
+    /// <summary>
+    /// Membership is held on the block rather than in a separate list of groups: there is then
+    /// nothing to keep in sync, and deleting a block cannot leave a group pointing at an id that
+    /// no longer exists. Wall-level metadata, if it is ever needed, belongs in its own top-level
+    /// table keyed by this id.
+    /// </summary>
+    [Serializable]
+    public sealed class KnockdownMapWallRef
+    {
+        public string wall_id;
     }
 
     /// <summary>Cell coordinate inside a layer: x is the column, y is the row upward.</summary>

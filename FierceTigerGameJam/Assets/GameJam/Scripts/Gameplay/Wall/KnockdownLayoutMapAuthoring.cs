@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Rendering;
 using UnityEngine.Serialization;
 
 #if UNITY_EDITOR
@@ -39,8 +40,76 @@ namespace GameJam.Gameplay.Wall
         [SerializeField] private bool createStructureCenter = true;
         [SerializeField] private SpinOnAxis structureSpinner;
 
+        [Header("Wall Grouping")]
+        [Tooltip("Runs of same-type blocks in a layer are built as one wall, which comes apart "
+                 + "into its blocks the moment anything knocks it.")]
+        [SerializeField] private bool groupBlocksIntoWalls = true;
+
+        [Tooltip("Smallest run worth merging. Below this a wall costs more than the blocks it "
+                 + "replaces, and single blocks still need to behave like single blocks.")]
+        [SerializeField] private int minimumWallCells = 3;
+
+        [Tooltip("Draw walls with the wall art from the block database instead of welding the "
+                 + "block meshes. A panel is a couple of hundred vertices whatever the run's "
+                 + "length; welding costs the same vertices as the blocks it replaced.")]
+        [SerializeField] private bool useWallPanels = true;
+
+        [Tooltip("How many times the wall texture repeats across one cell. This is the dial for "
+                 + "how big the bricks look: lower means larger bricks.")]
+        [SerializeField] private float wallTextureTilesPerCell = 1f;
+
+        /// <summary>
+        /// A block that passed validation and reserved its cells, held until every block in the
+        /// map has been placed so runs of the same type can be found before anything is built.
+        /// </summary>
+        private struct PlacedBlock
+        {
+            public KnockdownMapBlock Source;
+            public GameObject Prefab;
+            public string Name;
+            public Vector3 LocalPosition;
+            public Quaternion LocalRotation;
+            public Vector3Int GridPosition;
+            public Vector3Int Footprint;
+            public int Level;
+
+            /// <summary>The wall the map assigned this block to, or null.</summary>
+            public string WallId;
+
+            public bool IsSingleCell => Footprint.x == 1 && Footprint.y == 1 && Footprint.z == 1;
+        }
+
+        /// <summary>
+        /// A set of blocks that will be built as one wall, however they were grouped.
+        /// </summary>
+        private sealed class WallBuild
+        {
+            public string Name;
+
+            /// <summary>The shared block type, or null when the wall mixes materials.</summary>
+            public string Type;
+
+            public readonly List<PlacedBlock> Blocks = new List<PlacedBlock>();
+
+            /// <summary>
+            /// True only for a solid, single-material rectangle inside one layer. A wall panel
+            /// can be stretched over that and nothing else, because a panel has no holes.
+            /// </summary>
+            public bool IsRectangle;
+
+            public Vector3Int GridPosition;
+            public Vector3Int LogicalSize;
+        }
+
         private const float RightAngleDegrees = 90f;
         private const float RotationEpsilon = 0.01f;
+
+        /// <summary>
+        /// How many blocks the last build placed, counting the blocks a wall stands for rather
+        /// than the wall. This is the denominator clear progress is measured against, so it has
+        /// to be the count the player sees, not the count of objects in the scene.
+        /// </summary>
+        public int PlacedBlockCount { get; private set; }
 
         public BlockDatabase BlockDatabase => blockDatabase;
         public TextAsset MapJson => ResolveMapJson();
@@ -112,8 +181,11 @@ namespace GameJam.Gameplay.Wall
 
             Vector3 origin = ResolveGridOrigin(map);
             HashSet<Vector3Int> occupiedCells = new HashSet<Vector3Int>();
-            int spawned = 0;
+            List<PlacedBlock> placed = new List<PlacedBlock>();
 
+            // Placement first, building second. Validation and cell reservation are unchanged and
+            // still run per block; grouping then only ever sees blocks that were actually
+            // accepted, so a rejected block can never end up inside a wall.
             for (int layerIndex = 0; layerIndex < map.layers.Length; layerIndex++)
             {
                 KnockdownMapLayer layer = map.layers[layerIndex];
@@ -124,24 +196,35 @@ namespace GameJam.Gameplay.Wall
 
                 for (int blockIndex = 0; blockIndex < layer.blocks.Length; blockIndex++)
                 {
-                    if (TrySpawnBlock(map.grid, layer, layer.blocks[blockIndex], generatedRoot, origin, occupiedCells))
+                    if (TryPlaceBlock(map.grid, layer, layer.blocks[blockIndex], origin, occupiedCells, out PlacedBlock placement))
                     {
-                        spawned++;
+                        placed.Add(placement);
                     }
                 }
             }
+
+            int spawned = placed.Count;
+            PlacedBlockCount = spawned;
+            int walls = BuildPlacedBlocks(placed, generatedRoot);
 
             if (physicsSetup != null)
             {
                 physicsSetup.PrepareBlocks(generatedRoot);
             }
 
+            // Only now do the walls have a KnockdownBlock to listen to: the physics setup adds it
+            // after everything is built, so the subscription cannot happen while the wall is made.
+            SubscribeWalls(generatedRoot);
+
             if (createStructureCenter)
             {
                 SetupStructureCenter(parent, generatedRoot, map);
             }
 
-            Debug.Log($"Built map \"{map.id}\" with {spawned} block(s) under {generatedRoot.name}.", this);
+            Debug.Log(
+                $"Built map \"{map.id}\" with {spawned} block(s) under {generatedRoot.name}"
+                + (walls > 0 ? $", grouped into {walls} wall(s)." : "."),
+                this);
         }
 
         [ContextMenu("Clear Map")]
@@ -158,6 +241,8 @@ namespace GameJam.Gameplay.Wall
             {
                 ClearGeneratedBlocks(generatedRoot);
             }
+
+            PlacedBlockCount = 0;
         }
 
         /// <summary>
@@ -250,14 +335,16 @@ namespace GameJam.Gameplay.Wall
             return false;
         }
 
-        private bool TrySpawnBlock(
+        private bool TryPlaceBlock(
             KnockdownMapGrid grid,
             KnockdownMapLayer layer,
             KnockdownMapBlock block,
-            Transform generatedRoot,
             Vector3 origin,
-            HashSet<Vector3Int> occupiedCells)
+            HashSet<Vector3Int> occupiedCells,
+            out PlacedBlock placement)
         {
+            placement = default;
+
             if (block?.position == null)
             {
                 Debug.LogWarning($"A block on level {layer.level} has no position and was skipped.", this);
@@ -286,30 +373,565 @@ namespace GameJam.Gameplay.Wall
                 return false;
             }
 
-            GameObject instance = InstantiateBlock(prefab, generatedRoot);
-            if (instance == null)
+            placement = new PlacedBlock
             {
-                return false;
+                Source = block,
+                Prefab = prefab,
+                Name = $"{block.type}_{blockId}",
+                LocalPosition = ResolveLocalPosition(grid, layer.level, block.position, footprint, origin),
+                LocalRotation = ResolveVisualRotation(block.rotation),
+                // The cascade reads (column, height, depth), which is exactly the cell address.
+                GridPosition = new Vector3Int(block.position.x, block.position.y, layer.level),
+                Footprint = footprint,
+                Level = layer.level,
+                WallId = block.WallId,
+            };
+
+            return true;
+        }
+
+        /// <summary>
+        /// Turns accepted placements into objects. Blocks that name a wall are built as that
+        /// wall whatever their type or layer; everything left over falls back to finding runs of
+        /// the same type inside a single layer.
+        /// </summary>
+        /// <returns>How many walls were built.</returns>
+        private int BuildPlacedBlocks(List<PlacedBlock> placed, Transform generatedRoot)
+        {
+            if (!groupBlocksIntoWalls)
+            {
+                for (int i = 0; i < placed.Count; i++)
+                {
+                    SpawnPlacedBlock(placed[i], generatedRoot);
+                }
+
+                return 0;
             }
 
-            instance.name = $"{block.type}_{blockId}";
-            instance.transform.SetLocalPositionAndRotation(
-                ResolveLocalPosition(grid, layer.level, block.position, footprint, origin),
-                ResolveVisualRotation(block.rotation));
+            List<WallBuild> walls = new List<WallBuild>();
+            List<PlacedBlock> loose = new List<PlacedBlock>();
+            List<PlacedBlock> unassigned = new List<PlacedBlock>();
+
+            CollectNamedWalls(placed, walls, loose, unassigned);
+            CollectDetectedWalls(unassigned, walls, loose);
+
+            for (int i = 0; i < walls.Count; i++)
+            {
+                if (!TryBuildWall(walls[i], generatedRoot))
+                {
+                    loose.AddRange(walls[i].Blocks);
+                    walls.RemoveAt(i--);
+                }
+            }
+
+            for (int i = 0; i < loose.Count; i++)
+            {
+                SpawnPlacedBlock(loose[i], generatedRoot);
+            }
+
+            return walls.Count;
+        }
+
+        /// <summary>
+        /// Walls the map named explicitly. An author who put a wall id on a block meant it, so
+        /// these are taken whatever their types, layers or shape - the only rejection is a wall
+        /// with a single block in it, which is just a block.
+        /// </summary>
+        private void CollectNamedWalls(
+            List<PlacedBlock> placed,
+            List<WallBuild> walls,
+            List<PlacedBlock> loose,
+            List<PlacedBlock> unassigned)
+        {
+            Dictionary<string, List<PlacedBlock>> named = new Dictionary<string, List<PlacedBlock>>(StringComparer.Ordinal);
+            List<string> order = new List<string>();
+
+            for (int i = 0; i < placed.Count; i++)
+            {
+                string wallId = placed[i].WallId;
+                if (string.IsNullOrEmpty(wallId))
+                {
+                    unassigned.Add(placed[i]);
+                    continue;
+                }
+
+                if (!named.TryGetValue(wallId, out List<PlacedBlock> members))
+                {
+                    members = new List<PlacedBlock>();
+                    named[wallId] = members;
+                    order.Add(wallId);
+                }
+
+                members.Add(placed[i]);
+            }
+
+            for (int i = 0; i < order.Count; i++)
+            {
+                List<PlacedBlock> members = named[order[i]];
+                if (members.Count < 2)
+                {
+                    Debug.LogWarning(
+                        $"Wall \"{order[i]}\" has only {members.Count} block(s), so it is built as a plain block.",
+                        this);
+                    loose.AddRange(members);
+                    continue;
+                }
+
+                walls.Add(CreateWallBuild($"Wall_{order[i]}", members));
+            }
+        }
+
+        /// <summary>
+        /// The automatic fallback for blocks with no wall id: runs of the same type inside one
+        /// layer, which is all that can be inferred safely without the map saying so.
+        /// </summary>
+        private void CollectDetectedWalls(List<PlacedBlock> unassigned, List<WallBuild> walls, List<PlacedBlock> loose)
+        {
+            // Only single-cell blocks group. A 2x1 already covers more than one cell, and folding
+            // one into a run would lose the footprint the cascade reads.
+            Dictionary<(int level, string type), Dictionary<Vector2Int, PlacedBlock>> groups =
+                new Dictionary<(int, string), Dictionary<Vector2Int, PlacedBlock>>();
+
+            for (int i = 0; i < unassigned.Count; i++)
+            {
+                PlacedBlock candidate = unassigned[i];
+                if (!candidate.IsSingleCell)
+                {
+                    loose.Add(candidate);
+                    continue;
+                }
+
+                var key = (candidate.Level, candidate.Source.type);
+                if (!groups.TryGetValue(key, out Dictionary<Vector2Int, PlacedBlock> cells))
+                {
+                    cells = new Dictionary<Vector2Int, PlacedBlock>();
+                    groups[key] = cells;
+                }
+
+                cells[new Vector2Int(candidate.GridPosition.x, candidate.GridPosition.y)] = candidate;
+            }
+
+            foreach (KeyValuePair<(int level, string type), Dictionary<Vector2Int, PlacedBlock>> group in groups)
+            {
+                Dictionary<Vector2Int, string> typeByCell = new Dictionary<Vector2Int, string>(group.Value.Count);
+                foreach (KeyValuePair<Vector2Int, PlacedBlock> cell in group.Value)
+                {
+                    typeByCell[cell.Key] = group.Key.type;
+                }
+
+                List<WallGrouping.WallRect> rects = WallGrouping.Find(typeByCell);
+                for (int i = 0; i < rects.Count; i++)
+                {
+                    WallGrouping.WallRect rect = rects[i];
+                    List<PlacedBlock> members = new List<PlacedBlock>(rect.Cells.Count);
+                    for (int c = 0; c < rect.Cells.Count; c++)
+                    {
+                        members.Add(group.Value[rect.Cells[c]]);
+                    }
+
+                    if (rect.Area < minimumWallCells)
+                    {
+                        loose.AddRange(members);
+                        continue;
+                    }
+
+                    WallBuild build = CreateWallBuild(
+                        $"Wall_{rect.Type}_{rect.Width}x{rect.Height}_L{group.Key.level}",
+                        members);
+                    walls.Add(build);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Works out what a set of blocks amounts to: the cells it spans, whether it is one
+        /// material, and whether it is a solid rectangle in a single layer. Only that last shape
+        /// can have a wall panel stretched over it; anything else is welded from its blocks, so a
+        /// wall with a hole in it keeps the hole.
+        /// </summary>
+        private static WallBuild CreateWallBuild(string name, List<PlacedBlock> members)
+        {
+            WallBuild build = new WallBuild { Name = name };
+            build.Blocks.AddRange(members);
+
+            Vector3Int min = members[0].GridPosition;
+            Vector3Int max = min + members[0].Footprint - Vector3Int.one;
+            string type = members[0].Source.type;
+            bool singleType = true;
+            bool singleCells = members[0].IsSingleCell;
+
+            for (int i = 1; i < members.Count; i++)
+            {
+                Vector3Int position = members[i].GridPosition;
+                min = Vector3Int.Min(min, position);
+                max = Vector3Int.Max(max, position + members[i].Footprint - Vector3Int.one);
+
+                singleType &= string.Equals(members[i].Source.type, type, StringComparison.Ordinal);
+                singleCells &= members[i].IsSingleCell;
+            }
+
+            Vector3Int size = max - min + Vector3Int.one;
+            build.GridPosition = min;
+            build.LogicalSize = size;
+            build.Type = singleType ? type : null;
+            build.IsRectangle = singleType && singleCells && size.z == 1 && members.Count == size.x * size.y;
+            return build;
+        }
+
+        /// <summary>
+        /// Hands every wall the body it should watch. A wall comes apart when it is knocked, and
+        /// what does the knocking is the KnockdownBlock the physics setup just added to it.
+        /// </summary>
+        private static void SubscribeWalls(Transform generatedRoot)
+        {
+            BreakableWall[] walls = generatedRoot.GetComponentsInChildren<BreakableWall>(true);
+            for (int i = 0; i < walls.Length; i++)
+            {
+                walls[i].Listen(walls[i].GetComponent<KnockdownBlock>());
+            }
+        }
+
+        private void SpawnPlacedBlock(PlacedBlock placement, Transform generatedRoot)
+        {
+            GameObject instance = InstantiateBlock(placement.Prefab, generatedRoot);
+            if (instance == null)
+            {
+                return;
+            }
+
+            instance.name = placement.Name;
+            instance.transform.SetLocalPositionAndRotation(placement.LocalPosition, placement.LocalRotation);
             instance.transform.localScale = Vector3.one;
 
             if (instance.TryGetComponent(out KnockdownBlockAuthoring authoring))
             {
-                // The cascade reads (column, height, depth), which is exactly the cell address.
-                authoring.SetGridPosition(new Vector3Int(block.position.x, block.position.y, layer.level));
-                authoring.SetLogicalSize(footprint);
+                authoring.SetGridPosition(placement.GridPosition);
+                authoring.SetLogicalSize(placement.Footprint);
             }
             else
             {
-                Debug.LogWarning($"Prefab for type \"{block.type}\" has no {nameof(KnockdownBlockAuthoring)}, so block {blockId} will not cascade.", this);
+                Debug.LogWarning(
+                    $"Prefab for type \"{placement.Source.type}\" has no {nameof(KnockdownBlockAuthoring)}, "
+                    + $"so block {placement.Name} will not cascade.",
+                    this);
+            }
+        }
+
+        /// <summary>
+        /// Builds one wall: its blocks drawn as a single mesh, with a single collider and a
+        /// single body, plus the manifest it needs to put those blocks back when it is knocked.
+        /// </summary>
+        private bool TryBuildWall(WallBuild build, Transform generatedRoot)
+        {
+            ResolveWallBounds(build.Blocks, out Vector3 center, out Vector3 span);
+
+            List<BreakableWall.Cell> manifest = new List<BreakableWall.Cell>(build.Blocks.Count);
+            for (int i = 0; i < build.Blocks.Count; i++)
+            {
+                PlacedBlock cell = build.Blocks[i];
+                manifest.Add(new BreakableWall.Cell
+                {
+                    Prefab = cell.Prefab,
+                    Name = cell.Name,
+                    PositionInWall = cell.LocalPosition - center,
+                    RotationInWall = cell.LocalRotation,
+                    GridPosition = cell.GridPosition,
+                    LogicalSize = cell.Footprint,
+                });
             }
 
+            Mesh wallMesh = null;
+            Material[] materials = null;
+
+            if (build.IsRectangle
+                && useWallPanels
+                && blockDatabase != null
+                && blockDatabase.TryGetWallPanel(build.Type, out GameObject panel))
+            {
+                wallMesh = BuildPanelMesh(panel, build, span, out Material panelMaterial);
+                if (wallMesh != null)
+                {
+                    materials = new[] { panelMaterial };
+                }
+            }
+
+            if (wallMesh == null)
+            {
+                wallMesh = BuildWeldedMesh(build.Blocks, center, out materials);
+            }
+
+            if (wallMesh == null)
+            {
+                return false;
+            }
+
+            GameObject wall = new GameObject(build.Name);
+            wall.transform.SetParent(generatedRoot, false);
+            wall.transform.SetLocalPositionAndRotation(center, Quaternion.identity);
+            wall.transform.localScale = Vector3.one;
+
+            wall.AddComponent<MeshFilter>().sharedMesh = wallMesh;
+            wall.AddComponent<MeshRenderer>().sharedMaterials = materials;
+
+            BoxCollider wallCollider = wall.AddComponent<BoxCollider>();
+            wallCollider.center = wallMesh.bounds.center;
+            wallCollider.size = wallMesh.bounds.size;
+
+            KnockdownBlockAuthoring wallAuthoring = wall.AddComponent<KnockdownBlockAuthoring>();
+            if (build.Blocks[0].Prefab != null
+                && build.Blocks[0].Prefab.TryGetComponent(out KnockdownBlockAuthoring source))
+            {
+                // The wall behaves like the material it is made of, but weighs what all of its
+                // blocks weigh together.
+                wallAuthoring.CopyTuningFrom(source, source.Mass * build.Blocks.Count);
+            }
+
+            wallAuthoring.SetGridPosition(build.GridPosition);
+            wallAuthoring.SetLogicalSize(build.LogicalSize);
+
+            // Durability is summed from the blocks the wall stands for, so a long wall is harder
+            // to bring down than a short one and much harder than a lone block.
+            ResolveWallDurability(build.Blocks, out string wallMaterialId, out float wallHitPoints);
+            wall.AddComponent<BreakableWall>().Initialize(manifest, physicsSetup, wallMaterialId, wallHitPoints);
             return true;
+        }
+
+        /// <summary>
+        /// What the wall is made of and how much punishment it takes, read off the blocks it
+        /// replaces. A wall of mixed materials answers to the first block in it, since a shot has
+        /// to hit something definite.
+        /// </summary>
+        private static void ResolveWallDurability(List<PlacedBlock> blocks, out string materialId, out float hitPoints)
+        {
+            materialId = null;
+            hitPoints = 0f;
+
+            for (int i = 0; i < blocks.Count; i++)
+            {
+                if (blocks[i].Prefab == null || !blocks[i].Prefab.TryGetComponent(out BreakableBlock breakable))
+                {
+                    continue;
+                }
+
+                hitPoints += breakable.MaxHitPoints;
+                if (string.IsNullOrEmpty(materialId))
+                {
+                    materialId = breakable.MaterialId;
+                }
+            }
+
+            if (hitPoints <= 0f)
+            {
+                hitPoints = blocks.Count;
+            }
+        }
+
+        /// <summary>
+        /// Stretches the one-cell wall panel across the run. The stretch is baked into a copy of
+        /// the mesh rather than applied as a transform scale, so the panel's normals stay correct
+        /// under a very non-uniform stretch, and the UVs are scaled with it so the bricks keep
+        /// their size instead of smearing along the wall.
+        /// </summary>
+        private Mesh BuildPanelMesh(GameObject panel, WallBuild build, Vector3 cellSpan, out Material material)
+        {
+            material = null;
+
+            MeshFilter panelFilter = panel.GetComponentInChildren<MeshFilter>(true);
+            if (panelFilter == null || panelFilter.sharedMesh == null)
+            {
+                return null;
+            }
+
+            if (panelFilter.TryGetComponent(out MeshRenderer panelRenderer))
+            {
+                material = panelRenderer.sharedMaterial;
+            }
+
+            Mesh source = panelFilter.sharedMesh;
+            Vector3 panelSize = source.bounds.size;
+            Vector3 stretch = new Vector3(
+                panelSize.x > 0.0001f ? cellSpan.x / panelSize.x : 1f,
+                panelSize.y > 0.0001f ? cellSpan.y / panelSize.y : 1f,
+                1f);
+
+            Mesh wallMesh = Instantiate(source);
+            wallMesh.name = $"{build.Name}_Mesh";
+
+            Vector3[] vertices = wallMesh.vertices;
+            for (int i = 0; i < vertices.Length; i++)
+            {
+                vertices[i] = Vector3.Scale(vertices[i], stretch);
+            }
+
+            Vector3[] normals = wallMesh.normals;
+            Vector3 normalScale = new Vector3(1f / stretch.x, 1f / stretch.y, 1f / stretch.z);
+            for (int i = 0; i < normals.Length; i++)
+            {
+                normals[i] = Vector3.Scale(normals[i], normalScale).normalized;
+            }
+
+            // Tiled by how far the panel was stretched, not by the cell count, so a map whose
+            // cells are not the same size as its blocks still gets even brick sizes.
+            Vector2 tiling = new Vector2(
+                stretch.x * Mathf.Max(0.001f, wallTextureTilesPerCell),
+                stretch.y * Mathf.Max(0.001f, wallTextureTilesPerCell));
+
+            Vector2[] uv = wallMesh.uv;
+            for (int i = 0; i < uv.Length; i++)
+            {
+                uv[i] = Vector2.Scale(uv[i], tiling);
+            }
+
+            wallMesh.vertices = vertices;
+            if (normals.Length > 0)
+            {
+                wallMesh.normals = normals;
+            }
+
+            if (uv.Length > 0)
+            {
+                wallMesh.uv = uv;
+            }
+
+            wallMesh.RecalculateBounds();
+            return wallMesh;
+        }
+
+        /// <summary>
+        /// The fallback when a wall cannot use a panel - it mixes materials, spans layers, or is
+        /// not a solid rectangle: the block meshes welded where they stand. Costs the same
+        /// vertices as the blocks it replaces, but still collapses them into one renderer and one
+        /// body, and keeps the wall's real shape.
+        /// </summary>
+        private static Mesh BuildWeldedMesh(List<PlacedBlock> blocks, Vector3 center, out Material[] materials)
+        {
+            materials = null;
+
+            // Grouped by material so a wall of mixed types becomes one submesh per material
+            // rather than one per block.
+            List<Material> materialOrder = new List<Material>();
+            Dictionary<Material, List<CombineInstance>> byMaterial = new Dictionary<Material, List<CombineInstance>>();
+
+            for (int i = 0; i < blocks.Count; i++)
+            {
+                PlacedBlock cell = blocks[i];
+                MeshFilter visual = cell.Prefab != null ? cell.Prefab.GetComponentInChildren<MeshFilter>(true) : null;
+                if (visual == null || visual.sharedMesh == null)
+                {
+                    return null;
+                }
+
+                Material material = visual.TryGetComponent(out MeshRenderer visualRenderer)
+                    ? visualRenderer.sharedMaterial
+                    : null;
+
+                if (!byMaterial.TryGetValue(material, out List<CombineInstance> instances))
+                {
+                    instances = new List<CombineInstance>();
+                    byMaterial[material] = instances;
+                    materialOrder.Add(material);
+                }
+
+                Matrix4x4 cellMatrix = Matrix4x4.TRS(cell.LocalPosition - center, cell.LocalRotation, Vector3.one);
+                Matrix4x4 visualMatrix = cell.Prefab.transform.worldToLocalMatrix * visual.transform.localToWorldMatrix;
+                Matrix4x4 combined = cellMatrix * visualMatrix;
+
+                for (int subMesh = 0; subMesh < visual.sharedMesh.subMeshCount; subMesh++)
+                {
+                    instances.Add(new CombineInstance
+                    {
+                        mesh = visual.sharedMesh,
+                        subMeshIndex = subMesh,
+                        transform = combined,
+                    });
+                }
+            }
+
+            if (materialOrder.Count == 0)
+            {
+                return null;
+            }
+
+            materials = materialOrder.ToArray();
+
+            if (materialOrder.Count == 1)
+            {
+                return CombineToMesh(byMaterial[materialOrder[0]], true, true);
+            }
+
+            // Two passes: each material's blocks welded into one mesh, then those welded together
+            // without merging, which leaves exactly one submesh per material.
+            List<CombineInstance> parts = new List<CombineInstance>(materialOrder.Count);
+            List<Mesh> temporaries = new List<Mesh>(materialOrder.Count);
+            for (int i = 0; i < materialOrder.Count; i++)
+            {
+                Mesh part = CombineToMesh(byMaterial[materialOrder[i]], true, true);
+                temporaries.Add(part);
+                parts.Add(new CombineInstance { mesh = part, subMeshIndex = 0 });
+            }
+
+            Mesh wallMesh = CombineToMesh(parts, false, false);
+
+            for (int i = 0; i < temporaries.Count; i++)
+            {
+                DestroyMesh(temporaries[i]);
+            }
+
+            return wallMesh;
+        }
+
+        private static Mesh CombineToMesh(List<CombineInstance> instances, bool mergeSubMeshes, bool useMatrices)
+        {
+            Mesh mesh = new Mesh { indexFormat = IndexFormat.UInt32 };
+            mesh.CombineMeshes(instances.ToArray(), mergeSubMeshes, useMatrices);
+            mesh.RecalculateBounds();
+            return mesh;
+        }
+
+        private static void DestroyMesh(Mesh mesh)
+        {
+            if (mesh == null)
+            {
+                return;
+            }
+
+            if (Application.isPlaying)
+            {
+                Destroy(mesh);
+            }
+            else
+            {
+                DestroyImmediate(mesh);
+            }
+        }
+
+        /// <summary>
+        /// Middle of the blocks the wall covers, and how far it has to reach. The span is measured
+        /// from the blocks themselves plus one block, rather than assumed from the cell count, so
+        /// it stays right when a map's cell size and its block size disagree.
+        /// </summary>
+        private static void ResolveWallBounds(List<PlacedBlock> blocks, out Vector3 center, out Vector3 span)
+        {
+            Vector3 min = blocks[0].LocalPosition;
+            Vector3 max = min;
+            for (int i = 1; i < blocks.Count; i++)
+            {
+                min = Vector3.Min(min, blocks[i].LocalPosition);
+                max = Vector3.Max(max, blocks[i].LocalPosition);
+            }
+
+            center = (min + max) * 0.5f;
+            span = (max - min) + ResolveBlockSize(blocks[0].Prefab);
+        }
+
+        private static Vector3 ResolveBlockSize(GameObject prefab)
+        {
+            if (prefab != null && prefab.TryGetComponent(out BoxCollider blockCollider))
+            {
+                return blockCollider.size;
+            }
+
+            return Vector3.one * 0.25f;
         }
 
         /// <summary>
