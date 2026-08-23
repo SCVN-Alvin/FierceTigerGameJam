@@ -59,9 +59,9 @@ namespace GameJam.EditorTools
 
             GameObject ammoPick = BuildAmmoPick(canvas.transform, inventory, loadout, out Button startButton);
             GameObject hud = BuildHud(canvas.transform, run, tracker, inventory, loadout);
-            GameObject result = BuildResult(canvas.transform, flow, out Button retryButton);
+            GameObject result = BuildResult(canvas.transform, flow, out Button retryButton, out Button resultMainMenuButton);
 
-            WireFlow(flow, run, ammoPick, hud, result, startButton, retryButton);
+            WireFlow(flow, run, ammoPick, hud, result, startButton, retryButton, resultMainMenuButton);
 
             // The sprite chrome comes last: it fills the readouts the plain screens left empty,
             // and it needs the roots above to already exist.
@@ -119,7 +119,11 @@ namespace GameJam.EditorTools
             return root.gameObject;
         }
 
-        private static GameObject BuildResult(Transform canvas, GameFlowController flow, out Button retryButton)
+        private static GameObject BuildResult(
+            Transform canvas,
+            GameFlowController flow,
+            out Button retryButton,
+            out Button mainMenuButton)
         {
             RectTransform root = EnsurePanel(ResultName, canvas);
 
@@ -134,7 +138,12 @@ namespace GameJam.EditorTools
             TMP_Text reward = EnsureLabel("RewardLabel", rewardRoot, "+0", 48, TextAlignmentOptions.Center,
                 Vector2.zero, Vector2.one);
 
-            retryButton = EnsureButton("RetryButton", root, "RETRY", new Vector2(0.35f, 0.14f), new Vector2(0.65f, 0.24f));
+            // Side by side: the two ways out of a result are equally likely, so neither is
+            // buried under the other.
+            mainMenuButton = EnsureButton("MainMenuButton", root, "MAIN MENU",
+                new Vector2(0.10f, 0.13f), new Vector2(0.47f, 0.23f));
+            retryButton = EnsureButton("RetryButton", root, "RETRY",
+                new Vector2(0.53f, 0.13f), new Vector2(0.90f, 0.23f));
 
             RunResultView view = Ensure<RunResultView>(root.gameObject);
             SerializedObject serialized = new SerializedObject(view);
@@ -156,7 +165,8 @@ namespace GameJam.EditorTools
             GameObject hud,
             GameObject result,
             Button startButton,
-            Button retryButton)
+            Button retryButton,
+            Button resultMainMenuButton)
         {
             if (flow == null)
             {
@@ -171,6 +181,7 @@ namespace GameJam.EditorTools
             SetIfEmpty(serialized, "resultRoot", result);
             SetIfEmpty(serialized, "startRunButton", startButton);
             SetIfEmpty(serialized, "retryButton", retryButton);
+            SetIfEmpty(serialized, "resultContinueButton", resultMainMenuButton);
             serialized.ApplyModifiedPropertiesWithoutUndo();
         }
 
