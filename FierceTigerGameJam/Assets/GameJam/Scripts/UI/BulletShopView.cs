@@ -98,7 +98,7 @@ namespace GameJam.UI
             }
 
             Transform parent = container != null ? container : transform;
-            EnsureLayout(parent);
+            // EnsureLayout(parent);
 
             IReadOnlyList<BulletDefinition> bullets = catalogue.Bullets;
             if (bullets == null)
