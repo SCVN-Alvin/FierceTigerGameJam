@@ -53,6 +53,10 @@ namespace GameJam.Gameplay.Flow
         [Tooltip("Give up waiting after this, so a block rolling forever cannot hang the run.")]
         [SerializeField] private float maximumSettleSeconds = 8f;
 
+        [Tooltip("Pause after the last block goes before the result appears. Long enough to see "
+                 + "the structure finish falling, short enough not to feel like a hang.")]
+        [SerializeField] private float fullClearSettleSeconds = 0.6f;
+
         /// <summary>Raised with the run's result once it has been judged and paid.</summary>
         public event Action<RunResult> Finished;
 
@@ -86,6 +90,11 @@ namespace GameJam.Gameplay.Flow
             {
                 bulletInventory.Emptied += HandleInventoryEmptied;
             }
+
+            if (progressTracker != null)
+            {
+                progressTracker.ProgressChanged += HandleProgressChanged;
+            }
         }
 
         private void OnDisable()
@@ -94,6 +103,40 @@ namespace GameJam.Gameplay.Flow
             {
                 bulletInventory.Emptied -= HandleInventoryEmptied;
             }
+
+            if (progressTracker != null)
+            {
+                progressTracker.ProgressChanged -= HandleProgressChanged;
+            }
+        }
+
+        /// <summary>
+        /// Ends the run the moment there is nothing left standing. Waiting for the player to
+        /// spend the rest of their ammunition on rubble is not a decision, it is a chore, and it
+        /// buries the best outcome in the game under a minute of firing at nothing.
+        /// </summary>
+        private void HandleProgressChanged(float clearPercent)
+        {
+            if (State != RunState.Playing || clearPercent < 1f)
+            {
+                return;
+            }
+
+            StopSettling();
+            settleRoutine = StartCoroutine(FinishAfterFullClear());
+        }
+
+        /// <summary>
+        /// A short beat rather than the usual settle. Nothing is left to fall, so there is nothing
+        /// to wait for, but cutting to the result on the same frame as the last block hides the
+        /// moment the player just earned.
+        /// </summary>
+        private IEnumerator FinishAfterFullClear()
+        {
+            SetState(RunState.Settling);
+            yield return new WaitForSeconds(Mathf.Max(0f, fullClearSettleSeconds));
+            settleRoutine = null;
+            Judge();
         }
 
         /// <summary>

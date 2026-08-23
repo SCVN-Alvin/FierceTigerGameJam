@@ -7,17 +7,20 @@ using UnityEngine.UI;
 namespace GameJam.Gameplay.Flow
 {
     /// <summary>
-    /// Drives the top level loop: choose a map, choose what ammunition to bring, play the run,
-    /// then see what it came to.
+    /// Drives the whole loop: the menu, the shops, choosing a map, choosing ammunition, the run,
+    /// and the result that sends the player back to the menu.
     ///
-    /// The controller only decides which screen is up and when the run starts and stops. It talks
-    /// to the screens through plain methods that buttons call, rather than holding references to
-    /// the view types, so a screen can be redesigned or replaced without touching the flow.
+    /// The controller decides which screen is up and nothing else. It talks to screens through
+    /// buttons it is handed and roots it switches on and off, never by referencing the view types,
+    /// so a screen can be redesigned or replaced without the flow knowing anything about it.
     /// </summary>
     public sealed class GameFlowController : MonoBehaviour
     {
         public enum GameState
         {
+            MainMenu,
+            IapShop,
+            BulletShop,
             MapSelection,
 
             /// <summary>Choosing what ammunition to take into the chosen map.</summary>
@@ -34,37 +37,48 @@ namespace GameJam.Gameplay.Flow
         [SerializeField] private LevelRunController runController;
 
         [Header("Screens")]
-        [Tooltip("Root holding the map list UI.")]
+        [SerializeField] private GameObject mainMenuRoot;
         [SerializeField] private GameObject mapSelectionRoot;
-
-        [Tooltip("Root holding the ammunition pick UI.")]
         [SerializeField] private GameObject ammoPickRoot;
+        [SerializeField] private GameObject iapShopRoot;
+        [SerializeField] private GameObject bulletShopRoot;
 
-        [Tooltip("Root holding the slingshot, the structure and anything else only alive in play.")]
+        [Tooltip("The slingshot, the structure and anything else only alive in play.")]
         [SerializeField] private GameObject gameplayRoot;
 
-        [Tooltip("Root holding the in-run readouts. Shown with gameplay, hidden on the result.")]
+        [Tooltip("In-run readouts. Shown with gameplay, hidden once the result is up.")]
         [SerializeField] private GameObject hudRoot;
 
-        [Tooltip("Root holding the win and lose panel.")]
         [SerializeField] private GameObject resultRoot;
 
+        [Tooltip("The bottom tab bar. Shown on the menu and the shops, since its middle button is "
+                 + "what returns from a shop; hidden once the player is on their way into a run.")]
+        [SerializeField] private GameObject bottomBarRoot;
+
+        [Tooltip("Settings overlay. A modal rather than a screen: it opens over whatever is up "
+                 + "and closing it returns there, so it does not disturb the flow's state.")]
+        [SerializeField] private GameObject settingsRoot;
+
         [Header("Buttons")]
-        [Tooltip("Optional. Leaves whatever screen is up and returns to the map list.")]
+        [SerializeField] private Button playButton;
+        [SerializeField] private Button iapShopButton;
+        [SerializeField] private Button homeButton;
+        [SerializeField] private Button bulletShopButton;
+        [SerializeField] private Button startRunButton;
+        [SerializeField] private Button resultContinueButton;
         [SerializeField] private Button backButton;
 
-        [Tooltip("Optional. Commits the ammunition pick and starts the run.")]
-        [SerializeField] private Button startRunButton;
+        [Header("Settings Buttons")]
+        [SerializeField] private Button openSettingsButton;
+        [SerializeField] private Button openSettingsInRunButton;
+        [SerializeField] private Button closeSettingsButton;
 
-        [Tooltip("Optional. Plays the same map again from the ammunition pick.")]
-        [SerializeField] private Button retryButton;
+        [Tooltip("Abandons the run from the settings overlay. Hidden outside a run, where it would "
+                 + "only lead to the screen the player is already on.")]
+        [SerializeField] private Button settingsMainMenuButton;
 
         [Header("Reset On Entering A Map")]
-        [Tooltip("Optional. Put back to its rest rotation so a new map is not aimed at with the "
-                 + "angle left over from the last one. Found under the gameplay root if empty.")]
         [SerializeField] private CannonAimController aimController;
-
-        [Tooltip("Optional. Straightened out with the aim. Taken from the map builder if empty.")]
         [SerializeField] private SpinOnAxis structureSpinner;
 
         public event Action<GameState> StateChanged;
@@ -72,12 +86,11 @@ namespace GameJam.Gameplay.Flow
         /// <summary>Raised with the finished run, for a result screen to draw.</summary>
         public event Action<LevelRunController.RunResult> RunFinished;
 
-        public GameState State { get; private set; } = GameState.MapSelection;
+        public GameState State { get; private set; } = GameState.MainMenu;
 
-        /// <summary>
-        /// Cached separately from the serialized field so the authored value is left alone: what
-        /// gets hidden may need to be an ancestor of it. See <see cref="ResolveSelectionRoot"/>.
-        /// </summary>
+        /// <summary>True while a structure is up, so settings can offer a way out of it.</summary>
+        public bool IsInRun => State == GameState.Playing || State == GameState.Result;
+
         private GameObject selectionRoot;
 
         private void Awake()
@@ -107,9 +120,17 @@ namespace GameJam.Gameplay.Flow
                 runController.Finished += HandleRunFinished;
             }
 
-            Wire(backButton, ReturnToMapSelection);
+            Wire(playButton, EnterMapSelection);
+            Wire(iapShopButton, EnterIapShop);
+            Wire(homeButton, ReturnToMainMenu);
+            Wire(bulletShopButton, EnterBulletShop);
             Wire(startRunButton, ConfirmAmmoPick);
-            Wire(retryButton, RetryMap);
+            Wire(resultContinueButton, ReturnToMainMenu);
+            Wire(backButton, GoBack);
+            Wire(openSettingsButton, OpenSettings);
+            Wire(openSettingsInRunButton, OpenSettings);
+            Wire(closeSettingsButton, CloseSettings);
+            Wire(settingsMainMenuButton, AbandonRun);
         }
 
         private void OnDisable()
@@ -124,20 +145,58 @@ namespace GameJam.Gameplay.Flow
                 runController.Finished -= HandleRunFinished;
             }
 
-            Unwire(backButton, ReturnToMapSelection);
+            Unwire(playButton, EnterMapSelection);
+            Unwire(iapShopButton, EnterIapShop);
+            Unwire(homeButton, ReturnToMainMenu);
+            Unwire(bulletShopButton, EnterBulletShop);
             Unwire(startRunButton, ConfirmAmmoPick);
-            Unwire(retryButton, RetryMap);
+            Unwire(resultContinueButton, ReturnToMainMenu);
+            Unwire(backButton, GoBack);
+            Unwire(openSettingsButton, OpenSettings);
+            Unwire(openSettingsInRunButton, OpenSettings);
+            Unwire(closeSettingsButton, CloseSettings);
+            Unwire(settingsMainMenuButton, AbandonRun);
         }
 
         private void Start()
         {
-            ReturnToMapSelection();
+            ReturnToMainMenu();
+        }
+
+        [ContextMenu("Main Menu")]
+        public void ReturnToMainMenu()
+        {
+            TearDownRun();
+            Enter(GameState.MainMenu);
+        }
+
+        [ContextMenu("Map Selection")]
+        public void EnterMapSelection()
+        {
+            // Cleared on the way in, not on the way out: re-picking the map just played has to
+            // register as a change, or the flow would sit still on it.
+            if (mapSelection != null)
+            {
+                mapSelection.Clear();
+            }
+
+            Enter(GameState.MapSelection);
+        }
+
+        public void EnterIapShop()
+        {
+            Enter(GameState.IapShop);
+        }
+
+        public void EnterBulletShop()
+        {
+            Enter(GameState.BulletShop);
         }
 
         /// <summary>
-        /// Choosing a map no longer drops straight into play: the player picks their ammunition
-        /// first, and the structure is not built until they commit, so the pick screen is not
-        /// sitting on top of a live physics scene.
+        /// Choosing a map does not drop straight into play: the player picks ammunition first, and
+        /// the structure is not built until they commit, so the pick screen is never sitting on
+        /// top of a live physics scene.
         /// </summary>
         private void HandleMapSelected(MapInfo map)
         {
@@ -147,32 +206,7 @@ namespace GameJam.Gameplay.Flow
             }
         }
 
-        [ContextMenu("Enter Map Selection")]
-        public void ReturnToMapSelection()
-        {
-            if (runController != null)
-            {
-                runController.CancelRun();
-            }
-
-            if (mapBuilder != null)
-            {
-                mapBuilder.ClearMap();
-            }
-
-            ShowOnly(GameState.MapSelection);
-
-            // Silent, so leaving does not immediately bounce back in, and so re-picking the same
-            // map still registers as a change.
-            if (mapSelection != null)
-            {
-                mapSelection.Clear();
-            }
-
-            SetState(GameState.MapSelection);
-        }
-
-        [ContextMenu("Enter Ammo Pick")]
+        [ContextMenu("Ammo Pick")]
         public void EnterAmmoPick()
         {
             if (mapBuilder != null)
@@ -180,26 +214,24 @@ namespace GameJam.Gameplay.Flow
                 mapBuilder.ClearMap();
             }
 
-            // Opened before the screen is shown so the budget and the pass bar are already read
-            // from the map by the time the pick UI draws itself.
+            // Opened before the screen shows, so the budget and the pass bar are already read from
+            // the map by the time the pick UI draws itself.
             if (runController != null)
             {
                 runController.BeginPick();
             }
 
-            ShowOnly(GameState.AmmoPick);
-            SetState(GameState.AmmoPick);
+            Enter(GameState.AmmoPick);
         }
 
         /// <summary>Commits the pick, builds the structure and starts the run.</summary>
         [ContextMenu("Start Run")]
         public void ConfirmAmmoPick()
         {
-            // Activated before building: the builder cannot spawn into a hierarchy that is off.
-            ShowOnly(GameState.Playing);
+            Enter(GameState.Playing);
 
-            // Before the build, so the map is laid out around a root that is back at its rest
-            // pose rather than wherever the last map was dragged to.
+            // Before the build, so the map is laid out around a root back at its rest pose rather
+            // than wherever the last one was dragged to.
             ResetPlayfield();
 
             if (mapBuilder != null)
@@ -213,39 +245,114 @@ namespace GameJam.Gameplay.Flow
             {
                 runController.BeginRun();
             }
-
-            SetState(GameState.Playing);
         }
 
-        /// <summary>Another go at the same map, back at the ammunition pick.</summary>
-        [ContextMenu("Retry Map")]
-        public void RetryMap()
+        /// <summary>Leaves a run early from the settings overlay.</summary>
+        public void AbandonRun()
         {
-            EnterAmmoPick();
+            CloseSettings();
+            ReturnToMainMenu();
+        }
+
+        /// <summary>
+        /// One step back from wherever the player is. A single back button that knows the flow
+        /// beats one per screen that all do slightly different things.
+        /// </summary>
+        public void GoBack()
+        {
+            switch (State)
+            {
+                case GameState.AmmoPick:
+                    EnterMapSelection();
+                    break;
+                case GameState.MapSelection:
+                case GameState.IapShop:
+                case GameState.BulletShop:
+                case GameState.Playing:
+                case GameState.Result:
+                    ReturnToMainMenu();
+                    break;
+            }
+        }
+
+        public void OpenSettings()
+        {
+            SetRootActive(settingsRoot, true);
+
+            // Only worth offering when there is a run to leave.
+            SetRootActive(settingsMainMenuButton != null ? settingsMainMenuButton.gameObject : null, IsInRun);
+        }
+
+        public void CloseSettings()
+        {
+            SetRootActive(settingsRoot, false);
         }
 
         private void HandleRunFinished(LevelRunController.RunResult result)
         {
-            // The structure is left standing behind the result panel: the player should see what
-            // they did to it while they read what it was worth.
+            // The structure is left standing behind the result: the player should see what they
+            // did to it while they read what it was worth.
             SetRootActive(resultRoot, true);
             SetRootActive(hudRoot, false);
 
-            SetState(GameState.Result);
+            State = GameState.Result;
+            StateChanged?.Invoke(State);
             RunFinished?.Invoke(result);
         }
 
-        /// <summary>Turns on exactly the roots that belong to a state, and everything else off.</summary>
-        private void ShowOnly(GameState state)
+        /// <summary>Tears the run down and shows exactly the roots that belong to a state.</summary>
+        private void Enter(GameState state)
         {
+            if (!IsPlayState(state))
+            {
+                TearDownRun();
+            }
+
+            CloseSettings();
+
+            SetRootActive(mainMenuRoot, state == GameState.MainMenu);
             SetRootActive(selectionRoot, state == GameState.MapSelection);
             SetRootActive(ammoPickRoot, state == GameState.AmmoPick);
+            SetRootActive(iapShopRoot, state == GameState.IapShop);
+            SetRootActive(bulletShopRoot, state == GameState.BulletShop);
             SetRootActive(gameplayRoot, state == GameState.Playing);
             SetRootActive(hudRoot, state == GameState.Playing);
             SetRootActive(resultRoot, false);
 
-            // Back is only meaningful once the player has left the map list.
-            SetRootActive(backButton != null ? backButton.gameObject : null, state != GameState.MapSelection);
+            // The bar carries the way back out of a shop, so it belongs wherever the player might
+            // want that; once they are heading into a run it is only clutter.
+            SetRootActive(bottomBarRoot, IsMenuState(state));
+
+            // Back is for the screens the bar does not cover.
+            SetRootActive(
+                backButton != null ? backButton.gameObject : null,
+                state == GameState.MapSelection || state == GameState.AmmoPick);
+
+            State = state;
+            StateChanged?.Invoke(state);
+        }
+
+        private void TearDownRun()
+        {
+            if (runController != null)
+            {
+                runController.CancelRun();
+            }
+
+            if (mapBuilder != null)
+            {
+                mapBuilder.ClearMap();
+            }
+        }
+
+        private static bool IsMenuState(GameState state)
+        {
+            return state == GameState.MainMenu || state == GameState.IapShop || state == GameState.BulletShop;
+        }
+
+        private static bool IsPlayState(GameState state)
+        {
+            return state == GameState.Playing || state == GameState.Result;
         }
 
         private void ResetPlayfield()
@@ -263,8 +370,8 @@ namespace GameJam.Gameplay.Flow
 
         /// <summary>
         /// The map list spawns its buttons under its own transform, so hiding anything below the
-        /// view - a background panel, say - switches off the backdrop and leaves the buttons on
-        /// screen. Whatever was pointed at, hide the view that owns them.
+        /// view switches off the backdrop and leaves the buttons on screen. Whatever was pointed
+        /// at, hide the view that owns them.
         /// </summary>
         private GameObject ResolveSelectionRoot()
         {
@@ -276,12 +383,6 @@ namespace GameJam.Gameplay.Flow
 
             MapListView view = mapSelectionRoot.GetComponentInParent<MapListView>(true);
             return view != null ? view.gameObject : mapSelectionRoot;
-        }
-
-        private void SetState(GameState next)
-        {
-            State = next;
-            StateChanged?.Invoke(next);
         }
 
         private static void SetRootActive(GameObject root, bool active)

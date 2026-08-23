@@ -22,7 +22,7 @@ namespace GameJam.EditorTools
     /// whatever is already there and only fills in what is missing, so tuning a panel by hand is
     /// not undone by the next run.
     /// </summary>
-    public static class UiBuilder
+    public static partial class UiBuilder
     {
         private const string AmmoPickName = "AmmoPickScreen";
         private const string HudName = "RunHud";
@@ -60,9 +60,12 @@ namespace GameJam.EditorTools
             GameObject ammoPick = BuildAmmoPick(canvas.transform, inventory, loadout, out Button startButton);
             GameObject hud = BuildHud(canvas.transform, run, tracker, inventory, loadout);
             GameObject result = BuildResult(canvas.transform, flow, out Button retryButton);
-            BuildGoldPanel(canvas.transform, economy);
 
             WireFlow(flow, run, ammoPick, hud, result, startButton, retryButton);
+
+            // The sprite chrome comes last: it fills the readouts the plain screens left empty,
+            // and it needs the roots above to already exist.
+            BuildSpriteScreens(canvas.transform, flow, hud, economy);
 
             EditorSceneManager.MarkSceneDirty(scene);
             Debug.Log(
@@ -109,8 +112,6 @@ namespace GameJam.EditorTools
             TMP_Text required = EnsureLabel("RequiredPercent", root, "target 80%", 26, TextAlignmentOptions.Left,
                 new Vector2(0.04f, 0.83f), new Vector2(0.4f, 0.88f));
             Image fill = EnsureProgressBar("ProgressBar", root);
-            TMP_Text remaining = EnsureLabel("RemainingBullets", root, "0", 48, TextAlignmentOptions.Right,
-                new Vector2(0.6f, 0.88f), new Vector2(0.96f, 0.97f));
             RectTransform breakdown = EnsureRect("Breakdown", root, new Vector2(0.7f, 0.7f), new Vector2(0.96f, 0.87f));
 
             RunHudView view = Ensure<RunHudView>(root.gameObject);
@@ -122,7 +123,6 @@ namespace GameJam.EditorTools
             SetIfEmpty(serialized, "clearPercentLabel", percent);
             SetIfEmpty(serialized, "requiredPercentLabel", required);
             SetIfEmpty(serialized, "clearProgressFill", fill);
-            SetIfEmpty(serialized, "remainingBulletsLabel", remaining);
             SetIfEmpty(serialized, "bulletBreakdownContainer", breakdown);
             serialized.ApplyModifiedPropertiesWithoutUndo();
 
@@ -159,18 +159,6 @@ namespace GameJam.EditorTools
             return root.gameObject;
         }
 
-        private static void BuildGoldPanel(Transform canvas, EconomyService economy)
-        {
-            RectTransform root = EnsureRect(GoldName, canvas, new Vector2(0.62f, 0.9f), new Vector2(0.97f, 0.99f));
-            TMP_Text label = EnsureLabel("GoldLabel", root, "0", 40, TextAlignmentOptions.Right, Vector2.zero, Vector2.one);
-
-            GoldView view = Ensure<GoldView>(root.gameObject);
-            SerializedObject serialized = new SerializedObject(view);
-            SetIfEmpty(serialized, "economy", economy);
-            SetIfEmpty(serialized, "goldLabel", label);
-            serialized.ApplyModifiedPropertiesWithoutUndo();
-        }
-
         private static void WireFlow(
             GameFlowController flow,
             LevelRunController run,
@@ -200,7 +188,7 @@ namespace GameJam.EditorTools
         /// Only fills a reference that is empty. Re-running the builder must not overwrite
         /// something deliberately pointed somewhere else.
         /// </summary>
-        private static void SetIfEmpty(SerializedObject serialized, string propertyName, Object value)
+        internal static void SetIfEmpty(SerializedObject serialized, string propertyName, Object value)
         {
             SerializedProperty property = serialized.FindProperty(propertyName);
             if (property == null)
@@ -215,7 +203,7 @@ namespace GameJam.EditorTools
             }
         }
 
-        private static T Ensure<T>(GameObject target) where T : Component
+        internal static T Ensure<T>(GameObject target) where T : Component
         {
             T existing = target.GetComponent<T>();
             return existing != null ? existing : Undo.AddComponent<T>(target);
@@ -233,7 +221,7 @@ namespace GameJam.EditorTools
             return root;
         }
 
-        private static RectTransform EnsureRect(string name, Transform parent, Vector2 anchorMin, Vector2 anchorMax)
+        internal static RectTransform EnsureRect(string name, Transform parent, Vector2 anchorMin, Vector2 anchorMax)
         {
             Transform existing = parent.Find(name);
             RectTransform rect;
@@ -259,7 +247,7 @@ namespace GameJam.EditorTools
             return rect;
         }
 
-        private static TMP_Text EnsureLabel(
+        internal static TMP_Text EnsureLabel(
             string name,
             Transform parent,
             string text,
@@ -298,7 +286,7 @@ namespace GameJam.EditorTools
             return fill;
         }
 
-        private static Button EnsureButton(string name, Transform parent, string caption, Vector2 anchorMin, Vector2 anchorMax)
+        internal static Button EnsureButton(string name, Transform parent, string caption, Vector2 anchorMin, Vector2 anchorMax)
         {
             RectTransform rect = EnsureRect(name, parent, anchorMin, anchorMax);
             Button button = rect.GetComponent<Button>();
