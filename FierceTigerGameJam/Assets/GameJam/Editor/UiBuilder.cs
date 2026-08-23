@@ -138,12 +138,13 @@ namespace GameJam.EditorTools
             TMP_Text reward = EnsureLabel("RewardLabel", rewardRoot, "+0", 48, TextAlignmentOptions.Center,
                 Vector2.zero, Vector2.one);
 
-            // Side by side: the two ways out of a result are equally likely, so neither is
-            // buried under the other.
-            mainMenuButton = EnsureButton("MainMenuButton", root, "MAIN MENU",
-                new Vector2(0.10f, 0.13f), new Vector2(0.47f, 0.23f));
+            // Stacked rather than side by side: full width gives each a bigger tap target, and
+            // reading down the screen puts the likelier choice first. Retry is on top because a
+            // player who just failed is more often going again than leaving.
             retryButton = EnsureButton("RetryButton", root, "RETRY",
-                new Vector2(0.53f, 0.13f), new Vector2(0.90f, 0.23f));
+                new Vector2(0.22f, 0.20f), new Vector2(0.78f, 0.29f));
+            mainMenuButton = EnsureButton("MainMenuButton", root, "MAIN MENU",
+                new Vector2(0.22f, 0.09f), new Vector2(0.78f, 0.18f));
 
             RunResultView view = Ensure<RunResultView>(root.gameObject);
             SerializedObject serialized = new SerializedObject(view);
