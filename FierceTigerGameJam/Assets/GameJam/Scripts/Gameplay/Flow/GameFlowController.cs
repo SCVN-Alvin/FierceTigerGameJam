@@ -65,7 +65,12 @@ namespace GameJam.Gameplay.Flow
         [SerializeField] private Button homeButton;
         [SerializeField] private Button bulletShopButton;
         [SerializeField] private Button startRunButton;
+        [Tooltip("Leaves the result for the main menu.")]
         [SerializeField] private Button resultContinueButton;
+
+        [Tooltip("Another go at the same map. Returns to the ammunition pick rather than straight "
+                 + "into a run, because the last attempt is what proved the mix was wrong.")]
+        [SerializeField] private Button retryButton;
         [SerializeField] private Button backButton;
 
         [Header("Settings Buttons")]
@@ -126,6 +131,7 @@ namespace GameJam.Gameplay.Flow
             Wire(bulletShopButton, EnterBulletShop);
             Wire(startRunButton, ConfirmAmmoPick);
             Wire(resultContinueButton, ReturnToMainMenu);
+            Wire(retryButton, RetryMap);
             Wire(backButton, GoBack);
             Wire(openSettingsButton, OpenSettings);
             Wire(openSettingsInRunButton, OpenSettings);
@@ -151,6 +157,7 @@ namespace GameJam.Gameplay.Flow
             Unwire(bulletShopButton, EnterBulletShop);
             Unwire(startRunButton, ConfirmAmmoPick);
             Unwire(resultContinueButton, ReturnToMainMenu);
+            Unwire(retryButton, RetryMap);
             Unwire(backButton, GoBack);
             Unwire(openSettingsButton, OpenSettings);
             Unwire(openSettingsInRunButton, OpenSettings);
@@ -245,6 +252,17 @@ namespace GameJam.Gameplay.Flow
             {
                 runController.BeginRun();
             }
+        }
+
+        /// <summary>
+        /// Another attempt at the same map, back at the ammunition pick. The selection is left
+        /// alone, so the player keeps the map and only re-chooses what to bring; going straight
+        /// back into a run would hand them the same mix that just failed.
+        /// </summary>
+        [ContextMenu("Retry Map")]
+        public void RetryMap()
+        {
+            EnterAmmoPick();
         }
 
         /// <summary>Leaves a run early from the settings overlay.</summary>
