@@ -107,23 +107,13 @@ namespace GameJam.EditorTools
             // thing the player is aiming at.
             RectTransform root = EnsureRect(HudName, canvas, Vector2.zero, Vector2.one);
 
-            TMP_Text percent = EnsureLabel("ClearPercent", root, "0%", 56, TextAlignmentOptions.Left,
-                new Vector2(0.04f, 0.88f), new Vector2(0.4f, 0.97f));
-            TMP_Text required = EnsureLabel("RequiredPercent", root, "target 80%", 26, TextAlignmentOptions.Left,
-                new Vector2(0.04f, 0.83f), new Vector2(0.4f, 0.88f));
-            Image fill = EnsureProgressBar("ProgressBar", root);
-            RectTransform breakdown = EnsureRect("Breakdown", root, new Vector2(0.7f, 0.7f), new Vector2(0.96f, 0.87f));
+            TMP_Text percent = EnsureLabel("ClearPercent", root, "0%", 56, TextAlignmentOptions.Center,
+                new Vector2(0.32f, 0.885f), new Vector2(0.68f, 0.962f));
 
             RunHudView view = Ensure<RunHudView>(root.gameObject);
             SerializedObject serialized = new SerializedObject(view);
-            SetIfEmpty(serialized, "runController", run);
             SetIfEmpty(serialized, "progressTracker", tracker);
-            SetIfEmpty(serialized, "inventory", inventory);
-            SetIfEmpty(serialized, "loadout", loadout);
             SetIfEmpty(serialized, "clearPercentLabel", percent);
-            SetIfEmpty(serialized, "requiredPercentLabel", required);
-            SetIfEmpty(serialized, "clearProgressFill", fill);
-            SetIfEmpty(serialized, "bulletBreakdownContainer", breakdown);
             serialized.ApplyModifiedPropertiesWithoutUndo();
 
             return root.gameObject;

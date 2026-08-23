@@ -222,13 +222,13 @@ namespace GameJam.EditorTools
             Button settingsButton = EnsureSpriteButton("RunSettingsButton", hudRect, $"{MenuTextures}/Btn_Setting.png",
                 new Vector2(0.785f, 0.885f), new Vector2(0.87f, 0.962f));
 
-            RunHudView view = hud.GetComponent<RunHudView>();
-            if (view != null)
-            {
-                SerializedObject serialized = new SerializedObject(view);
-                SetIfEmpty(serialized, "remainingBulletsLabel", counterLabel);
-                serialized.ApplyModifiedPropertiesWithoutUndo();
-            }
+            // The counter owns its own number rather than the HUD reaching across to it, so the
+            // readout cannot end up on a different object from the art it belongs to.
+            BulletCounterView counterView = Ensure<BulletCounterView>(counter.gameObject);
+            SerializedObject serialized = new SerializedObject(counterView);
+            SetIfEmpty(serialized, "inventory", LoadFirstAsset<GameJam.Gameplay.Combat.BulletInventory>());
+            SetIfEmpty(serialized, "countLabel", counterLabel);
+            serialized.ApplyModifiedPropertiesWithoutUndo();
 
             return settingsButton;
         }
