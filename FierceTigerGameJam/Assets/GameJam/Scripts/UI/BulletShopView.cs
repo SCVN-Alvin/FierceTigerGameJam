@@ -201,6 +201,12 @@ namespace GameJam.UI
                 interactable = economy.CanUpgrade(row.Bullet);
             }
 
+            if (row.Typed != null)
+            {
+                row.Typed.Bind(row.Bullet.DisplayName, $"Lv {level} / {maxLevel}", caption, interactable);
+                return;
+            }
+
             // Readings the prefab has no home for are folded into the name, so a one-label row
             // still tells the player everything rather than quietly dropping half of it.
             string nameText = row.Bullet.DisplayName;
@@ -283,9 +289,15 @@ namespace GameJam.UI
                 ? Instantiate(rowPrefab, parent)
                 : CreateDefaultRow(parent);
 
+            // A row that describes itself is used as it is. The name and position matching below
+            // is only for rows that were not authored for this shop.
+            BulletTypeUpgradeView typedRow = rowObject.GetComponent<BulletTypeUpgradeView>();
+
             // Resolved before the rename so the search cannot be thrown by an id that happens to
             // contain one of the words being looked for.
-            Button action = rowObject.GetComponentInChildren<Button>(true);
+            Button action = typedRow != null
+                ? typedRow.ActionButton
+                : rowObject.GetComponentInChildren<Button>(true);
 
             rowObject.name = RowNamePrefix + bullet.Id;
 
@@ -295,6 +307,17 @@ namespace GameJam.UI
                     $"{name}: the row for {bullet.DisplayName} has no Button, so it can be read but not "
                     + "bought from. Put one on the row prefab.",
                     this);
+            }
+
+            if (typedRow != null)
+            {
+                return new Row
+                {
+                    Bullet = bullet,
+                    Root = rowObject,
+                    Action = action,
+                    Typed = typedRow,
+                };
             }
 
             return new Row
@@ -571,6 +594,10 @@ namespace GameJam.UI
             public BulletDefinition Bullet;
             public GameObject Root;
             public Button Action;
+
+            /// <summary>Set when the row prefab describes its own parts; null for a found row.</summary>
+            public BulletTypeUpgradeView Typed;
+
             public Label NameLabel;
             public Label LevelLabel;
             public Label CaptionLabel;

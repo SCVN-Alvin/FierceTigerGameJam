@@ -22,9 +22,9 @@ MonoBehaviour:
     requiredClearPercent: 0.8
     passMapRewardId: pass_map_2
     clearMapRewardId: clear_map_2
-    bulletPickLimit: 10
+    bulletPickLimit: 20
   - mapId: 3
     requiredClearPercent: 0.8
     passMapRewardId: pass_map_3
     clearMapRewardId: clear_map_3
-    bulletPickLimit: 10
+    bulletPickLimit: 30
