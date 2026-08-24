@@ -1,8 +1,7 @@
 fileFormatVersion: 2
-guid: 8105016687592461f977c054a80ce2f2
-NativeFormatImporter:
+guid: 20dd229b654e6604bb54a99f98e9e03a
+PrefabImporter:
   externalObjects: {}
-  mainObjectFileID: 0
   userData: 
   assetBundleName: 
   assetBundleVariant: 
@@ -11,5 +10,5 @@ AssetOrigin:
   productId: 363612
   packageName: "Hyper-Casual Cannon Pack \u2013 Animated Turrets (URP + Built-in)"
   packageVersion: 1.0
-  assetPath: Assets/Readme.asset
+  assetPath: "Assets/Hyper-Casual Cannon Pack \u2013 Animated Turrets (URP + Built-in)/Cannon_Pack_URP/Prefaps_URP/Cannon_D_C_URP.prefab"
   uploadId: 868326

@@ -1,0 +1,65 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: Orange_URP
+  m_Shader: {fileID: 4800000, guid: 709ba3929ce370640aea0b81d81fb77f, type: 3}
+  m_Parent: {fileID: 2100000, guid: 547b7efb2a1f6f7419cc4828270ef9cc, type: 2}
+  m_ModifiedSerializedProperties: 4
+  m_ValidKeywords:
+  - MATCAP_ON
+  - MOBILE_FAKE_AO
+  - OUTLINE_ON
+  - RIM_LIGHTMASK
+  - RIM_ON
+  - _SSAO_ON
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 1
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _MatCapTex:
+        m_Texture: {fileID: 2800000, guid: cda2f2cd49bff5a4fa9d69729f6b393c, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _IndirectIntensity: 1
+    - _MatCapIntensity: 1.14
+    - _Metallic: 0.03
+    - _RampSmoothing: 0.71
+    - _RampThreshold: 1
+    - _ShadowTexStrength: 1
+    - _Smoothness: 0.64
+    - _UseMatCap: 1
+    - _UseRimLightMask: 1
+    m_Colors:
+    - _BaseColor: {r: 1, g: 0.64848316, b: 0.4901961, a: 1}
+    - _MatCapColor: {r: 0.4113207, g: 0.37462145, b: 0.19479524, a: 1}
+    - _SColor: {r: 0.5471698, g: 0.16003355, b: 0.032004245, a: 1}
+    - _SmoothnessColor: {r: 0.7735849, g: 0.121146254, b: 0.5113522, a: 1}
+  m_BuildTextureStacks: []
+--- !u!114 &8611407016927993283
+MonoBehaviour:
+  m_ObjectHideFlags: 11
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d0353a89b1f911e48b9e16bdc9f2e058, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  version: 7

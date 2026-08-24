@@ -1,8 +1,7 @@
 fileFormatVersion: 2
-guid: 8105016687592461f977c054a80ce2f2
-NativeFormatImporter:
+guid: 9fc0d4010bbf28b4594072e72b8655ab
+DefaultImporter:
   externalObjects: {}
-  mainObjectFileID: 0
   userData: 
   assetBundleName: 
   assetBundleVariant: 
@@ -11,5 +10,5 @@ AssetOrigin:
   productId: 363612
   packageName: "Hyper-Casual Cannon Pack \u2013 Animated Turrets (URP + Built-in)"
   packageVersion: 1.0
-  assetPath: Assets/Readme.asset
+  assetPath: "Assets/Hyper-Casual Cannon Pack \u2013 Animated Turrets (URP + Built-in)/Cannon_Pack_URP/Scenes_URP/Demo_URP.unity"
   uploadId: 868326

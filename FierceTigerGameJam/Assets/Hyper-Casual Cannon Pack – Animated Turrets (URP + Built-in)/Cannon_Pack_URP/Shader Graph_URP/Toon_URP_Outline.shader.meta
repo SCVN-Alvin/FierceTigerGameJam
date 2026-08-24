@@ -1,8 +1,9 @@
 fileFormatVersion: 2
-guid: 8105016687592461f977c054a80ce2f2
-NativeFormatImporter:
+guid: 709ba3929ce370640aea0b81d81fb77f
+ShaderImporter:
   externalObjects: {}
-  mainObjectFileID: 0
+  defaultTextures: []
+  nonModifiableTextures: []
   userData: 
   assetBundleName: 
   assetBundleVariant: 
@@ -11,5 +12,6 @@ AssetOrigin:
   productId: 363612
   packageName: "Hyper-Casual Cannon Pack \u2013 Animated Turrets (URP + Built-in)"
   packageVersion: 1.0
-  assetPath: Assets/Readme.asset
+  assetPath: "Assets/Hyper-Casual Cannon Pack \u2013 Animated Turrets (URP + Built-in)/Cannon_Pack_URP/Shader
+    Graph_URP/Toon_URP_Outline.shader"
   uploadId: 868326
