@@ -55,3 +55,6 @@ FierceTigerGameJam/.utmp
 
 # Mono crash dumps, written next to the project when the editor falls over
 mono_crash.*.json
+
+# Agent worktrees, which live inside the repo but are not part of it
+.claude/worktrees/
