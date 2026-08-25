@@ -33,6 +33,15 @@ namespace GameJam.Diagnostics
         private sealed class Window
         {
             public string Name;
+
+            /// <summary>
+            /// Wall clock, not frames. A map build runs to completion inside a single call, so
+            /// Update never ticks while it is open and a frame count would read zero - which is
+            /// exactly how the first attempt at this managed to swallow the build spike it
+            /// existed to measure.
+            /// </summary>
+            public readonly Stopwatch Clock = Stopwatch.StartNew();
+
             public int Frames;
             public float WorstFrameMs;
             public float TotalSeconds;
@@ -42,6 +51,7 @@ namespace GameJam.Diagnostics
             public long WorstDrawCalls;
             public long WorstSetPassCalls;
             public long WorstBatches;
+            public long WorstActiveBodies;
             public readonly Dictionary<string, int> Counts = new Dictionary<string, int>();
 
             /// <summary>Highest value seen, for things judged on their worst moment.</summary>
@@ -58,6 +68,7 @@ namespace GameJam.Diagnostics
         private ProfilerRecorder setPassCalls;
         private ProfilerRecorder batches;
         private ProfilerRecorder physicsProcessing;
+        private ProfilerRecorder activeBodies;
 
         private float sinceReport;
         private float reportInterval = DefaultReportInterval;
@@ -95,6 +106,7 @@ namespace GameJam.Diagnostics
             }
 
             instance.phases.Add(new Window { Name = phaseName });
+            instance.phases[instance.phases.Count - 1].Clock.Restart();
             Debug.Log($"{Prefix}|phase_begin|name={phaseName}|mesh_count={CountLoadedMeshes()}");
         }
 
@@ -192,6 +204,7 @@ namespace GameJam.Diagnostics
             setPassCalls.Dispose();
             batches.Dispose();
             physicsProcessing.Dispose();
+            activeBodies.Dispose();
 
             if (instance == this)
             {
@@ -209,7 +222,40 @@ namespace GameJam.Diagnostics
             drawCalls = ProfilerRecorder.StartNew(ProfilerCategory.Render, "Draw Calls Count");
             setPassCalls = ProfilerRecorder.StartNew(ProfilerCategory.Render, "SetPass Calls Count");
             batches = ProfilerRecorder.StartNew(ProfilerCategory.Render, "Batches Count");
-            physicsProcessing = ProfilerRecorder.StartNew(ProfilerCategory.Physics, "Physics.Processing");
+            physicsProcessing = StartFirstAvailable(
+                ProfilerCategory.Physics,
+                "Physics.Processing",
+                "PhysicsFixedUpdate",
+                "FixedUpdate.PhysicsFixedUpdate",
+                "Physics.Simulate");
+
+            activeBodies = StartFirstAvailable(
+                ProfilerCategory.Physics,
+                "Active Dynamic Bodies",
+                "Active Rigidbodies",
+                "Dynamic Bodies");
+        }
+
+        /// <summary>
+        /// Counter and marker names differ by platform and physics backend - Physics.Processing
+        /// resolves in the editor but not in an Android player - so each candidate is tried in
+        /// turn and the first one that attaches wins. A column that cannot be filled is worth
+        /// losing on its own; it is not worth losing the log for.
+        /// </summary>
+        private static ProfilerRecorder StartFirstAvailable(ProfilerCategory category, params string[] names)
+        {
+            for (int i = 0; i < names.Length; i++)
+            {
+                ProfilerRecorder candidate = ProfilerRecorder.StartNew(category, names[i]);
+                if (candidate.Valid)
+                {
+                    return candidate;
+                }
+
+                candidate.Dispose();
+            }
+
+            return default;
         }
 
         private void LogDeviceHeader()
@@ -234,7 +280,8 @@ namespace GameJam.Diagnostics
                 + $"|draw_calls={drawCalls.Valid}"
                 + $"|setpass={setPassCalls.Valid}"
                 + $"|batches={batches.Valid}"
-                + $"|physics={physicsProcessing.Valid}");
+                + $"|physics={physicsProcessing.Valid}"
+                + $"|active_bodies={activeBodies.Valid}");
         }
 
         private void Update()
@@ -291,6 +338,11 @@ namespace GameJam.Diagnostics
             {
                 window.WorstBatches = batches.LastValue;
             }
+
+            if (activeBodies.Valid && activeBodies.LastValue > window.WorstActiveBodies)
+            {
+                window.WorstActiveBodies = activeBodies.LastValue;
+            }
         }
 
         private void RaisePeak(Window window, string key, int value)
@@ -323,7 +375,7 @@ namespace GameJam.Diagnostics
         /// </summary>
         private void Report(string kind, Window window, bool includeMeshCount)
         {
-            if (window.Frames == 0)
+            if (window.Frames == 0 && kind == "window")
             {
                 return;
             }
@@ -337,7 +389,8 @@ namespace GameJam.Diagnostics
                 return;
             }
 
-            float averageMs = window.TotalSeconds > 0f
+            double elapsedMs = window.Clock.Elapsed.TotalMilliseconds;
+            float averageMs = window.Frames > 0 && window.TotalSeconds > 0f
                 ? (window.TotalSeconds * 1000f) / window.Frames
                 : 0f;
 
@@ -345,6 +398,7 @@ namespace GameJam.Diagnostics
                 $"{Prefix}|{kind}"
                 + $"|name={window.Name}"
                 + $"|frames={window.Frames}"
+                + $"|elapsed_ms={elapsedMs:0.##}"
                 + $"|seconds={window.TotalSeconds:0.###}"
                 + $"|worst_ms={window.WorstFrameMs:0.##}"
                 + $"|avg_ms={averageMs:0.##}"
@@ -354,7 +408,8 @@ namespace GameJam.Diagnostics
                 + $"|physics_total_ms={window.TotalPhysicsNs / NanosecondsPerMillisecond:0.###}"
                 + $"|draw_calls={window.WorstDrawCalls}"
                 + $"|setpass={window.WorstSetPassCalls}"
-                + $"|batches={window.WorstBatches}";
+                + $"|batches={window.WorstBatches}"
+                + $"|active_bodies={window.WorstActiveBodies}";
 
             foreach (KeyValuePair<string, int> count in window.Counts)
             {

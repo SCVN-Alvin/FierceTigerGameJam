@@ -623,6 +623,7 @@ MonoBehaviour:
   settingsMainMenuButton: {fileID: 1508834017}
   aimController: {fileID: 2066028395}
   structureSpinner: {fileID: 744831460}
+  fireController: {fileID: 0}
 --- !u!1 &328022730
 GameObject:
   m_ObjectHideFlags: 0
@@ -1385,6 +1386,52 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Button
+--- !u!1 &1038934807
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1038934808}
+  - component: {fileID: 1038934809}
+  m_Layer: 0
+  m_Name: ProjectilePool
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1038934808
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1038934807}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1730233750}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1038934809
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1038934807}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d331731708d894e0cb1ace6fa94fc382, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GameJam.Gameplay.Cannon.ProjectilePool
+  projectilePrefab: {fileID: 455035435007290810, guid: fca73c2f5172c4e88bbb9c9863d2539c, type: 3}
+  poolSize: 10
 --- !u!224 &1057146298 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 2918516431879678483, guid: fc51324bb26a5469fa6220e8ba4cb7f3, type: 3}
@@ -1611,6 +1658,7 @@ Transform:
   - {fileID: 1430230331}
   - {fileID: 698397710}
   - {fileID: 917068039}
+  - {fileID: 1038934808}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1753531689 stripped
@@ -2359,6 +2407,8 @@ MonoBehaviour:
   bulletInventory: {fileID: 11400000, guid: 33a393a72d7344c9c99a08f0872e6da0, type: 2}
   bulletLoadout: {fileID: 11400000, guid: ea232b2781ddf4fa39b17ced7cdbaba1, type: 2}
   projectilePrefab: {fileID: 455035435007290810, guid: fca73c2f5172c4e88bbb9c9863d2539c, type: 3}
+  projectilePool: {fileID: 1038934809}
+  runController: {fileID: 1430230332}
   projectileParent: {fileID: 2066028391}
   fireOrigin: {fileID: 4100000003}
   shotPresenter: {fileID: 4100000004}
@@ -2773,8 +2823,10 @@ MonoBehaviour:
   buildOnStart: 0
   createStructureCenter: 1
   structureSpinner: {fileID: 744831460}
-  groupBlocksIntoWalls: 1
+  wallGrouping: 1
   minimumWallCells: 4
+  groupBlocksIntoWalls: 1
+  wallGroupingMigrated: 1
   useWallPanels: 1
   wallTextureTilesPerCell: 1
 --- !u!1001 &143464335349630862
