@@ -245,6 +245,10 @@ namespace GameJam.Gameplay.Wall
             active.Add(debris);
             activeChunkCounts.Add(pooled.ChunkCount);
             activeChunks += pooled.ChunkCount;
+
+            GameJam.Diagnostics.RuntimeProfileLogger.Count("debris_rented");
+            GameJam.Diagnostics.RuntimeProfileLogger.Peak("debris_sessions", active.Count);
+            GameJam.Diagnostics.RuntimeProfileLogger.Peak("debris_chunks", activeChunks);
             return debris;
         }
 
@@ -384,6 +388,7 @@ namespace GameJam.Gameplay.Wall
                 poolRoot = transform;
             }
 
+            GameJam.Diagnostics.RuntimeProfileLogger.Count("debris_instantiated");
             GameObject instanceObject = Instantiate(pooled.Prefab, poolRoot);
             if (!instanceObject.TryGetComponent(out ShatteredBlock debris))
             {

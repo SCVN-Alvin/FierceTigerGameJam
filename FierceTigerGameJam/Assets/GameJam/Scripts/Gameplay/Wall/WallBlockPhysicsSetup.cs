@@ -74,6 +74,8 @@ namespace GameJam.Gameplay
                 return;
             }
 
+            GameJam.Diagnostics.RuntimeProfileLogger.Count("added_collider");
+
             if (addMeshColliders && block.TryGetComponent(out MeshFilter meshFilter) && meshFilter.sharedMesh != null)
             {
                 MeshCollider meshCollider = block.AddComponent<MeshCollider>();
@@ -94,6 +96,7 @@ namespace GameJam.Gameplay
         {
             if (!block.TryGetComponent(out Rigidbody blockRigidbody))
             {
+                GameJam.Diagnostics.RuntimeProfileLogger.Count("added_rigidbody");
                 blockRigidbody = block.AddComponent<Rigidbody>();
             }
 
@@ -110,6 +113,7 @@ namespace GameJam.Gameplay
         {
             if (!block.TryGetComponent(out KnockdownBlock knockdownBlock))
             {
+                GameJam.Diagnostics.RuntimeProfileLogger.Count("added_knockdown_block");
                 knockdownBlock = block.AddComponent<KnockdownBlock>();
             }
 

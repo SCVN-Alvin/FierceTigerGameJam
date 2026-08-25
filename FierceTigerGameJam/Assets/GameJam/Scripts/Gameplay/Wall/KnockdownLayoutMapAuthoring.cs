@@ -201,6 +201,20 @@ namespace GameJam.Gameplay.Wall
         [ContextMenu("Build Map")]
         public void BuildMap()
         {
+            GameJam.Diagnostics.RuntimeProfileLogger.Count("build_map_calls");
+            GameJam.Diagnostics.RuntimeProfileLogger.BeginPhase("build_map");
+            try
+            {
+                BuildMapInternal();
+            }
+            finally
+            {
+                GameJam.Diagnostics.RuntimeProfileLogger.EndPhase();
+            }
+        }
+
+        private void BuildMapInternal()
+        {
             if (!TryParseMap(out KnockdownMapDefinition map))
             {
                 return;
