@@ -14,6 +14,10 @@ namespace GameJam.Gameplay.Cannon
         [Tooltip("Optional. Supplies the ammunition definitions the inventory holds counts of.")]
         [SerializeField] private BulletLoadout bulletLoadout;
 
+        [Tooltip("Optional. The vehicle the cannon is mounted on, which multiplies the damage of "
+                 + "whatever is loaded. Without one every shot does the bullet's authored damage.")]
+        [SerializeField] private VehicleLoadout vehicleLoadout;
+
         [SerializeField] private GridKnockdownCannonProjectile projectilePrefab;
 
         [Tooltip("Optional. Hands out warm cannon balls instead of instantiating one per shot. "
@@ -220,6 +224,13 @@ namespace GameJam.Gameplay.Cannon
             if (ammunition != null)
             {
                 projectile.SetAmmunition(ammunition, bulletLoadout.GetLevel(ammunition));
+            }
+
+            // Read at the moment of firing rather than cached in Awake: the player changes
+            // vehicle in the shop between runs, and the cannon is not re-enabled in between.
+            if (vehicleLoadout != null)
+            {
+                projectile.SetDamageMultiplier(vehicleLoadout.SelectedDamageMultiplier);
             }
 
             projectile.Launch(direction, projectileSpeed, projectileLifetime);
