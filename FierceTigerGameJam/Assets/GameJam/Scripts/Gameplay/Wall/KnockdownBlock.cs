@@ -49,6 +49,10 @@ namespace GameJam.Gameplay
         private Rigidbody blockRigidbody;
         private bool isActivated;
 
+        private StructureRegistry registry;
+        private bool registryResolved;
+        private bool registered;
+
         /// <summary>
         /// Raised the first time the block stops being static, however that happened - struck,
         /// caught in a blast, or released by the block under it. A wall built from many blocks
@@ -90,6 +94,10 @@ namespace GameJam.Gameplay
             maxKnockHorizontalSpeed = authoring.MaxKnockHorizontalSpeed;
             maxKnockVerticalSpeed = authoring.MaxKnockVerticalSpeed;
             gridPosition = authoring.GridPosition;
+
+            // Only now is the block's address final: the prefab is baked at the origin and the
+            // map builder tells it where it actually landed.
+            RegisterWithStructure();
 
             if (blockRigidbody == null)
             {
@@ -193,6 +201,52 @@ namespace GameJam.Gameplay
             Knock(contact.point, force, ForceMode.Impulse);
         }
 
+        /// <summary>
+        /// Claims this block's cells so the blocks beneath it can find it without searching. Any
+        /// earlier claim is dropped first, since the block may have been told a new address.
+        /// </summary>
+        private void RegisterWithStructure()
+        {
+            StructureRegistry structure = ResolveRegistry();
+            if (structure == null)
+            {
+                return;
+            }
+
+            if (registered)
+            {
+                structure.Unregister(this);
+            }
+
+            structure.Register(this);
+            registered = true;
+        }
+
+        /// <summary>
+        /// Looked up once. A block with no registry above it - one placed by hand in a test
+        /// scene - falls back to scanning its siblings, which is what every block used to do.
+        /// </summary>
+        private StructureRegistry ResolveRegistry()
+        {
+            if (registryResolved)
+            {
+                return registry;
+            }
+
+            registryResolved = true;
+            registry = GetComponentInParent<StructureRegistry>();
+            return registry;
+        }
+
+        private void OnDestroy()
+        {
+            if (registered && registry != null)
+            {
+                registry.Unregister(this);
+                registered = false;
+            }
+        }
+
         private void ApplyRuntimeBodySettings()
         {
             blockRigidbody.mass = mass;
@@ -213,6 +267,55 @@ namespace GameJam.Gameplay
                 return;
             }
 
+            StructureRegistry structure = ResolveRegistry();
+            if (structure != null)
+            {
+                ReleaseFromRegistry(structure);
+                return;
+            }
+
+            ReleaseByScanningSiblings();
+        }
+
+        /// <summary>
+        /// Walks the cells above this block's own footprint. Costs the height of the structure
+        /// rather than the number of blocks in it, and allocates nothing.
+        /// </summary>
+        private void ReleaseFromRegistry(StructureRegistry structure)
+        {
+            bool oneLevel = supportCascadeMode == SupportCascadeMode.OneLevel;
+            List<KnockdownBlock> supported = structure.CollectSupportedAbove(this, oneLevel);
+
+            try
+            {
+                if (oneLevel)
+                {
+                    if (supported.Count > 0)
+                    {
+                        supported[0].ActivateFromSupportRelease(this);
+                    }
+
+                    return;
+                }
+
+                for (int i = 0; i < supported.Count; i++)
+                {
+                    supported[i].ActivateFromSupportRelease(this);
+                }
+            }
+            finally
+            {
+                structure.ReleaseCollected(supported);
+            }
+        }
+
+        /// <summary>
+        /// The original scan, kept for blocks that were placed by hand rather than built from a
+        /// map and so have no registry to consult.
+        /// </summary>
+        private void ReleaseByScanningSiblings()
+        {
+            GameJam.Diagnostics.RuntimeProfileLogger.Count("support_scan_fallback");
             Transform parent = transform.parent;
             if (parent == null)
             {

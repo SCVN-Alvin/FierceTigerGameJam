@@ -236,6 +236,13 @@ namespace GameJam.Gameplay.Wall
             Transform generatedRoot = EnsureGeneratedChild(parent, GeneratedBlocksRootName);
             ClearGeneratedBlocks(generatedRoot);
 
+            // Sits on the root the blocks are parented to, so each one finds it with a single
+            // walk up the hierarchy and never has to search its siblings again.
+            if (!generatedRoot.TryGetComponent(out StructureRegistry _))
+            {
+                generatedRoot.gameObject.AddComponent<StructureRegistry>();
+            }
+
             Vector3 origin = ResolveGridOrigin(map);
             HashSet<Vector3Int> occupiedCells = new HashSet<Vector3Int>();
             List<PlacedBlock> placed = new List<PlacedBlock>();
@@ -262,6 +269,7 @@ namespace GameJam.Gameplay.Wall
 
             int spawned = placed.Count;
             PlacedBlockCount = spawned;
+            GameJam.Diagnostics.RuntimeProfileLogger.Count("blocks_placed", spawned);
             int walls = BuildPlacedBlocks(placed, generatedRoot, out int panelWalls);
 
             if (physicsSetup != null)

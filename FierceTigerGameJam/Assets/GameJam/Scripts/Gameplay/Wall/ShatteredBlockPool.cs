@@ -22,8 +22,10 @@ namespace GameJam.Gameplay.Wall
                  + "before the first shot rather than filling during the first cascade.")]
         [SerializeField] private BlockDatabase blockDatabase;
 
-        [Tooltip("Instances built up front per debris prefab.")]
-        [SerializeField] private int warmPerType = 4;
+        [Tooltip("Instances built up front per debris prefab. Worth covering a whole cascade of "
+                 + "one material: the queues are per type, so a wall of one thing drains its own "
+                 + "queue and starts instantiating in exactly the frames this exists to protect.")]
+        [SerializeField] private int warmPerType = 12;
 
         [Tooltip("Bursts allowed on screen at once. A new one retires the oldest.")]
         [SerializeField] private int maxActiveSessions = 12;
