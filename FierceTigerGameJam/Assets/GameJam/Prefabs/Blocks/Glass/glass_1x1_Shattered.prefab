@@ -9,11 +9,11 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6126964366391912042}
-  - component: {fileID: 1185982816190376564}
   - component: {fileID: 1989253014084332924}
+  - component: {fileID: 1185982816190376564}
   - component: {fileID: 1385174318166955437}
   - component: {fileID: 5797279867562189036}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: glass_1x1_Chunk_07
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -35,14 +35,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 5524991427672890353}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!33 &1185982816190376564
-MeshFilter:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2892809415683707534}
-  m_Mesh: {fileID: -8641301939002906240, guid: b662edde884064b248eafd4a89477f3b, type: 2}
 --- !u!23 &1989253014084332924
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -51,8 +43,8 @@ MeshRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2892809415683707534}
   m_Enabled: 1
-  m_CastShadows: 1
-  m_ReceiveShadows: 1
+  m_CastShadows: 0
+  m_ReceiveShadows: 0
   m_DynamicOccludee: 1
   m_StaticShadowCaster: 0
   m_MotionVectors: 1
@@ -92,6 +84,14 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!33 &1185982816190376564
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2892809415683707534}
+  m_Mesh: {fileID: -8641301939002906240, guid: b662edde884064b248eafd4a89477f3b, type: 2}
 --- !u!65 &1385174318166955437
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -99,7 +99,7 @@ BoxCollider:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2892809415683707534}
-  m_Material: {fileID: 0}
+  m_Material: {fileID: 13400000, guid: 5200dcea446cc4b02aeec2e06188180e, type: 2}
   m_IncludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -122,8 +122,8 @@ Rigidbody:
   m_GameObject: {fileID: 2892809415683707534}
   serializedVersion: 5
   m_Mass: 0.06666667
-  m_LinearDamping: 0
-  m_AngularDamping: 0.05
+  m_LinearDamping: 0.32
+  m_AngularDamping: 0.32
   m_CenterOfMass: {x: 0, y: 0, z: 0}
   m_InertiaTensor: {x: 1, y: 1, z: 1}
   m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
@@ -137,7 +137,7 @@ Rigidbody:
   m_ImplicitTensor: 1
   m_UseGravity: 1
   m_IsKinematic: 0
-  m_Interpolate: 1
+  m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
 --- !u!1 &3550921600715679701
@@ -149,11 +149,11 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6130653773797875535}
-  - component: {fileID: 2787515732323872773}
   - component: {fileID: 5778677489996663521}
+  - component: {fileID: 2787515732323872773}
   - component: {fileID: 2975247250529666216}
   - component: {fileID: 129793480431015841}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: glass_1x1_Chunk_00
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -175,14 +175,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 5524991427672890353}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!33 &2787515732323872773
-MeshFilter:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3550921600715679701}
-  m_Mesh: {fileID: 4300000, guid: b662edde884064b248eafd4a89477f3b, type: 2}
 --- !u!23 &5778677489996663521
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -191,8 +183,8 @@ MeshRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3550921600715679701}
   m_Enabled: 1
-  m_CastShadows: 1
-  m_ReceiveShadows: 1
+  m_CastShadows: 0
+  m_ReceiveShadows: 0
   m_DynamicOccludee: 1
   m_StaticShadowCaster: 0
   m_MotionVectors: 1
@@ -232,6 +224,14 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!33 &2787515732323872773
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3550921600715679701}
+  m_Mesh: {fileID: 4300000, guid: b662edde884064b248eafd4a89477f3b, type: 2}
 --- !u!65 &2975247250529666216
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -239,7 +239,7 @@ BoxCollider:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3550921600715679701}
-  m_Material: {fileID: 0}
+  m_Material: {fileID: 13400000, guid: 5200dcea446cc4b02aeec2e06188180e, type: 2}
   m_IncludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -262,8 +262,8 @@ Rigidbody:
   m_GameObject: {fileID: 3550921600715679701}
   serializedVersion: 5
   m_Mass: 0.06666667
-  m_LinearDamping: 0
-  m_AngularDamping: 0.05
+  m_LinearDamping: 0.32
+  m_AngularDamping: 0.32
   m_CenterOfMass: {x: 0, y: 0, z: 0}
   m_InertiaTensor: {x: 1, y: 1, z: 1}
   m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
@@ -277,7 +277,7 @@ Rigidbody:
   m_ImplicitTensor: 1
   m_UseGravity: 1
   m_IsKinematic: 0
-  m_Interpolate: 1
+  m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
 --- !u!1 &4293522797996099035
@@ -336,6 +336,7 @@ MonoBehaviour:
   lifetime: 2
   shrinkDuration: 0.4
   freezeWhileShrinking: 1
+  settleSeconds: 0.4
 --- !u!1 &4748977143875620044
 GameObject:
   m_ObjectHideFlags: 0
@@ -345,11 +346,11 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8175508529816603760}
-  - component: {fileID: 5652378620637064390}
   - component: {fileID: 3699017290642788406}
+  - component: {fileID: 5652378620637064390}
   - component: {fileID: 7943433916747701650}
   - component: {fileID: 4010161551902476621}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: glass_1x1_Chunk_03
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -371,14 +372,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 5524991427672890353}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!33 &5652378620637064390
-MeshFilter:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4748977143875620044}
-  m_Mesh: {fileID: 478215855871790495, guid: b662edde884064b248eafd4a89477f3b, type: 2}
 --- !u!23 &3699017290642788406
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -387,8 +380,8 @@ MeshRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4748977143875620044}
   m_Enabled: 1
-  m_CastShadows: 1
-  m_ReceiveShadows: 1
+  m_CastShadows: 0
+  m_ReceiveShadows: 0
   m_DynamicOccludee: 1
   m_StaticShadowCaster: 0
   m_MotionVectors: 1
@@ -428,6 +421,14 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!33 &5652378620637064390
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4748977143875620044}
+  m_Mesh: {fileID: 478215855871790495, guid: b662edde884064b248eafd4a89477f3b, type: 2}
 --- !u!65 &7943433916747701650
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -435,7 +436,7 @@ BoxCollider:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4748977143875620044}
-  m_Material: {fileID: 0}
+  m_Material: {fileID: 13400000, guid: 5200dcea446cc4b02aeec2e06188180e, type: 2}
   m_IncludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -458,8 +459,8 @@ Rigidbody:
   m_GameObject: {fileID: 4748977143875620044}
   serializedVersion: 5
   m_Mass: 0.06666667
-  m_LinearDamping: 0
-  m_AngularDamping: 0.05
+  m_LinearDamping: 0.32
+  m_AngularDamping: 0.32
   m_CenterOfMass: {x: 0, y: 0, z: 0}
   m_InertiaTensor: {x: 1, y: 1, z: 1}
   m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
@@ -473,7 +474,7 @@ Rigidbody:
   m_ImplicitTensor: 1
   m_UseGravity: 1
   m_IsKinematic: 0
-  m_Interpolate: 1
+  m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
 --- !u!1 &4781841658194637747
@@ -485,11 +486,11 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2330815716281029676}
-  - component: {fileID: 6031411212142249956}
   - component: {fileID: 5761633129774544488}
+  - component: {fileID: 6031411212142249956}
   - component: {fileID: 6210026384079158302}
   - component: {fileID: 8660670937217580300}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: glass_1x1_Chunk_04
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -511,14 +512,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 5524991427672890353}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!33 &6031411212142249956
-MeshFilter:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4781841658194637747}
-  m_Mesh: {fileID: -1706334078701877440, guid: b662edde884064b248eafd4a89477f3b, type: 2}
 --- !u!23 &5761633129774544488
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -527,8 +520,8 @@ MeshRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4781841658194637747}
   m_Enabled: 1
-  m_CastShadows: 1
-  m_ReceiveShadows: 1
+  m_CastShadows: 0
+  m_ReceiveShadows: 0
   m_DynamicOccludee: 1
   m_StaticShadowCaster: 0
   m_MotionVectors: 1
@@ -568,6 +561,14 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!33 &6031411212142249956
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4781841658194637747}
+  m_Mesh: {fileID: -1706334078701877440, guid: b662edde884064b248eafd4a89477f3b, type: 2}
 --- !u!65 &6210026384079158302
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -575,7 +576,7 @@ BoxCollider:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4781841658194637747}
-  m_Material: {fileID: 0}
+  m_Material: {fileID: 13400000, guid: 5200dcea446cc4b02aeec2e06188180e, type: 2}
   m_IncludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -598,8 +599,8 @@ Rigidbody:
   m_GameObject: {fileID: 4781841658194637747}
   serializedVersion: 5
   m_Mass: 0.06666667
-  m_LinearDamping: 0
-  m_AngularDamping: 0.05
+  m_LinearDamping: 0.32
+  m_AngularDamping: 0.32
   m_CenterOfMass: {x: 0, y: 0, z: 0}
   m_InertiaTensor: {x: 1, y: 1, z: 1}
   m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
@@ -613,7 +614,7 @@ Rigidbody:
   m_ImplicitTensor: 1
   m_UseGravity: 1
   m_IsKinematic: 0
-  m_Interpolate: 1
+  m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
 --- !u!1 &5074326659520454706
@@ -625,11 +626,11 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6064615884159622931}
-  - component: {fileID: 5296222597801085961}
   - component: {fileID: 8910277169951793024}
+  - component: {fileID: 5296222597801085961}
   - component: {fileID: 3118134256467190576}
   - component: {fileID: 2889762503925593843}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: glass_1x1_Chunk_01
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -651,14 +652,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 5524991427672890353}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!33 &5296222597801085961
-MeshFilter:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5074326659520454706}
-  m_Mesh: {fileID: -7630645439847750484, guid: b662edde884064b248eafd4a89477f3b, type: 2}
 --- !u!23 &8910277169951793024
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -667,8 +660,8 @@ MeshRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5074326659520454706}
   m_Enabled: 1
-  m_CastShadows: 1
-  m_ReceiveShadows: 1
+  m_CastShadows: 0
+  m_ReceiveShadows: 0
   m_DynamicOccludee: 1
   m_StaticShadowCaster: 0
   m_MotionVectors: 1
@@ -708,6 +701,14 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!33 &5296222597801085961
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5074326659520454706}
+  m_Mesh: {fileID: -7630645439847750484, guid: b662edde884064b248eafd4a89477f3b, type: 2}
 --- !u!65 &3118134256467190576
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -715,7 +716,7 @@ BoxCollider:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5074326659520454706}
-  m_Material: {fileID: 0}
+  m_Material: {fileID: 13400000, guid: 5200dcea446cc4b02aeec2e06188180e, type: 2}
   m_IncludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -738,8 +739,8 @@ Rigidbody:
   m_GameObject: {fileID: 5074326659520454706}
   serializedVersion: 5
   m_Mass: 0.06666667
-  m_LinearDamping: 0
-  m_AngularDamping: 0.05
+  m_LinearDamping: 0.32
+  m_AngularDamping: 0.32
   m_CenterOfMass: {x: 0, y: 0, z: 0}
   m_InertiaTensor: {x: 1, y: 1, z: 1}
   m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
@@ -753,7 +754,7 @@ Rigidbody:
   m_ImplicitTensor: 1
   m_UseGravity: 1
   m_IsKinematic: 0
-  m_Interpolate: 1
+  m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
 --- !u!1 &5642694152663398197
@@ -765,11 +766,11 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8804545693439359987}
-  - component: {fileID: 6616124581216416592}
   - component: {fileID: 5140065243386523489}
+  - component: {fileID: 6616124581216416592}
   - component: {fileID: 6409712295787991010}
   - component: {fileID: 1778449969178013440}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: glass_1x1_Chunk_02
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -791,14 +792,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 5524991427672890353}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!33 &6616124581216416592
-MeshFilter:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5642694152663398197}
-  m_Mesh: {fileID: 397279019525132197, guid: b662edde884064b248eafd4a89477f3b, type: 2}
 --- !u!23 &5140065243386523489
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -807,8 +800,8 @@ MeshRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5642694152663398197}
   m_Enabled: 1
-  m_CastShadows: 1
-  m_ReceiveShadows: 1
+  m_CastShadows: 0
+  m_ReceiveShadows: 0
   m_DynamicOccludee: 1
   m_StaticShadowCaster: 0
   m_MotionVectors: 1
@@ -848,6 +841,14 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!33 &6616124581216416592
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5642694152663398197}
+  m_Mesh: {fileID: 397279019525132197, guid: b662edde884064b248eafd4a89477f3b, type: 2}
 --- !u!65 &6409712295787991010
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -855,7 +856,7 @@ BoxCollider:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5642694152663398197}
-  m_Material: {fileID: 0}
+  m_Material: {fileID: 13400000, guid: 5200dcea446cc4b02aeec2e06188180e, type: 2}
   m_IncludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -878,8 +879,8 @@ Rigidbody:
   m_GameObject: {fileID: 5642694152663398197}
   serializedVersion: 5
   m_Mass: 0.06666667
-  m_LinearDamping: 0
-  m_AngularDamping: 0.05
+  m_LinearDamping: 0.32
+  m_AngularDamping: 0.32
   m_CenterOfMass: {x: 0, y: 0, z: 0}
   m_InertiaTensor: {x: 1, y: 1, z: 1}
   m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
@@ -893,7 +894,7 @@ Rigidbody:
   m_ImplicitTensor: 1
   m_UseGravity: 1
   m_IsKinematic: 0
-  m_Interpolate: 1
+  m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
 --- !u!1 &6627008278166737540
@@ -905,11 +906,11 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1706278951865909171}
-  - component: {fileID: 8666315891012037213}
   - component: {fileID: 8903652950900638985}
+  - component: {fileID: 8666315891012037213}
   - component: {fileID: 3626144525905848750}
   - component: {fileID: 629298347045329232}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: glass_1x1_Chunk_08
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -931,14 +932,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 5524991427672890353}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!33 &8666315891012037213
-MeshFilter:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6627008278166737540}
-  m_Mesh: {fileID: 3214144631434785390, guid: b662edde884064b248eafd4a89477f3b, type: 2}
 --- !u!23 &8903652950900638985
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -947,8 +940,8 @@ MeshRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6627008278166737540}
   m_Enabled: 1
-  m_CastShadows: 1
-  m_ReceiveShadows: 1
+  m_CastShadows: 0
+  m_ReceiveShadows: 0
   m_DynamicOccludee: 1
   m_StaticShadowCaster: 0
   m_MotionVectors: 1
@@ -988,6 +981,14 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!33 &8666315891012037213
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6627008278166737540}
+  m_Mesh: {fileID: 3214144631434785390, guid: b662edde884064b248eafd4a89477f3b, type: 2}
 --- !u!65 &3626144525905848750
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -995,7 +996,7 @@ BoxCollider:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6627008278166737540}
-  m_Material: {fileID: 0}
+  m_Material: {fileID: 13400000, guid: 5200dcea446cc4b02aeec2e06188180e, type: 2}
   m_IncludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -1018,8 +1019,8 @@ Rigidbody:
   m_GameObject: {fileID: 6627008278166737540}
   serializedVersion: 5
   m_Mass: 0.06666667
-  m_LinearDamping: 0
-  m_AngularDamping: 0.05
+  m_LinearDamping: 0.32
+  m_AngularDamping: 0.32
   m_CenterOfMass: {x: 0, y: 0, z: 0}
   m_InertiaTensor: {x: 1, y: 1, z: 1}
   m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
@@ -1033,7 +1034,7 @@ Rigidbody:
   m_ImplicitTensor: 1
   m_UseGravity: 1
   m_IsKinematic: 0
-  m_Interpolate: 1
+  m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
 --- !u!1 &6999086254678110501
@@ -1045,11 +1046,11 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8834848099074649458}
-  - component: {fileID: 1248247259936198674}
   - component: {fileID: 6888835586667586379}
+  - component: {fileID: 1248247259936198674}
   - component: {fileID: 3449965023597880199}
   - component: {fileID: 647592168890347914}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: glass_1x1_Chunk_06
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1071,14 +1072,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 5524991427672890353}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!33 &1248247259936198674
-MeshFilter:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6999086254678110501}
-  m_Mesh: {fileID: 2652132614902371034, guid: b662edde884064b248eafd4a89477f3b, type: 2}
 --- !u!23 &6888835586667586379
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -1087,8 +1080,8 @@ MeshRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6999086254678110501}
   m_Enabled: 1
-  m_CastShadows: 1
-  m_ReceiveShadows: 1
+  m_CastShadows: 0
+  m_ReceiveShadows: 0
   m_DynamicOccludee: 1
   m_StaticShadowCaster: 0
   m_MotionVectors: 1
@@ -1128,6 +1121,14 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!33 &1248247259936198674
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6999086254678110501}
+  m_Mesh: {fileID: 2652132614902371034, guid: b662edde884064b248eafd4a89477f3b, type: 2}
 --- !u!65 &3449965023597880199
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -1135,7 +1136,7 @@ BoxCollider:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6999086254678110501}
-  m_Material: {fileID: 0}
+  m_Material: {fileID: 13400000, guid: 5200dcea446cc4b02aeec2e06188180e, type: 2}
   m_IncludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -1158,8 +1159,8 @@ Rigidbody:
   m_GameObject: {fileID: 6999086254678110501}
   serializedVersion: 5
   m_Mass: 0.06666667
-  m_LinearDamping: 0
-  m_AngularDamping: 0.05
+  m_LinearDamping: 0.32
+  m_AngularDamping: 0.32
   m_CenterOfMass: {x: 0, y: 0, z: 0}
   m_InertiaTensor: {x: 1, y: 1, z: 1}
   m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
@@ -1173,7 +1174,7 @@ Rigidbody:
   m_ImplicitTensor: 1
   m_UseGravity: 1
   m_IsKinematic: 0
-  m_Interpolate: 1
+  m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
 --- !u!1 &7817167629800218263
@@ -1185,11 +1186,11 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3761042236642308907}
-  - component: {fileID: 5330972579128433886}
   - component: {fileID: 6771524796591898131}
+  - component: {fileID: 5330972579128433886}
   - component: {fileID: 8838500893608812700}
   - component: {fileID: 7613089469469237448}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: glass_1x1_Chunk_05
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1211,14 +1212,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 5524991427672890353}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!33 &5330972579128433886
-MeshFilter:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7817167629800218263}
-  m_Mesh: {fileID: 7055066341232719185, guid: b662edde884064b248eafd4a89477f3b, type: 2}
 --- !u!23 &6771524796591898131
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -1227,8 +1220,8 @@ MeshRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7817167629800218263}
   m_Enabled: 1
-  m_CastShadows: 1
-  m_ReceiveShadows: 1
+  m_CastShadows: 0
+  m_ReceiveShadows: 0
   m_DynamicOccludee: 1
   m_StaticShadowCaster: 0
   m_MotionVectors: 1
@@ -1268,6 +1261,14 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!33 &5330972579128433886
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7817167629800218263}
+  m_Mesh: {fileID: 7055066341232719185, guid: b662edde884064b248eafd4a89477f3b, type: 2}
 --- !u!65 &8838500893608812700
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -1275,7 +1276,7 @@ BoxCollider:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7817167629800218263}
-  m_Material: {fileID: 0}
+  m_Material: {fileID: 13400000, guid: 5200dcea446cc4b02aeec2e06188180e, type: 2}
   m_IncludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -1298,8 +1299,8 @@ Rigidbody:
   m_GameObject: {fileID: 7817167629800218263}
   serializedVersion: 5
   m_Mass: 0.06666667
-  m_LinearDamping: 0
-  m_AngularDamping: 0.05
+  m_LinearDamping: 0.32
+  m_AngularDamping: 0.32
   m_CenterOfMass: {x: 0, y: 0, z: 0}
   m_InertiaTensor: {x: 1, y: 1, z: 1}
   m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
@@ -1313,6 +1314,6 @@ Rigidbody:
   m_ImplicitTensor: 1
   m_UseGravity: 1
   m_IsKinematic: 0
-  m_Interpolate: 1
+  m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0

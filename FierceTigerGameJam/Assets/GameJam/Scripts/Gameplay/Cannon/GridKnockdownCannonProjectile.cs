@@ -16,7 +16,11 @@ namespace GameJam.Gameplay.Cannon
         [SerializeField] private float neighborImpulseMultiplier = 0.65f;
         [SerializeField] private float upwardForce = 0.25f;
         [SerializeField] private LayerMask hittableLayers = ~0;
-        [SerializeField] private bool destroyOnImpact = true;
+
+        [Tooltip("Seconds the ball keeps flying after its first hit. It carries on bouncing but "
+                 + "does no further damage, which is what turns a shot into something the player "
+                 + "watches rather than something that ends the instant it lands.")]
+        [SerializeField] private float postImpactLifetime = 0.4f;
 
         [Header("Damage")]
         [Tooltip("Where the loaded ammunition and its level are read from. Without one, the flat "
@@ -36,15 +40,41 @@ namespace GameJam.Gameplay.Cannon
         [Tooltip("Hit points taken off blocks in the blast radius, when no ammunition is set.")]
         [SerializeField] private float splashDamage = 1f;
 
+        /// <summary>
+        /// Shared by every shot, and only ever touched between a collision and the end of the
+        /// same call. A blast reaches a couple of dozen colliders at most, and overflowing the
+        /// buffer costs the outermost blocks of one shot rather than an allocation on every one.
+        /// </summary>
+        private static readonly Collider[] OverlapBuffer = new Collider[32];
+
+        private static readonly HashSet<KnockdownBlock> ProcessedBlocks = new HashSet<KnockdownBlock>();
+
         private Rigidbody projectileRigidbody;
         private Collider projectileCollider;
+        private ProjectilePool pool;
+
+        /// <summary>
+        /// Colliders this shot was told to pass through. Kept so they can be un-ignored when it
+        /// goes back to the pool: an ignore pair outlives the shot that set it, and the next
+        /// shot out of the same instance would fly through whatever the last one did.
+        /// </summary>
+        private readonly List<Collider> ignoredColliders = new List<Collider>();
+
         private bool hasHit;
+        private float sinceHit;
+        private float flightRemaining;
 
         private void Awake()
         {
             projectileRigidbody = GetComponent<Rigidbody>();
             projectileCollider = GetComponent<Collider>();
             projectileRigidbody.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
+        }
+
+        /// <summary>Told which pool to go back to. A shot with no pool destroys itself.</summary>
+        public void SetPool(ProjectilePool owner)
+        {
+            pool = owner;
         }
 
         private void OnValidate()
@@ -54,6 +84,7 @@ namespace GameJam.Gameplay.Cannon
             minimumFalloff = Mathf.Clamp01(minimumFalloff);
             neighborImpulseMultiplier = Mathf.Max(0f, neighborImpulseMultiplier);
             upwardForce = Mathf.Max(0f, upwardForce);
+            postImpactLifetime = Mathf.Max(0f, postImpactLifetime);
             directHitDamage = Mathf.Max(0f, directHitDamage);
             splashDamage = Mathf.Max(0f, splashDamage);
             bulletLevelOverride = Mathf.Max(1, bulletLevelOverride);
@@ -76,13 +107,66 @@ namespace GameJam.Gameplay.Cannon
                 projectileRigidbody = GetComponent<Rigidbody>();
             }
 
+            hasHit = false;
+            sinceHit = 0f;
+            flightRemaining = lifetime;
+
+            // Back to the setting a shot in flight needs. A pooled ball was switched to Discrete
+            // when its last shot landed, and would otherwise tunnel straight through thin glass.
+            projectileRigidbody.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
+            projectileRigidbody.angularVelocity = Vector3.zero;
             projectileRigidbody.linearVelocity = direction.normalized * speed;
             IgnoreSpawnOverlaps();
+        }
 
-            if (lifetime > 0f)
+        /// <summary>
+        /// Two clocks, not one: the flight timeout that catches a shot which never hits anything,
+        /// and the short life a shot is given after it does hit, so it can bounce on into a
+        /// second block instead of vanishing at the moment of contact.
+        /// </summary>
+        private void Update()
+        {
+            if (hasHit)
             {
-                Destroy(gameObject, lifetime);
+                sinceHit += Time.deltaTime;
+                if (sinceHit >= postImpactLifetime)
+                {
+                    Despawn();
+                }
+
+                return;
             }
+
+            if (flightRemaining <= 0f)
+            {
+                return;
+            }
+
+            flightRemaining -= Time.deltaTime;
+            if (flightRemaining <= 0f)
+            {
+                Despawn();
+            }
+        }
+
+        /// <summary>
+        /// Every path out of a shot ends here - retired by the pool, timed out, or destroyed -
+        /// so this is where the ignore pairs it set have to be put back.
+        /// </summary>
+        private void OnDisable()
+        {
+            ClearIgnoredCollisions();
+        }
+
+        private void Despawn()
+        {
+            if (pool != null)
+            {
+                pool.Return(this);
+                return;
+            }
+
+            Destroy(gameObject);
         }
 
         private void OnCollisionEnter(Collision collision)
@@ -106,6 +190,11 @@ namespace GameJam.Gameplay.Cannon
             }
 
             hasHit = true;
+            sinceHit = 0f;
+
+            // Nothing left to tunnel through at the speed it is now going, and continuous
+            // detection on a ball rattling around inside a collapsing structure is pure cost.
+            projectileRigidbody.collisionDetectionMode = CollisionDetectionMode.Discrete;
 
             ContactPoint contact = collision.GetContact(0);
             Vector3 impulseDirection = projectileRigidbody.linearVelocity.sqrMagnitude > 0.01f
@@ -113,9 +202,9 @@ namespace GameJam.Gameplay.Cannon
                 : transform.forward;
             KnockBlocks(contact.point, impulseDirection, block);
 
-            if (destroyOnImpact)
+            if (postImpactLifetime <= 0f)
             {
-                Destroy(gameObject);
+                Despawn();
             }
         }
 
@@ -129,7 +218,11 @@ namespace GameJam.Gameplay.Cannon
         private void KnockBlocks(Vector3 impactPoint, Vector3 impulseDirection, KnockdownBlock directlyHitBlock)
         {
             Vector3 forceDirection = (impulseDirection + Vector3.up * upwardForce).normalized;
-            HashSet<KnockdownBlock> processedBlocks = new HashSet<KnockdownBlock>();
+
+            // Static and cleared per shot rather than allocated per shot. Only one shot is ever
+            // resolving a hit at a time: this runs inside OnCollisionEnter and never yields.
+            HashSet<KnockdownBlock> processedBlocks = ProcessedBlocks;
+            processedBlocks.Clear();
 
             if (directlyHitBlock != null)
             {
@@ -142,15 +235,16 @@ namespace GameJam.Gameplay.Cannon
                 return;
             }
 
-            Collider[] hits = Physics.OverlapSphere(
+            int hitCount = Physics.OverlapSphereNonAlloc(
                 impactPoint,
                 impactRadius,
+                OverlapBuffer,
                 hittableLayers,
                 QueryTriggerInteraction.Ignore);
 
-            for (int i = 0; i < hits.Length; i++)
+            for (int i = 0; i < hitCount; i++)
             {
-                KnockdownBlock nearbyBlock = hits[i].GetComponentInParent<KnockdownBlock>();
+                KnockdownBlock nearbyBlock = OverlapBuffer[i].GetComponentInParent<KnockdownBlock>();
                 if (nearbyBlock == null || !processedBlocks.Add(nearbyBlock))
                 {
                     continue;
@@ -282,15 +376,16 @@ namespace GameJam.Gameplay.Cannon
 
             Bounds bounds = projectileCollider.bounds;
             float overlapRadius = Mathf.Max(bounds.extents.x, bounds.extents.y, bounds.extents.z) * 0.98f;
-            Collider[] overlaps = Physics.OverlapSphere(
+            int overlapCount = Physics.OverlapSphereNonAlloc(
                 bounds.center,
                 overlapRadius,
+                OverlapBuffer,
                 hittableLayers,
                 QueryTriggerInteraction.Ignore);
 
-            for (int i = 0; i < overlaps.Length; i++)
+            for (int i = 0; i < overlapCount; i++)
             {
-                IgnoreCollision(overlaps[i]);
+                IgnoreCollision(OverlapBuffer[i]);
             }
         }
 
@@ -302,6 +397,26 @@ namespace GameJam.Gameplay.Cannon
             }
 
             Physics.IgnoreCollision(projectileCollider, other, true);
+            ignoredColliders.Add(other);
+        }
+
+        /// <summary>
+        /// Puts back every pair this shot suppressed. An ignore pair is a property of the two
+        /// colliders, not of the shot, so a pooled ball that skipped this would keep flying
+        /// through blocks its previous life had spawned inside.
+        /// </summary>
+        private void ClearIgnoredCollisions()
+        {
+            for (int i = 0; i < ignoredColliders.Count; i++)
+            {
+                Collider other = ignoredColliders[i];
+                if (other != null && projectileCollider != null)
+                {
+                    Physics.IgnoreCollision(projectileCollider, other, false);
+                }
+            }
+
+            ignoredColliders.Clear();
         }
     }
 }

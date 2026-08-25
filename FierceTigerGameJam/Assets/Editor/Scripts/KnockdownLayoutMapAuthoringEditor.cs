@@ -29,13 +29,14 @@ public sealed class KnockdownLayoutMapAuthoringEditor : Editor
         EditorGUILayout.PropertyField(serializedObject.FindProperty("createStructureCenter"));
         EditorGUILayout.PropertyField(serializedObject.FindProperty("structureSpinner"));
 
-        SerializedProperty grouping = serializedObject.FindProperty("groupBlocksIntoWalls");
+        // The "Wall Grouping" heading comes from the [Header] on the field itself.
+        SerializedProperty mode = serializedObject.FindProperty("wallGrouping");
         SerializedProperty minimumWallCells = serializedObject.FindProperty("minimumWallCells");
+        EditorGUILayout.PropertyField(mode);
 
-        EditorGUILayout.Space(6f);
-        EditorGUILayout.LabelField("Wall Grouping", EditorStyles.boldLabel);
-        EditorGUILayout.PropertyField(grouping);
-        using (new EditorGUI.DisabledScope(!grouping.boolValue))
+        // Nothing but NamedAndDetected reads the threshold, and a field that is drawn but ignored
+        // reads as a dial that still does something.
+        if (mode.enumValueIndex == (int)WallGroupingMode.NamedAndDetected)
         {
             EditorGUILayout.PropertyField(minimumWallCells);
         }
@@ -43,21 +44,25 @@ public sealed class KnockdownLayoutMapAuthoringEditor : Editor
         serializedObject.ApplyModifiedProperties();
 
         KnockdownLayoutMapAuthoring layout = (KnockdownLayoutMapAuthoring)target;
+        WallGroupingMode grouping = (WallGroupingMode)mode.enumValueIndex;
 
         EditorGUILayout.Space(10f);
-        KnockdownMapDefinition map = DrawMapSummary(layout, grouping.boolValue, minimumWallCells.intValue);
+        KnockdownMapDefinition map = DrawMapSummary(layout, grouping, minimumWallCells.intValue);
 
         if (map != null)
         {
             EditorGUILayout.Space(10f);
-            DrawLayerPreview(layout, map, grouping.boolValue, minimumWallCells.intValue);
+            DrawLayerPreview(layout, map, grouping, minimumWallCells.intValue);
         }
 
         EditorGUILayout.Space(10f);
         DrawActions(layout, map);
     }
 
-    private KnockdownMapDefinition DrawMapSummary(KnockdownLayoutMapAuthoring layout, bool grouping, int minimumWallCells)
+    private KnockdownMapDefinition DrawMapSummary(
+        KnockdownLayoutMapAuthoring layout,
+        WallGroupingMode grouping,
+        int minimumWallCells)
     {
         if (layout.MapJson == null)
         {
@@ -76,11 +81,13 @@ public sealed class KnockdownLayoutMapAuthoringEditor : Editor
         EditorGUILayout.LabelField("Grid", $"{map.grid.width} x {map.grid.height} cells, cell {map.grid.cellSize}, layer depth {map.grid.layerDepth}");
         EditorGUILayout.LabelField("Contents", $"{map.layers.Length} layer(s), {map.CountBlocks()} block(s)");
 
-        if (grouping && layout.BlockDatabase != null)
+        if (grouping != WallGroupingMode.None && layout.BlockDatabase != null)
         {
-            CountGrouping(layout, map, minimumWallCells, out int walls, out int wallCells);
-            int objects = walls + (map.CountBlocks() - wallCells);
-            EditorGUILayout.LabelField("Grouped", $"{walls} wall(s) covering {wallCells} block(s) -> {objects} object(s)");
+            WallPreview preview = ResolveWalls(layout, map, grouping, minimumWallCells);
+            int objects = preview.WallCount + (map.CountBlocks() - preview.WallBlockCount);
+            EditorGUILayout.LabelField(
+                "Grouped",
+                $"{preview.WallCount} wall(s) covering {preview.WallBlockCount} block(s) -> {objects} object(s)");
         }
 
         // Measured off a prefab the map actually uses rather than assumed: a map whose cells are
@@ -109,14 +116,13 @@ public sealed class KnockdownLayoutMapAuthoringEditor : Editor
 
     /// <summary>
     /// Face-on view of one layer: columns run along the grid width, rows upward, with the top
-    /// row drawn first so the preview reads the same way the slice stands in the scene. With
-    /// grouping on, cells that will be merged share a colour, so a wall is visible before it is
-    /// built.
+    /// row drawn first so the preview reads the same way the slice stands in the scene. Cells
+    /// that will be merged share a colour, so a wall is visible before it is built.
     /// </summary>
     private void DrawLayerPreview(
         KnockdownLayoutMapAuthoring layout,
         KnockdownMapDefinition map,
-        bool grouping,
+        WallGroupingMode grouping,
         int minimumWallCells)
     {
         EditorGUILayout.LabelField("Layer Preview", EditorStyles.boldLabel);
@@ -128,9 +134,10 @@ public sealed class KnockdownLayoutMapAuthoringEditor : Editor
 
         Dictionary<Vector2Int, int> wallByCell = null;
         int wallCount = 0;
-        if (grouping && layout.BlockDatabase != null)
+        if (grouping != WallGroupingMode.None && layout.BlockDatabase != null)
         {
-            wallByCell = ResolveWalls(layout, map, previewLevel, minimumWallCells, out wallCount);
+            WallPreview preview = ResolveWalls(layout, map, grouping, minimumWallCells);
+            wallByCell = preview.SliceLevel(previewLevel, out wallCount);
         }
 
         for (int y = map.grid.height - 1; y >= 0; y--)
@@ -167,17 +174,25 @@ public sealed class KnockdownLayoutMapAuthoringEditor : Editor
 
         if (wallByCell != null)
         {
-            EditorGUILayout.LabelField(
-                wallCount > 0
-                    ? $"{wallCount} wall(s) on this level; each colour is one wall, grey blocks stay separate."
-                    : "Nothing on this level is a long enough run to merge.",
-                EditorStyles.miniLabel);
+            EditorGUILayout.LabelField(ResolveLevelWallNote(grouping, wallCount), EditorStyles.miniLabel);
         }
 
         if (hasUnknownType)
         {
             EditorGUILayout.HelpBox("Cells in red use a block type the database does not map to a prefab.", MessageType.Warning);
         }
+    }
+
+    private static string ResolveLevelWallNote(WallGroupingMode grouping, int wallCount)
+    {
+        if (wallCount > 0)
+        {
+            return $"{wallCount} wall(s) on this level; each colour is one wall, grey blocks stay separate.";
+        }
+
+        return grouping == WallGroupingMode.NamedAndDetected
+            ? "No block on this level names a wall, and nothing here is a long enough run to merge."
+            : "No block on this level names a wall, so every block on it is built on its own.";
     }
 
     private static Color ResolveCellColor(
@@ -216,104 +231,133 @@ public sealed class KnockdownLayoutMapAuthoringEditor : Editor
     }
 
     /// <summary>
-    /// Mirrors what the builder does: only single-cell blocks group, by type, within one level.
-    /// This works straight off the map rather than off accepted placements, so a map with
-    /// overlapping blocks can preview a wall the builder would end up trimming.
+    /// Every wall the whole map would produce, indexed by the cells it covers. Held for the map
+    /// rather than per level because a named wall may span levels: counting one level at a time
+    /// would report a wall once per level it reaches into.
     /// </summary>
-    private static Dictionary<Vector2Int, int> ResolveWalls(
-        KnockdownLayoutMapAuthoring layout,
-        KnockdownMapDefinition map,
-        int level,
-        int minimumWallCells,
-        out int wallCount)
+    private sealed class WallPreview
     {
-        Dictionary<Vector2Int, int> wallByCell = new Dictionary<Vector2Int, int>();
-        wallCount = 0;
+        /// <summary>Cell (x, y, level) to the index of the wall that covers it.</summary>
+        public readonly Dictionary<Vector3Int, int> WallIndexByCell = new Dictionary<Vector3Int, int>();
 
-        // Walls the map named come first and are taken as given, exactly as the builder does.
-        HashSet<Vector2Int> named = new HashSet<Vector2Int>();
-        Dictionary<string, int> indexByWallId = new Dictionary<string, int>(StringComparer.Ordinal);
-        foreach (KnockdownMapBlock block in BlocksOnLevel(map, level))
+        public int WallCount;
+
+        /// <summary>Blocks that ended up inside a wall, which is what the summary subtracts.</summary>
+        public int WallBlockCount;
+
+        /// <summary>Takes the next wall index and paints the blocks that make it up.</summary>
+        public void AddWall(List<PreviewBlock> blocks, List<int> members)
         {
-            string wallId = block.WallId;
-            if (string.IsNullOrEmpty(wallId) || block.position == null)
+            for (int i = 0; i < members.Count; i++)
             {
-                continue;
-            }
+                PreviewBlock block = blocks[members[i]];
 
-            if (!indexByWallId.TryGetValue(wallId, out int index))
-            {
-                index = wallCount++;
-                indexByWallId[wallId] = index;
-            }
-
-            Vector2Int cell = new Vector2Int(block.position.x, block.position.y);
-            wallByCell[cell] = index;
-            named.Add(cell);
-        }
-
-        foreach (KeyValuePair<string, Dictionary<Vector2Int, string>> group in BuildSingleCellGroups(layout, map, level))
-        {
-            Dictionary<Vector2Int, string> free = new Dictionary<Vector2Int, string>(group.Value.Count);
-            foreach (KeyValuePair<Vector2Int, string> cell in group.Value)
-            {
-                if (!named.Contains(cell.Key))
+                // Only the cells on the block's own level: a block deeper than one cell reserves
+                // the levels behind it, but it is drawn on the level it was authored in.
+                for (int x = 0; x < block.Footprint.x; x++)
                 {
-                    free[cell.Key] = cell.Value;
+                    for (int y = 0; y < block.Footprint.y; y++)
+                    {
+                        WallIndexByCell[new Vector3Int(
+                            block.GridPosition.x + x,
+                            block.GridPosition.y + y,
+                            block.Level)] = WallCount;
+                    }
                 }
             }
 
-            List<WallGrouping.WallRect> rects = WallGrouping.Find(free);
-            for (int i = 0; i < rects.Count; i++)
+            WallBlockCount += members.Count;
+            WallCount++;
+        }
+
+        /// <summary>The walls that show on one level, keyed the way the preview grid is drawn.</summary>
+        public Dictionary<Vector2Int, int> SliceLevel(int level, out int wallCount)
+        {
+            Dictionary<Vector2Int, int> byCell = new Dictionary<Vector2Int, int>();
+            HashSet<int> present = new HashSet<int>();
+
+            foreach (KeyValuePair<Vector3Int, int> cell in WallIndexByCell)
             {
-                if (rects[i].Area < minimumWallCells)
+                if (cell.Key.z != level)
                 {
                     continue;
                 }
 
-                for (int c = 0; c < rects[i].Cells.Count; c++)
-                {
-                    wallByCell[rects[i].Cells[c]] = wallCount;
-                }
-
-                wallCount++;
+                byCell[new Vector2Int(cell.Key.x, cell.Key.y)] = cell.Value;
+                present.Add(cell.Value);
             }
-        }
 
-        return wallByCell;
+            wallCount = present.Count;
+            return byCell;
+        }
     }
 
-    private static IEnumerable<KnockdownMapBlock> BlocksOnLevel(KnockdownMapDefinition map, int level)
+    /// <summary>A block the builder would accept, reduced to what grouping actually looks at.</summary>
+    private readonly struct PreviewBlock
     {
-        for (int layerIndex = 0; layerIndex < map.layers.Length; layerIndex++)
-        {
-            KnockdownMapLayer layer = map.layers[layerIndex];
-            if (layer == null || layer.level != level || layer.blocks == null)
-            {
-                continue;
-            }
+        public readonly KnockdownMapBlock Source;
+        public readonly int Level;
+        public readonly Vector3Int GridPosition;
+        public readonly Vector3Int Footprint;
 
-            for (int blockIndex = 0; blockIndex < layer.blocks.Length; blockIndex++)
-            {
-                if (layer.blocks[blockIndex] != null)
-                {
-                    yield return layer.blocks[blockIndex];
-                }
-            }
+        public PreviewBlock(KnockdownMapBlock source, int level, Vector3Int footprint)
+        {
+            Source = source;
+            Level = level;
+            GridPosition = new Vector3Int(source.position.x, source.position.y, level);
+            Footprint = footprint;
         }
+
+        public bool IsSingleCell => Footprint.x == 1 && Footprint.y == 1 && Footprint.z == 1;
     }
 
-    private static Dictionary<string, Dictionary<Vector2Int, string>> BuildSingleCellGroups(
+    /// <summary>
+    /// Mirrors what the builder does, so the preview never shows a wall the runtime will not
+    /// build: named walls first, taken as given but demoted when they hold a single block and
+    /// split when their blocks do not touch, then - in NamedAndDetected only - the automatic
+    /// same-type rectangles for the blocks the map left unassigned.
+    ///
+    /// This works straight off the map rather than off accepted placements, so a map with
+    /// overlapping or out-of-grid blocks can still preview a wall the builder would end up
+    /// trimming.
+    /// </summary>
+    private static WallPreview ResolveWalls(
         KnockdownLayoutMapAuthoring layout,
         KnockdownMapDefinition map,
-        int level)
+        WallGroupingMode grouping,
+        int minimumWallCells)
     {
-        Dictionary<string, Dictionary<Vector2Int, string>> groups = new Dictionary<string, Dictionary<Vector2Int, string>>();
+        WallPreview preview = new WallPreview();
+        if (grouping == WallGroupingMode.None)
+        {
+            return preview;
+        }
+
+        List<PreviewBlock> blocks = CollectPreviewBlocks(layout, map);
+        AddNamedWalls(preview, blocks);
+
+        if (grouping == WallGroupingMode.NamedAndDetected)
+        {
+            AddDetectedWalls(preview, blocks, minimumWallCells);
+        }
+
+        return preview;
+    }
+
+    /// <summary>
+    /// In the order the builder would place them, so a wall keeps the same index - and so the
+    /// same colour - as the map is edited around it.
+    /// </summary>
+    private static List<PreviewBlock> CollectPreviewBlocks(
+        KnockdownLayoutMapAuthoring layout,
+        KnockdownMapDefinition map)
+    {
+        List<PreviewBlock> blocks = new List<PreviewBlock>();
 
         for (int layerIndex = 0; layerIndex < map.layers.Length; layerIndex++)
         {
             KnockdownMapLayer layer = map.layers[layerIndex];
-            if (layer == null || layer.level != level || layer.blocks == null)
+            if (layer?.blocks == null)
             {
                 continue;
             }
@@ -321,45 +365,137 @@ public sealed class KnockdownLayoutMapAuthoringEditor : Editor
             for (int blockIndex = 0; blockIndex < layer.blocks.Length; blockIndex++)
             {
                 KnockdownMapBlock block = layer.blocks[blockIndex];
+
+                // A type the database cannot resolve never becomes a placement, so it can never
+                // become part of a wall either.
                 if (block?.position == null || !IsTypeKnown(layout, block.type))
                 {
                     continue;
                 }
 
-                Vector3Int footprint = ResolveFootprint(layout, block);
-                if (footprint.x != 1 || footprint.y != 1 || footprint.z != 1)
+                blocks.Add(new PreviewBlock(block, layer.level, ResolveFootprint(layout, block)));
+            }
+        }
+
+        return blocks;
+    }
+
+    /// <summary>
+    /// Walls the map named. A wall of one block is a block, and a wall whose blocks do not touch
+    /// is split, both exactly as the builder does it.
+    /// </summary>
+    private static void AddNamedWalls(WallPreview preview, List<PreviewBlock> blocks)
+    {
+        Dictionary<string, List<int>> byWallId = new Dictionary<string, List<int>>(StringComparer.Ordinal);
+        List<string> order = new List<string>();
+
+        for (int i = 0; i < blocks.Count; i++)
+        {
+            string wallId = blocks[i].Source.WallId;
+            if (string.IsNullOrEmpty(wallId))
+            {
+                continue;
+            }
+
+            if (!byWallId.TryGetValue(wallId, out List<int> members))
+            {
+                members = new List<int>();
+                byWallId[wallId] = members;
+                order.Add(wallId);
+            }
+
+            members.Add(i);
+        }
+
+        for (int i = 0; i < order.Count; i++)
+        {
+            List<int> members = byWallId[order[i]];
+            if (members.Count < 2)
+            {
+                continue;
+            }
+
+            List<WallGrouping.CellBox> boxes = new List<WallGrouping.CellBox>(members.Count);
+            for (int m = 0; m < members.Count; m++)
+            {
+                boxes.Add(new WallGrouping.CellBox(blocks[members[m]].GridPosition, blocks[members[m]].Footprint));
+            }
+
+            List<List<int>> parts = WallGrouping.FindConnectedGroups(boxes);
+            for (int p = 0; p < parts.Count; p++)
+            {
+                if (parts[p].Count < 2)
                 {
                     continue;
                 }
 
-                if (!groups.TryGetValue(block.type, out Dictionary<Vector2Int, string> cells))
+                List<int> part = new List<int>(parts[p].Count);
+                for (int m = 0; m < parts[p].Count; m++)
                 {
-                    cells = new Dictionary<Vector2Int, string>();
-                    groups[block.type] = cells;
+                    part.Add(members[parts[p][m]]);
                 }
 
-                cells[new Vector2Int(block.position.x, block.position.y)] = block.type;
+                preview.AddWall(blocks, part);
             }
         }
-
-        return groups;
     }
 
-    private static void CountGrouping(
-        KnockdownLayoutMapAuthoring layout,
-        KnockdownMapDefinition map,
-        int minimumWallCells,
-        out int walls,
-        out int wallCells)
+    /// <summary>
+    /// The legacy fallback: single-cell blocks of one type inside one level, grouped into
+    /// rectangles. Only blocks the map left without a wall id are candidates - a block whose
+    /// named wall was demoted stays a block rather than being picked up here, which is what the
+    /// builder does too.
+    /// </summary>
+    private static void AddDetectedWalls(WallPreview preview, List<PreviewBlock> blocks, int minimumWallCells)
     {
-        walls = 0;
-        wallCells = 0;
+        Dictionary<(int level, string type), Dictionary<Vector2Int, int>> groups =
+            new Dictionary<(int, string), Dictionary<Vector2Int, int>>();
+        List<(int level, string type)> order = new List<(int, string)>();
 
-        for (int level = 0; level <= map.MaxLevel(); level++)
+        for (int i = 0; i < blocks.Count; i++)
         {
-            Dictionary<Vector2Int, int> wallByCell = ResolveWalls(layout, map, level, minimumWallCells, out int levelWalls);
-            walls += levelWalls;
-            wallCells += wallByCell.Count;
+            PreviewBlock block = blocks[i];
+            if (!string.IsNullOrEmpty(block.Source.WallId) || !block.IsSingleCell)
+            {
+                continue;
+            }
+
+            (int, string) key = (block.Level, block.Source.type);
+            if (!groups.TryGetValue(key, out Dictionary<Vector2Int, int> cells))
+            {
+                cells = new Dictionary<Vector2Int, int>();
+                groups[key] = cells;
+                order.Add(key);
+            }
+
+            cells[new Vector2Int(block.GridPosition.x, block.GridPosition.y)] = i;
+        }
+
+        for (int g = 0; g < order.Count; g++)
+        {
+            Dictionary<Vector2Int, int> cells = groups[order[g]];
+            Dictionary<Vector2Int, string> typeByCell = new Dictionary<Vector2Int, string>(cells.Count);
+            foreach (KeyValuePair<Vector2Int, int> cell in cells)
+            {
+                typeByCell[cell.Key] = order[g].type;
+            }
+
+            List<WallGrouping.WallRect> rects = WallGrouping.Find(typeByCell);
+            for (int i = 0; i < rects.Count; i++)
+            {
+                if (rects[i].Area < minimumWallCells)
+                {
+                    continue;
+                }
+
+                List<int> members = new List<int>(rects[i].Cells.Count);
+                for (int c = 0; c < rects[i].Cells.Count; c++)
+                {
+                    members.Add(cells[rects[i].Cells[c]]);
+                }
+
+                preview.AddWall(blocks, members);
+            }
         }
     }
 

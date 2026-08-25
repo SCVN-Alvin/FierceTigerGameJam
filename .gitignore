@@ -52,3 +52,6 @@ Desktop.ini
 !.env.example
 
 FierceTigerGameJam/.utmp
+
+# Mono crash dumps, written next to the project when the editor falls over
+mono_crash.*.json

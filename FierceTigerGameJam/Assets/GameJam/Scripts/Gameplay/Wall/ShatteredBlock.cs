@@ -7,6 +7,10 @@ namespace GameJam.Gameplay.Wall
     /// children are the chunks: a rigidbody and a box collider each, no component of their own.
     /// Keeping the timing here rather than on every chunk means one Update for the whole burst
     /// and no empty container left over once the pieces are gone.
+    ///
+    /// An instance is reused rather than thrown away. Everything it needs per frame - the chunk
+    /// transforms, their bodies and colliders, and the pose the prefab authored them at - is
+    /// read once in Awake, so a burst costs no lookups and no allocations while it plays.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class ShatteredBlock : MonoBehaviour
@@ -21,14 +25,42 @@ namespace GameJam.Gameplay.Wall
                  + "drags the rest of the structure around.")]
         [SerializeField] private bool freezeWhileShrinking = true;
 
+        [Tooltip("Seconds after the burst during which chunks that have landed have their slide "
+                 + "damped away. Debris that skates across the floor keeps solving contacts long "
+                 + "after anyone has stopped looking at it.")]
+        [SerializeField] private float settleSeconds = 0.4f;
+
         private Transform[] chunks;
-        private Vector3[] chunkScales;
+        private Rigidbody[] chunkBodies;
+        private Collider[] chunkColliders;
+        private Vector3[] restPositions;
+        private Quaternion[] restRotations;
+        private Vector3[] restScales;
+
+        private ShatteredBlockPool owner;
+        private GameObject sourcePrefab;
         private float age;
         private bool isShrinking;
+
+        /// <summary>How many pieces this burst is worth, which is what the pool's cap counts.</summary>
+        public int ChunkCount => chunks != null ? chunks.Length : transform.childCount;
+
+        /// <summary>The prefab this was made from, which is the queue it goes back to.</summary>
+        internal GameObject SourcePrefab => sourcePrefab;
 
         private void Awake()
         {
             CacheChunks();
+        }
+
+        /// <summary>
+        /// Told which pool to go back to, and which of its queues. Debris dropped into a scene by
+        /// hand has no pool and destroys itself when it is done, exactly as it used to.
+        /// </summary>
+        internal void SetOwner(ShatteredBlockPool pool, GameObject prefab)
+        {
+            owner = pool;
+            sourcePrefab = prefab;
         }
 
         /// <summary>
@@ -51,7 +83,8 @@ namespace GameJam.Gameplay.Wall
 
             for (int i = 0; i < chunks.Length; i++)
             {
-                if (chunks[i] == null || !chunks[i].TryGetComponent(out Rigidbody body))
+                Rigidbody body = chunkBodies[i];
+                if (chunks[i] == null || body == null)
                 {
                     continue;
                 }
@@ -67,6 +100,56 @@ namespace GameJam.Gameplay.Wall
                 body.linearVelocity = inheritedVelocity + (outward.normalized * outwardSpeed) + directionalVelocity;
                 body.angularVelocity = Random.onUnitSphere * spin;
             }
+        }
+
+        /// <summary>
+        /// Puts the pieces back where the prefab authored them and hands them back to physics.
+        /// Called before a pooled burst is shown again: the chunks were left wherever they had
+        /// scattered to, at whatever scale they had shrunk to.
+        /// </summary>
+        public void ResetChunks()
+        {
+            if (chunks == null)
+            {
+                CacheChunks();
+            }
+
+            age = 0f;
+            isShrinking = false;
+
+            for (int i = 0; i < chunks.Length; i++)
+            {
+                if (chunks[i] == null)
+                {
+                    continue;
+                }
+
+                chunks[i].SetLocalPositionAndRotation(restPositions[i], restRotations[i]);
+                chunks[i].localScale = restScales[i];
+
+                if (chunkColliders[i] != null)
+                {
+                    chunkColliders[i].enabled = true;
+                }
+
+                Rigidbody body = chunkBodies[i];
+                if (body == null)
+                {
+                    continue;
+                }
+
+                body.isKinematic = false;
+                body.linearVelocity = Vector3.zero;
+                body.angularVelocity = Vector3.zero;
+            }
+        }
+
+        /// <summary>Stops the burst dead, ready to be parked in the pool.</summary>
+        internal void SettleForPool()
+        {
+            FreezeChunks();
+            isShrinking = false;
+            age = 0f;
         }
 
         private void Update()
@@ -89,7 +172,7 @@ namespace GameJam.Gameplay.Wall
             float shrunk = (age - lifetime) / Mathf.Max(0.01f, shrinkDuration);
             if (shrunk >= 1f)
             {
-                Destroy(gameObject);
+                Despawn();
                 return;
             }
 
@@ -100,39 +183,99 @@ namespace GameJam.Gameplay.Wall
             {
                 if (chunks[i] != null)
                 {
-                    chunks[i].localScale = chunkScales[i] * remaining;
+                    chunks[i].localScale = restScales[i] * remaining;
                 }
             }
         }
 
+        /// <summary>
+        /// Only while the burst is young: a chunk that has come to rest keeps being nudged by its
+        /// neighbours settling around it, and damping the slide is far cheaper than letting the
+        /// solver grind it out.
+        /// </summary>
+        private void FixedUpdate()
+        {
+            if (isShrinking || age > settleSeconds)
+            {
+                return;
+            }
+
+            for (int i = 0; i < chunkBodies.Length; i++)
+            {
+                DebrisPhysicsProfile.DampGroundedMotion(chunkBodies[i]);
+            }
+        }
+
+        private void Despawn()
+        {
+            if (owner != null)
+            {
+                owner.Return(this);
+                return;
+            }
+
+            Destroy(gameObject);
+        }
+
+        private void OnDestroy()
+        {
+            if (owner != null)
+            {
+                owner.Forget(this);
+            }
+        }
+
+        /// <summary>
+        /// Reads the chunks once. The layer and the shared surface are enforced here as well as
+        /// in the prefab builder, so a prefab built before either existed still behaves - a chunk
+        /// on the wrong layer collides with every other chunk on screen.
+        /// </summary>
         private void CacheChunks()
         {
-            chunks = new Transform[transform.childCount];
-            chunkScales = new Vector3[transform.childCount];
-            for (int i = 0; i < transform.childCount; i++)
+            int count = transform.childCount;
+            chunks = new Transform[count];
+            chunkBodies = new Rigidbody[count];
+            chunkColliders = new Collider[count];
+            restPositions = new Vector3[count];
+            restRotations = new Quaternion[count];
+            restScales = new Vector3[count];
+
+            int debrisLayer = DebrisPhysicsProfile.Layer;
+
+            for (int i = 0; i < count; i++)
             {
-                chunks[i] = transform.GetChild(i);
-                chunkScales[i] = chunks[i].localScale;
+                Transform chunk = transform.GetChild(i);
+                chunks[i] = chunk;
+                restPositions[i] = chunk.localPosition;
+                restRotations[i] = chunk.localRotation;
+                restScales[i] = chunk.localScale;
+                chunk.gameObject.layer = debrisLayer;
+
+                chunk.TryGetComponent(out chunkBodies[i]);
+                chunk.TryGetComponent(out chunkColliders[i]);
+
+                DebrisPhysicsProfile.ApplyToRigidbody(chunkBodies[i]);
+                DebrisPhysicsProfile.ApplyToCollider(chunkColliders[i]);
             }
         }
 
         private void FreezeChunks()
         {
+            if (chunks == null)
+            {
+                return;
+            }
+
             for (int i = 0; i < chunks.Length; i++)
             {
-                if (chunks[i] == null)
+                if (chunkBodies[i] != null)
                 {
-                    continue;
+                    chunkBodies[i].isKinematic = true;
                 }
 
-                if (chunks[i].TryGetComponent(out Rigidbody body))
+                if (chunkColliders[i] != null)
                 {
-                    body.isKinematic = true;
-                }
-
-                if (chunks[i].TryGetComponent(out Collider chunkCollider))
-                {
-                    chunkCollider.enabled = false;
+                    chunkColliders[i].enabled = false;
                 }
             }
         }
@@ -141,6 +284,7 @@ namespace GameJam.Gameplay.Wall
         {
             lifetime = Mathf.Max(0f, lifetime);
             shrinkDuration = Mathf.Max(0.01f, shrinkDuration);
+            settleSeconds = Mathf.Max(0f, settleSeconds);
         }
     }
 }

@@ -128,5 +128,117 @@ namespace GameJam.Gameplay.Wall
             int byRow = left.y.CompareTo(right.y);
             return byRow != 0 ? byRow : left.x.CompareTo(right.x);
         }
+
+        /// <summary>The cells one block covers: its lowest cell and how many cells it spans.</summary>
+        public readonly struct CellBox
+        {
+            public readonly Vector3Int Position;
+            public readonly Vector3Int Size;
+
+            public CellBox(Vector3Int position, Vector3Int size)
+            {
+                Position = position;
+                Size = size;
+            }
+        }
+
+        private static readonly Vector3Int[] FaceNeighbours =
+        {
+            new Vector3Int(1, 0, 0),
+            new Vector3Int(-1, 0, 0),
+            new Vector3Int(0, 1, 0),
+            new Vector3Int(0, -1, 0),
+            new Vector3Int(0, 0, 1),
+            new Vector3Int(0, 0, -1),
+        };
+
+        /// <summary>
+        /// Splits blocks into the groups that actually touch, over the six face neighbours of
+        /// every cell they cover. A wall is only one body if its blocks are connected: a single
+        /// collider stretched around two separate clusters would stop shots in the empty space
+        /// between them.
+        ///
+        /// Groups come back in the order their first block appears in the input, and the indices
+        /// inside a group keep the input's order, so the same set of blocks always splits the
+        /// same way.
+        /// </summary>
+        /// <returns>Each group as the indices into <paramref name="boxes"/> that make it up.</returns>
+        public static List<List<int>> FindConnectedGroups(IReadOnlyList<CellBox> boxes)
+        {
+            List<List<int>> groups = new List<List<int>>();
+            if (boxes == null || boxes.Count == 0)
+            {
+                return groups;
+            }
+
+            // Cells are reserved before this runs, so no two blocks claim the same one; a
+            // duplicate could only come from a caller that skipped that, and the first block to
+            // claim the cell keeps it.
+            Dictionary<Vector3Int, int> ownerByCell = new Dictionary<Vector3Int, int>();
+            for (int i = 0; i < boxes.Count; i++)
+            {
+                foreach (Vector3Int cell in Cells(boxes[i]))
+                {
+                    if (!ownerByCell.ContainsKey(cell))
+                    {
+                        ownerByCell[cell] = i;
+                    }
+                }
+            }
+
+            bool[] reached = new bool[boxes.Count];
+            List<int> frontier = new List<int>();
+
+            for (int i = 0; i < boxes.Count; i++)
+            {
+                if (reached[i])
+                {
+                    continue;
+                }
+
+                List<int> group = new List<int>();
+                reached[i] = true;
+                frontier.Add(i);
+
+                while (frontier.Count > 0)
+                {
+                    int index = frontier[frontier.Count - 1];
+                    frontier.RemoveAt(frontier.Count - 1);
+                    group.Add(index);
+
+                    foreach (Vector3Int cell in Cells(boxes[index]))
+                    {
+                        for (int n = 0; n < FaceNeighbours.Length; n++)
+                        {
+                            if (ownerByCell.TryGetValue(cell + FaceNeighbours[n], out int other)
+                                && !reached[other])
+                            {
+                                reached[other] = true;
+                                frontier.Add(other);
+                            }
+                        }
+                    }
+                }
+
+                group.Sort();
+                groups.Add(group);
+            }
+
+            return groups;
+        }
+
+        private static IEnumerable<Vector3Int> Cells(CellBox box)
+        {
+            for (int x = 0; x < Mathf.Max(1, box.Size.x); x++)
+            {
+                for (int y = 0; y < Mathf.Max(1, box.Size.y); y++)
+                {
+                    for (int z = 0; z < Mathf.Max(1, box.Size.z); z++)
+                    {
+                        yield return new Vector3Int(box.Position.x + x, box.Position.y + y, box.Position.z + z);
+                    }
+                }
+            }
+        }
     }
 }

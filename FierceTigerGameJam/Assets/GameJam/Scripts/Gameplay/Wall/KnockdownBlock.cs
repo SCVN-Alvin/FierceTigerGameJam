@@ -27,6 +27,20 @@ namespace GameJam.Gameplay
         [SerializeField] private bool countsTowardKnockdown = true;
         [SerializeField] private Vector3Int logicalSize = Vector3Int.one;
 
+        [Header("Knock Clamp")]
+        [Tooltip("Fastest a knock may leave a block travelling sideways. Uncapped, one good shot "
+                 + "throws blocks off the screen and the chain of destruction stops reading as a "
+                 + "chain. Zero disables the cap.")]
+        [SerializeField] private float maxKnockHorizontalSpeed = 8.5f;
+
+        [Tooltip("Fastest a knock may throw a block upward. Only the upward half is capped: a "
+                 + "block on its way back down is gravity's doing, not the shot's.")]
+        [SerializeField] private float maxKnockVerticalSpeed = 1.35f;
+
+        [Tooltip("Reports every knock the clamp had to cut back. For checking the cap is doing "
+                 + "its job during a cascade; a full structure logs a lot.")]
+        [SerializeField] private bool logClampedKnocks;
+
         [Tooltip("Cell coordinate as (column x, layer level y, row z).")]
         [SerializeField] private Vector3Int gridPosition;
 
@@ -73,6 +87,8 @@ namespace GameJam.Gameplay
             collisionActivationVelocity = authoring.CollisionActivationVelocity;
             supportCascadeMode = authoring.SupportCascadeMode;
             supportReleaseImpulse = authoring.SupportReleaseImpulse;
+            maxKnockHorizontalSpeed = authoring.MaxKnockHorizontalSpeed;
+            maxKnockVerticalSpeed = authoring.MaxKnockVerticalSpeed;
             gridPosition = authoring.GridPosition;
 
             if (blockRigidbody == null)
@@ -90,6 +106,50 @@ namespace GameJam.Gameplay
         {
             Activate();
             blockRigidbody.AddForceAtPosition(force, impactPoint, forceMode);
+            ClampKnockSpeed();
+        }
+
+        /// <summary>
+        /// Caps what one knock can do to a block's speed. An impulse is applied to the velocity
+        /// there and then, so the cut can be made here rather than being chased across the next
+        /// physics step.
+        /// </summary>
+        private void ClampKnockSpeed()
+        {
+            Vector3 velocity = blockRigidbody.linearVelocity;
+            bool clamped = false;
+
+            if (maxKnockHorizontalSpeed > 0f)
+            {
+                float horizontalSqr = (velocity.x * velocity.x) + (velocity.z * velocity.z);
+                if (horizontalSqr > maxKnockHorizontalSpeed * maxKnockHorizontalSpeed)
+                {
+                    float scale = maxKnockHorizontalSpeed / Mathf.Sqrt(horizontalSqr);
+                    velocity.x *= scale;
+                    velocity.z *= scale;
+                    clamped = true;
+                }
+            }
+
+            if (maxKnockVerticalSpeed > 0f && velocity.y > maxKnockVerticalSpeed)
+            {
+                velocity.y = maxKnockVerticalSpeed;
+                clamped = true;
+            }
+
+            if (!clamped)
+            {
+                return;
+            }
+
+            blockRigidbody.linearVelocity = velocity;
+
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            if (logClampedKnocks)
+            {
+                Debug.Log($"{name} knock clamped to {velocity} m/s.", this);
+            }
+#endif
         }
 
         public void Activate()
@@ -138,8 +198,12 @@ namespace GameJam.Gameplay
             blockRigidbody.mass = mass;
             blockRigidbody.angularDamping = angularDrag;
             blockRigidbody.linearDamping = linearDrag;
-            blockRigidbody.interpolation = RigidbodyInterpolation.Interpolate;
-            blockRigidbody.collisionDetectionMode = CollisionDetectionMode.Continuous;
+            // Deliberately the cheapest pair of settings there is. Interpolation and continuous
+            // detection on a few hundred bodies at once is what melts frames on a mid-range
+            // phone, and a block only has to fall over convincingly. The projectile is the one
+            // thing fast enough to tunnel, so it keeps ContinuousDynamic to itself.
+            blockRigidbody.interpolation = RigidbodyInterpolation.None;
+            blockRigidbody.collisionDetectionMode = CollisionDetectionMode.Discrete;
         }
 
         private void ReleaseSupportedBlocksAbove()

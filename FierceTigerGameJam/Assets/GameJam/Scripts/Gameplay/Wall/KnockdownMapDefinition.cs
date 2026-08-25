@@ -138,7 +138,13 @@ namespace GameJam.Gameplay.Wall
         /// <summary>
         /// Optional. Names the wall this block belongs to. Blocks sharing a wall are built as one
         /// body whatever their type or layer, which is how a wall spanning materials or depth is
-        /// described. Left out, the block is grouped automatically with its same-type neighbours.
+        /// described. Left out, the block is built as a single block (unless the authoring
+        /// component is set to NamedAndDetected, which still merges same-type neighbours on its
+        /// own for maps written before wall ids existed).
+        ///
+        /// JsonUtility fills this field in whether or not the JSON has a "wall" key, so an
+        /// absent wall reads as an instance with an empty id: <see cref="WallId"/> is the only
+        /// reliable test for whether the map assigned one.
         /// </summary>
         public KnockdownMapWallRef wall;
 
