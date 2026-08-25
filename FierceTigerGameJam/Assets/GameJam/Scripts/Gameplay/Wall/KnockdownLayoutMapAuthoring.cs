@@ -1256,6 +1256,11 @@ namespace GameJam.Gameplay.Wall
 
         private static void ClearGeneratedBlocks(Transform generatedRoot)
         {
+            // Debris from the last attempt is parented here so it spins with the structure, but
+            // it belongs to a pool. Handing it back first is what stops the clear from destroying
+            // instances the pool still counts as its own.
+            ShatteredBlockPool.ReturnAll();
+
             for (int i = generatedRoot.childCount - 1; i >= 0; i--)
             {
                 GameObject child = generatedRoot.GetChild(i).gameObject;

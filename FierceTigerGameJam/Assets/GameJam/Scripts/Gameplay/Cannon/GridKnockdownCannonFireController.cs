@@ -1,4 +1,5 @@
 using GameJam.Gameplay.Combat;
+using GameJam.Gameplay.Flow;
 using UnityEngine;
 
 namespace GameJam.Gameplay.Cannon
@@ -14,6 +15,16 @@ namespace GameJam.Gameplay.Cannon
         [SerializeField] private BulletLoadout bulletLoadout;
 
         [SerializeField] private GridKnockdownCannonProjectile projectilePrefab;
+
+        [Tooltip("Optional. Hands out warm cannon balls instead of instantiating one per shot. "
+                 + "Without one the cannon still fires, it just pays for the ball at the moment "
+                 + "the player taps.")]
+        [SerializeField] private ProjectilePool projectilePool;
+
+        [Tooltip("Optional. Only read for how many bullets the map lets the player bring, which "
+                 + "is the most shots that can ever be in the air at once.")]
+        [SerializeField] private LevelRunController runController;
+
         [SerializeField] private Transform projectileParent;
         [SerializeField] private Transform fireOrigin;
         [SerializeField] private CannonShotPresenter shotPresenter;
@@ -24,6 +35,7 @@ namespace GameJam.Gameplay.Cannon
         [SerializeField] private float muzzleSpawnOffset = 0.28f;
 
         private const float MinFireDirectionSqrMagnitude = 0.0001f;
+        private const int FallbackPoolSize = 10;
 
         private void Awake()
         {
@@ -40,6 +52,33 @@ namespace GameJam.Gameplay.Cannon
             if (aimController != null)
             {
                 aimController.Initialize(fireOrigin);
+            }
+        }
+
+        /// <summary>
+        /// Warms the ball queue for a run. Called when the run starts rather than in Awake,
+        /// because how many balls are worth holding is a property of the map that was picked.
+        /// </summary>
+        public void PrepareForRun()
+        {
+            if (projectilePool == null)
+            {
+                return;
+            }
+
+            int budget = runController != null && runController.BulletPickLimit > 0
+                ? runController.BulletPickLimit
+                : FallbackPoolSize;
+
+            projectilePool.Warm(budget);
+        }
+
+        /// <summary>Calls back any shot still in the air, so a run never leaves one behind.</summary>
+        public void EndRun()
+        {
+            if (projectilePool != null)
+            {
+                projectilePool.ReturnAll();
             }
         }
 
@@ -169,9 +208,12 @@ namespace GameJam.Gameplay.Cannon
                 return;
             }
 
-            GridKnockdownCannonProjectile projectile = projectilePrefab != null
-                ? Instantiate(projectilePrefab, spawnPosition, Quaternion.LookRotation(direction, Vector3.up), projectileParent)
-                : CreateDefaultProjectile(spawnPosition, direction);
+            Quaternion spawnRotation = Quaternion.LookRotation(direction, Vector3.up);
+            GridKnockdownCannonProjectile projectile = RentProjectile(spawnPosition, spawnRotation, direction);
+            if (projectile == null)
+            {
+                return;
+            }
 
             // Told what fired it before launching, since the damage it deals is looked up from
             // the ammunition and the very first collision can happen on the next physics step.
@@ -185,6 +227,33 @@ namespace GameJam.Gameplay.Cannon
             {
                 shotPresenter.PlayShot();
             }
+        }
+
+        /// <summary>
+        /// The pool first, then a plain instantiate of the prefab, then the built-in sphere. The
+        /// last of those is the scene's own fallback for having no prefab at all, so it is never
+        /// pooled: it is a debugging aid, not something a run is played with.
+        /// </summary>
+        private GridKnockdownCannonProjectile RentProjectile(
+            Vector3 spawnPosition,
+            Quaternion spawnRotation,
+            Vector3 direction)
+        {
+            if (projectilePool != null && projectilePool.HasPrefab)
+            {
+                GridKnockdownCannonProjectile pooled = projectilePool.Rent(spawnPosition, spawnRotation, projectileParent);
+                if (pooled != null)
+                {
+                    return pooled;
+                }
+            }
+
+            if (projectilePrefab != null)
+            {
+                return Instantiate(projectilePrefab, spawnPosition, spawnRotation, projectileParent);
+            }
+
+            return CreateDefaultProjectile(spawnPosition, direction);
         }
 
         private GridKnockdownCannonProjectile CreateDefaultProjectile(Vector3 spawnPosition, Vector3 direction)

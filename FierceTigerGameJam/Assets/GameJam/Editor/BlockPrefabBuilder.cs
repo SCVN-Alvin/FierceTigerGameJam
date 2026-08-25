@@ -25,6 +25,9 @@ namespace GameJam.EditorTools
         /// <summary>Where earlier runs wrote every block before they were split by material.</summary>
         private const string LegacyMeshFolder = "Assets/GameJam/Prefabs/Blocks/Meshes";
         private const string MaterialFolder = "Assets/GameJam/Materials";
+
+        /// <summary>Where the shared debris surface is written.</summary>
+        private const string PhysicsFolder = "Assets/GameJam/Physics";
         private const string GlassMaterialPath = "Assets/GameJam/Materials/M_Glass.mat";
         private const string UrpLitShaderName = "Universal Render Pipeline/Lit";
         private const string VisualChildName = "Visual";
@@ -77,6 +80,14 @@ namespace GameJam.EditorTools
             public KnockdownBlock.SupportCascadeMode SupportCascadeMode;
             public float SupportReleaseImpulse;
             public bool CountsTowardKnockdown;
+
+            /// <summary>
+            /// Ceilings on what one knock may do to this block's speed. Authored per material
+            /// because a pane of glass is meant to scatter further than a concrete slab, and
+            /// because leaving either at zero means no ceiling at all.
+            /// </summary>
+            public float MaxKnockHorizontalSpeed;
+            public float MaxKnockVerticalSpeed;
 
             public float HitPoints;
             public float MinimumImpactSpeed;
@@ -139,6 +150,8 @@ namespace GameJam.EditorTools
                 SupportCascadeMode = KnockdownBlock.SupportCascadeMode.ColumnAbove,
                 SupportReleaseImpulse = 0.35f,
                 CountsTowardKnockdown = true,
+                MaxKnockHorizontalSpeed = 8.5f,
+                MaxKnockVerticalSpeed = 1.35f,
                 HitPoints = 3f,
                 MinimumImpactSpeed = 2.5f,
                 DamagePerImpactSpeed = 0.5f,
@@ -160,6 +173,8 @@ namespace GameJam.EditorTools
                 SupportCascadeMode = KnockdownBlock.SupportCascadeMode.ColumnAbove,
                 SupportReleaseImpulse = 0.5f,
                 CountsTowardKnockdown = true,
+                MaxKnockHorizontalSpeed = 11f,
+                MaxKnockVerticalSpeed = 1.8f,
                 HitPoints = 1f,
                 MinimumImpactSpeed = 1.2f,
                 DamagePerImpactSpeed = 1.5f,
@@ -179,6 +194,8 @@ namespace GameJam.EditorTools
                 SupportCascadeMode = KnockdownBlock.SupportCascadeMode.ColumnAbove,
                 SupportReleaseImpulse = 0.25f,
                 CountsTowardKnockdown = true,
+                MaxKnockHorizontalSpeed = 8.5f,
+                MaxKnockVerticalSpeed = 1.35f,
                 HitPoints = 6f,
                 MinimumImpactSpeed = 3.5f,
                 DamagePerImpactSpeed = 0.4f,
@@ -202,6 +219,8 @@ namespace GameJam.EditorTools
                 SupportCascadeMode = KnockdownBlock.SupportCascadeMode.ColumnAbove,
                 SupportReleaseImpulse = 0.35f,
                 CountsTowardKnockdown = true,
+                MaxKnockHorizontalSpeed = 8.5f,
+                MaxKnockVerticalSpeed = 1.35f,
                 HitPoints = 5f,
                 MinimumImpactSpeed = 2.5f,
                 DamagePerImpactSpeed = 0.5f,
@@ -1112,18 +1131,90 @@ namespace GameJam.EditorTools
             chunk.transform.SetParent(root.transform, false);
             chunk.transform.localPosition = chunkMesh.LocalPosition;
 
+            // Its own layer, so the layer can be made to ignore itself. A broken wall is a
+            // hundred chunks in one place, and chunk-on-chunk contacts are both the most
+            // expensive and the least noticed thing in that moment.
+            chunk.layer = ResolveDebrisLayer();
+
+            MeshRenderer chunkRenderer = chunk.AddComponent<MeshRenderer>();
             chunk.AddComponent<MeshFilter>().sharedMesh = chunkMesh.Mesh;
-            chunk.AddComponent<MeshRenderer>().sharedMaterial = material;
+            chunkRenderer.sharedMaterial = material;
+
+            // Debris is on screen for two seconds and is mostly under whatever it fell out of.
+            // Shadowing it costs a second pass over every chunk for something nobody reads.
+            chunkRenderer.shadowCastingMode = ShadowCastingMode.Off;
+            chunkRenderer.receiveShadows = false;
 
             // A box rather than a convex hull of the fracture: debris only has to bounce and
             // settle, and a dozen convex meshes per broken block is a real cost on mobile.
             BoxCollider chunkCollider = chunk.AddComponent<BoxCollider>();
             chunkCollider.center = chunkMesh.Mesh.bounds.center;
             chunkCollider.size = chunkMesh.Mesh.bounds.size;
+            chunkCollider.sharedMaterial = ResolveDebrisPhysicsMaterial();
 
             Rigidbody chunkBody = chunk.AddComponent<Rigidbody>();
             chunkBody.mass = chunkMass;
-            chunkBody.interpolation = RigidbodyInterpolation.Interpolate;
+
+            // Matches what the runtime profile applies, so a chunk behaves the same whether it
+            // was launched in play mode or is just sitting in the prefab.
+            chunkBody.linearDamping = DebrisPhysicsProfile.LinearDamping;
+            chunkBody.angularDamping = DebrisPhysicsProfile.AngularDamping;
+            chunkBody.interpolation = RigidbodyInterpolation.None;
+            chunkBody.collisionDetectionMode = CollisionDetectionMode.Discrete;
+        }
+
+        /// <summary>
+        /// The debris layer, or the default layer with a warning. A missing layer only costs
+        /// performance, so a build that hits it should still produce usable prefabs.
+        /// </summary>
+        private static int ResolveDebrisLayer()
+        {
+            int layer = LayerMask.NameToLayer(DebrisPhysicsProfile.LayerName);
+            if (layer >= 0)
+            {
+                return layer;
+            }
+
+            Debug.LogWarning(
+                $"No \"{DebrisPhysicsProfile.LayerName}\" layer in the project, so debris chunks "
+                + "were left on the default layer and will collide with each other. Add the layer "
+                + "in Project Settings > Tags and Layers and build the prefabs again.");
+            return 0;
+        }
+
+        /// <summary>
+        /// The one surface every chunk bounces with, written next to the block prefabs so the
+        /// value is visible in the inspector rather than only appearing at runtime. Its numbers
+        /// come from <see cref="DebrisPhysicsProfile"/>, which is where they are tuned.
+        /// </summary>
+        private static PhysicsMaterial ResolveDebrisPhysicsMaterial()
+        {
+            EnsureFolder(PhysicsFolder);
+
+            string path = $"{PhysicsFolder}/{DebrisPhysicsProfile.MaterialName}.physicMaterial";
+            PhysicsMaterial material = AssetDatabase.LoadAssetAtPath<PhysicsMaterial>(path);
+            bool created = material == null;
+            if (created)
+            {
+                material = new PhysicsMaterial(DebrisPhysicsProfile.MaterialName);
+            }
+
+            material.staticFriction = DebrisPhysicsProfile.StaticFriction;
+            material.dynamicFriction = DebrisPhysicsProfile.DynamicFriction;
+            material.bounciness = DebrisPhysicsProfile.Bounciness;
+            material.frictionCombine = PhysicsMaterialCombine.Minimum;
+            material.bounceCombine = PhysicsMaterialCombine.Average;
+
+            if (created)
+            {
+                AssetDatabase.CreateAsset(material, path);
+            }
+            else
+            {
+                EditorUtility.SetDirty(material);
+            }
+
+            return material;
         }
 
         private static Material FindFirstMaterial(GameObject visual)
@@ -1408,6 +1499,8 @@ namespace GameJam.EditorTools
             serializedAuthoring.FindProperty("collisionActivationVelocity").floatValue = spec.CollisionActivationVelocity;
             serializedAuthoring.FindProperty("supportCascadeMode").enumValueIndex = (int)spec.SupportCascadeMode;
             serializedAuthoring.FindProperty("supportReleaseImpulse").floatValue = spec.SupportReleaseImpulse;
+            serializedAuthoring.FindProperty("maxKnockHorizontalSpeed").floatValue = spec.MaxKnockHorizontalSpeed;
+            serializedAuthoring.FindProperty("maxKnockVerticalSpeed").floatValue = spec.MaxKnockVerticalSpeed;
             serializedAuthoring.FindProperty("logicalSize").vector3IntValue = logicalSize;
             serializedAuthoring.FindProperty("gridPosition").vector3IntValue = Vector3Int.zero;
             serializedAuthoring.ApplyModifiedPropertiesWithoutUndo();

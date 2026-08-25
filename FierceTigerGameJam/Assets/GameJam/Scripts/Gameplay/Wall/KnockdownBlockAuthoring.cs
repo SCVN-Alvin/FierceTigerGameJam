@@ -14,6 +14,13 @@ namespace GameJam.Gameplay.Wall
         [SerializeField] private float supportReleaseImpulse = 0.35f;
         [SerializeField] private Vector3Int logicalSize = Vector3Int.one;
 
+        [Tooltip("Fastest a knock may leave this block travelling sideways. Authored per material "
+                 + "because glass wants to scatter further than concrete. Zero disables the cap.")]
+        [SerializeField] private float maxKnockHorizontalSpeed = 8.5f;
+
+        [Tooltip("Fastest a knock may throw this block upward.")]
+        [SerializeField] private float maxKnockVerticalSpeed = 1.35f;
+
         [Tooltip("Cell coordinate as (column x, layer level y, row z).")]
         [SerializeField] private Vector3Int gridPosition;
 
@@ -23,6 +30,8 @@ namespace GameJam.Gameplay.Wall
         public float CollisionActivationVelocity => collisionActivationVelocity;
         public KnockdownBlock.SupportCascadeMode SupportCascadeMode => supportCascadeMode;
         public float SupportReleaseImpulse => supportReleaseImpulse;
+        public float MaxKnockHorizontalSpeed => maxKnockHorizontalSpeed;
+        public float MaxKnockVerticalSpeed => maxKnockVerticalSpeed;
         public Vector3Int LogicalSize => logicalSize;
         public Vector3Int GridPosition => gridPosition;
 
@@ -43,6 +52,8 @@ namespace GameJam.Gameplay.Wall
             collisionActivationVelocity = source.collisionActivationVelocity;
             supportCascadeMode = source.supportCascadeMode;
             supportReleaseImpulse = source.supportReleaseImpulse;
+            maxKnockHorizontalSpeed = source.maxKnockHorizontalSpeed;
+            maxKnockVerticalSpeed = source.maxKnockVerticalSpeed;
             mass = Mathf.Max(0.01f, massOverride);
         }
 
@@ -72,6 +83,8 @@ namespace GameJam.Gameplay.Wall
 
             collisionActivationVelocity = Mathf.Max(0f, collisionActivationVelocity);
             supportReleaseImpulse = Mathf.Max(0f, supportReleaseImpulse);
+            maxKnockHorizontalSpeed = Mathf.Max(0f, maxKnockHorizontalSpeed);
+            maxKnockVerticalSpeed = Mathf.Max(0f, maxKnockVerticalSpeed);
             logicalSize.x = Mathf.Max(1, logicalSize.x);
             logicalSize.y = Mathf.Max(1, logicalSize.y);
             logicalSize.z = Mathf.Max(1, logicalSize.z);

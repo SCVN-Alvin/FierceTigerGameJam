@@ -86,6 +86,10 @@ namespace GameJam.Gameplay.Flow
         [SerializeField] private CannonAimController aimController;
         [SerializeField] private SpinOnAxis structureSpinner;
 
+        [Tooltip("Optional. Warmed at the start of a run so the first shot of a map costs no "
+                 + "more than the tenth.")]
+        [SerializeField] private GridKnockdownCannonFireController fireController;
+
         public event Action<GameState> StateChanged;
 
         /// <summary>Raised with the finished run, for a result screen to draw.</summary>
@@ -241,6 +245,10 @@ namespace GameJam.Gameplay.Flow
             // than wherever the last one was dragged to.
             ResetPlayfield();
 
+            // Before the build too: warming the debris queues instantiates a few dozen chunks,
+            // and doing that during the first cascade is the cost this is meant to avoid.
+            WarmPools();
+
             if (mapBuilder != null)
             {
                 mapBuilder.BuildMap();
@@ -357,9 +365,33 @@ namespace GameJam.Gameplay.Flow
                 runController.CancelRun();
             }
 
+            // Before the map goes: active debris hangs under the generated root, and a pooled
+            // burst destroyed along with it is one the pool still believes it owns.
+            ShatteredBlockPool.ReturnAll();
+            BreakEffectPool.StopAll();
+
+            if (fireController != null)
+            {
+                fireController.EndRun();
+            }
+
             if (mapBuilder != null)
             {
                 mapBuilder.ClearMap();
+            }
+        }
+
+        /// <summary>
+        /// Fills the debris and cannon-ball queues for the map about to be played. Both are safe
+        /// to call again, which is what a retry does.
+        /// </summary>
+        private void WarmPools()
+        {
+            ShatteredBlockPool.Initialize(mapBuilder != null ? mapBuilder.BlockDatabase : null);
+
+            if (fireController != null)
+            {
+                fireController.PrepareForRun();
             }
         }
 

@@ -58,6 +58,9 @@ namespace GameJam.Gameplay.Wall
 
         public string MaterialId => materialId;
         public float MaxHitPoints => maxHitPoints;
+
+        /// <summary>The debris this block leaves, read by the pool so it can be warmed up front.</summary>
+        public GameObject ShatteredPrefab => shatteredPrefab;
         public float RemainingHitPoints => remainingHitPoints;
         public bool IsBroken => isBroken;
 
@@ -175,28 +178,33 @@ namespace GameJam.Gameplay.Wall
                 return;
             }
 
-            // Parented where the block was, so the debris spins with the structure like the rest
-            // of the map and gets torn down with it when the map is cleared.
-            GameObject debris = Instantiate(
+            // Rented rather than instantiated: a wall coming apart breaks several blocks in the
+            // same frame, and each one is a dozen rigidbodies. Parented where the block was, so
+            // the debris spins with the structure like the rest of the map; the pool takes it
+            // back before the map is cleared out from under it.
+            ShatteredBlock debris = ShatteredBlockPool.Rent(
                 shatteredPrefab,
                 transform.position,
                 transform.rotation,
                 transform.parent);
+
+            if (debris == null)
+            {
+                return;
+            }
+
             debris.transform.localScale = transform.localScale;
 
             Vector3 directionalVelocity = impactDirection.sqrMagnitude > 0.000001f
                 ? impactDirection.normalized * shardDirectionalSpeed
                 : Vector3.zero;
 
-            if (debris.TryGetComponent(out ShatteredBlock shattered))
-            {
-                shattered.Launch(
-                    inheritedVelocity,
-                    transform.position,
-                    directionalVelocity,
-                    shardOutwardSpeed,
-                    shardSpin);
-            }
+            debris.Launch(
+                inheritedVelocity,
+                transform.position,
+                directionalVelocity,
+                shardOutwardSpeed,
+                shardSpin);
         }
 
         private void SpawnBreakEffect(Vector3 impactPoint)
@@ -206,9 +214,7 @@ namespace GameJam.Gameplay.Wall
                 return;
             }
 
-            // Deliberately not parented to the block, which is about to be destroyed, nor to the
-            // structure, so a burst mid-spin stays where the hit happened.
-            Instantiate(breakEffectPrefab, impactPoint, Quaternion.identity);
+            BreakEffectPool.Play(breakEffectPrefab, impactPoint);
         }
 
         private void OnValidate()
