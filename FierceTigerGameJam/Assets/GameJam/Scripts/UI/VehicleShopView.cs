@@ -1,0 +1,486 @@
+using System;
+using System.Collections.Generic;
+using GameJam.Data;
+using GameJam.Economy;
+using GameJam.Gameplay.Combat;
+using TMPro;
+using UnityEngine;
+using UnityEngine.UI;
+
+namespace GameJam.UI
+{
+    /// <summary>
+    /// The shop where vehicles are bought, levelled up and mounted.
+    ///
+    /// It lists the same way <see cref="BulletShopView"/> does - one row per catalogue entry,
+    /// every price and every refusal coming from <see cref="EconomyService"/> - but each row
+    /// carries two buttons rather than one. A bullet is only ever in one state at a time, so a
+    /// single button can hold whatever applies; a vehicle can be worth upgrading and worth
+    /// mounting at the same moment, and those are different purchases. Upgrading the vehicle the
+    /// player is saving toward without driving it is the normal case, not an edge one.
+    ///
+    /// Buttons with nothing to do are disabled rather than hidden, so every row keeps the same
+    /// shape and the list does not re-flow as the player buys their way down it.
+    /// </summary>
+    public sealed class VehicleShopView : MonoBehaviour
+    {
+        [Tooltip("The service every button here goes through, and the source of all prices.")]
+        [SerializeField] private EconomyService economy;
+
+        [Tooltip("The catalogue listed in the shop. Left empty, the service's own vehicle "
+                 + "catalogue is used, which is the one it unlocks and upgrades against anyway.")]
+        [SerializeField] private VehicleLoadout loadout;
+
+        [Tooltip("Rows are spawned under here. Falls back to this object's transform.")]
+        [SerializeField] private RectTransform container;
+
+        [Tooltip("A row carrying a VehicleShopRowView, or children named Name, Level, Primary and "
+                 + "Select for it to wire itself from. Left empty, a plain two-button row is "
+                 + "generated so the shop works before anyone designs one.")]
+        [SerializeField] private GameObject rowPrefab;
+
+        [Tooltip("Optional. The wallet, redrawn whenever gold changes. Put a GoldView on this "
+                 + "object instead to get the count-up; this is the plain total.")]
+        [SerializeField] private TMP_Text goldLabel;
+
+        private const string RowNamePrefix = "VehicleRow_";
+
+        private readonly List<Row> spawnedRows = new List<Row>();
+
+        private void OnEnable()
+        {
+            if (economy != null)
+            {
+                // A sale changes what every other row can afford, not just the one that was
+                // clicked, so the whole screen listens rather than each row refreshing itself.
+                economy.GoldChanged += Refresh;
+            }
+
+            VehicleLoadout catalogue = ResolveLoadout();
+            if (catalogue != null)
+            {
+                catalogue.SelectionChanged += HandleSelectionChanged;
+                catalogue.LevelChanged += HandleLevelChanged;
+            }
+
+            // A level bought elsewhere - the debug panel, a reward - has to show here too.
+            UserData.Changed += Refresh;
+
+            // Rebuilt rather than refreshed: the catalogue may have been re-authored, and rows do
+            // not survive an assembly reload.
+            Rebuild();
+        }
+
+        private void OnDisable()
+        {
+            if (economy != null)
+            {
+                // The service is an asset and outlives this scene, so a subscription left behind
+                // would keep a destroyed row alive and fire into it on the next run.
+                economy.GoldChanged -= Refresh;
+            }
+
+            VehicleLoadout catalogue = ResolveLoadout();
+            if (catalogue != null)
+            {
+                catalogue.SelectionChanged -= HandleSelectionChanged;
+                catalogue.LevelChanged -= HandleLevelChanged;
+            }
+
+            UserData.Changed -= Refresh;
+        }
+
+        /// <summary>
+        /// Throws away the rows and builds them again from the catalogue. Safe to call at any
+        /// time: it clears before it spawns, so calling it twice leaves one set of rows.
+        /// </summary>
+        [ContextMenu("Rebuild")]
+        public void Rebuild()
+        {
+            ClearRows();
+
+            VehicleLoadout catalogue = ResolveLoadout();
+            if (economy == null || catalogue == null)
+            {
+                Debug.LogWarning(
+                    $"{nameof(VehicleShopView)} on \"{name}\" needs an {nameof(EconomyService)} and a "
+                    + $"{nameof(VehicleLoadout)} (its own, or one on the service); it lists nothing until it has both.",
+                    this);
+                return;
+            }
+
+            Transform parent = container != null ? container : transform;
+
+            IReadOnlyList<VehicleDefinition> vehicles = catalogue.Vehicles;
+            if (vehicles == null)
+            {
+                return;
+            }
+
+            for (int i = 0; i < vehicles.Count; i++)
+            {
+                VehicleDefinition vehicle = vehicles[i];
+                if (vehicle == null)
+                {
+                    continue;
+                }
+
+                // Locked vehicles are listed: seeing what is for sale is the point of a shop.
+                Row row = CreateRow(parent, vehicle);
+                if (row == null)
+                {
+                    continue;
+                }
+
+                // Captured per iteration, otherwise every button on the screen would end up
+                // spending on the last vehicle in the catalogue.
+                VehicleDefinition clicked = vehicle;
+
+                if (row.View.PrimaryButton != null)
+                {
+                    row.View.PrimaryButton.onClick.AddListener(() => HandlePrimaryClicked(clicked));
+                }
+
+                if (row.View.SelectButton != null)
+                {
+                    row.View.SelectButton.onClick.AddListener(() => HandleSelectClicked(clicked));
+                }
+
+                spawnedRows.Add(row);
+            }
+
+            Refresh();
+        }
+
+        /// <summary>Redraws every reading and every button state without rebuilding the rows.</summary>
+        [ContextMenu("Refresh")]
+        public void Refresh()
+        {
+            if (economy == null)
+            {
+                return;
+            }
+
+            for (int i = 0; i < spawnedRows.Count; i++)
+            {
+                RefreshRow(spawnedRows[i]);
+            }
+
+            if (goldLabel != null)
+            {
+                goldLabel.text = economy.Gold.ToString();
+            }
+        }
+
+        /// <summary>
+        /// Draws one row in whichever state its vehicle is in, and lets the service decide whether
+        /// the primary button is live. A price the player cannot cover leaves the button visibly
+        /// dead, which reads as "not yet" rather than as a tap that did nothing.
+        ///
+        /// The level reading carries the multiplier, because that number is the whole product: a
+        /// player asked to pay for level 2 has no other way to see what level 2 is worth.
+        /// </summary>
+        private void RefreshRow(Row row)
+        {
+            if (row == null || row.Root == null || row.Vehicle == null || row.View == null)
+            {
+                return;
+            }
+
+            VehicleLoadout catalogue = ResolveLoadout();
+            if (catalogue == null)
+            {
+                return;
+            }
+
+            bool unlocked = catalogue.IsUnlocked(row.Vehicle);
+            int level = catalogue.GetLevel(row.Vehicle);
+            int maxLevel = economy.GetVehicleMaxLevel(row.Vehicle);
+            bool selected = catalogue.Selected == row.Vehicle;
+
+            string levelText;
+            string primaryText;
+            bool primaryInteractable;
+
+            if (!unlocked)
+            {
+                levelText = "Locked";
+
+                // False from TryGetVehiclePurchasePrice means the vehicle is not for sale at all,
+                // which is said outright: a blank button would read as a price that failed to load.
+                primaryText = economy.TryGetVehiclePurchasePrice(row.Vehicle, out int purchasePrice)
+                    ? $"Buy  {purchasePrice}"
+                    : "Not for sale";
+                primaryInteractable = economy.CanPurchaseVehicle(row.Vehicle);
+            }
+            else
+            {
+                levelText = $"Lv {level}/{maxLevel}  x{row.Vehicle.GetDamageMultiplier(level):0.00}";
+
+                if (level >= maxLevel)
+                {
+                    primaryText = "MAX";
+                    primaryInteractable = false;
+                }
+                else
+                {
+                    // Between the floor and the ceiling but unpriced is an authoring gap, so the
+                    // row names it rather than pretending the vehicle is finished.
+                    primaryText = economy.TryGetVehicleUpgradePrice(row.Vehicle, out int upgradePrice, out int _)
+                        ? $"Upgrade  {upgradePrice}"
+                        : "No upgrade priced";
+                    primaryInteractable = economy.CanUpgradeVehicle(row.Vehicle);
+                }
+            }
+
+            // "Selected" rather than a hidden button, so the mounted vehicle is readable at a
+            // glance instead of being the one row that looks unfinished.
+            string selectText = selected ? "Selected" : "Select";
+            bool selectInteractable = unlocked && !selected;
+
+            row.View.Bind(
+                row.Vehicle.DisplayName,
+                levelText,
+                primaryText,
+                primaryInteractable,
+                selectText,
+                selectInteractable);
+        }
+
+        /// <summary>
+        /// What the primary button does is decided here rather than when it was wired, so a
+        /// vehicle bought in one click can be upgraded by the next one without the row being
+        /// rebuilt underneath the player's finger.
+        /// </summary>
+        private void HandlePrimaryClicked(VehicleDefinition vehicle)
+        {
+            if (economy == null || vehicle == null)
+            {
+                return;
+            }
+
+            VehicleLoadout catalogue = ResolveLoadout();
+            if (catalogue == null)
+            {
+                return;
+            }
+
+            if (catalogue.IsUnlocked(vehicle))
+            {
+                economy.TryUpgradeVehicle(vehicle);
+            }
+            else
+            {
+                economy.TryPurchaseVehicle(vehicle);
+            }
+
+            // A successful transaction already announced itself through GoldChanged, so this is
+            // for the refused one: nothing changed, and the row should still show why.
+            Refresh();
+        }
+
+        /// <summary>
+        /// Mounting costs nothing, so this does not go through the economy. It still goes through
+        /// the loadout rather than the save, which is what refuses a locked vehicle and what tells
+        /// the mount to swap the model.
+        /// </summary>
+        private void HandleSelectClicked(VehicleDefinition vehicle)
+        {
+            VehicleLoadout catalogue = ResolveLoadout();
+            if (catalogue == null || vehicle == null)
+            {
+                return;
+            }
+
+            catalogue.Select(vehicle);
+            Refresh();
+        }
+
+        private void HandleSelectionChanged(VehicleDefinition vehicle)
+        {
+            Refresh();
+        }
+
+        private void HandleLevelChanged(VehicleDefinition vehicle, int level)
+        {
+            Refresh();
+        }
+
+        /// <summary>
+        /// The catalogue to list. The service holds one too, and using it when this view has none
+        /// avoids a shop that lists vehicles the service would refuse to sell.
+        /// </summary>
+        private VehicleLoadout ResolveLoadout()
+        {
+            if (loadout != null)
+            {
+                return loadout;
+            }
+
+            return economy != null ? economy.VehicleLoadout : null;
+        }
+
+        /// <summary>
+        /// Rows describe themselves here, unlike in the bullet shop. That shop has to find labels
+        /// by name and the button by being the only one, which cannot tell two buttons apart, so
+        /// a vehicle row without a <see cref="VehicleShopRowView"/> gets one added rather than
+        /// being guessed at.
+        /// </summary>
+        private Row CreateRow(Transform parent, VehicleDefinition vehicle)
+        {
+            GameObject rowObject = rowPrefab != null
+                ? Instantiate(rowPrefab, parent)
+                : CreateDefaultRow(parent);
+
+            VehicleShopRowView view = rowObject.GetComponent<VehicleShopRowView>();
+            if (view == null)
+            {
+                // Added rather than refused: the component wires itself from the children's names
+                // in Awake, so a row prefab that was only ever designed still works.
+                view = rowObject.AddComponent<VehicleShopRowView>();
+            }
+
+            rowObject.name = RowNamePrefix + vehicle.Id;
+
+            if (view.PrimaryButton == null || view.SelectButton == null)
+            {
+                Debug.LogWarning(
+                    $"{name}: the row for {vehicle.DisplayName} is missing one of its two buttons, so part of "
+                    + "it can be read but not used. The row prefab needs children named Primary and Select.",
+                    this);
+            }
+
+            return new Row
+            {
+                Vehicle = vehicle,
+                Root = rowObject,
+                View = view,
+            };
+        }
+
+        /// <summary>
+        /// Minimal stand-in so the shop is usable before anyone designs a row. Named the way
+        /// <see cref="VehicleShopRowView"/> looks for its parts, so the component wires itself.
+        /// </summary>
+        private static GameObject CreateDefaultRow(Transform parent)
+        {
+            GameObject rowObject = new GameObject(
+                "VehicleRow", typeof(RectTransform), typeof(HorizontalLayoutGroup));
+            RectTransform rowRect = (RectTransform)rowObject.transform;
+            rowRect.SetParent(parent, false);
+            rowRect.sizeDelta = new Vector2(680f, 56f);
+
+            // Freshly created, so nothing can be blocking the add here.
+            HorizontalLayoutGroup group = rowObject.GetComponent<HorizontalLayoutGroup>();
+            if (group != null)
+            {
+                group.spacing = 12f;
+                group.childAlignment = TextAnchor.MiddleLeft;
+                group.childForceExpandWidth = false;
+                group.childForceExpandHeight = false;
+                group.childControlWidth = false;
+                group.childControlHeight = false;
+            }
+
+            CreateDefaultLabel(rowRect, "Name", new Vector2(200f, 48f), TextAlignmentOptions.Left);
+            CreateDefaultLabel(rowRect, "Level", new Vector2(200f, 48f), TextAlignmentOptions.Center);
+            CreateDefaultButton(rowRect, "Primary", new Vector2(160f, 48f));
+            CreateDefaultButton(rowRect, "Select", new Vector2(120f, 48f));
+
+            return rowObject;
+        }
+
+        private static void CreateDefaultButton(Transform parent, string objectName, Vector2 size)
+        {
+            GameObject buttonObject = new GameObject(objectName, typeof(RectTransform), typeof(Image), typeof(Button));
+            RectTransform buttonRect = (RectTransform)buttonObject.transform;
+            buttonRect.SetParent(parent, false);
+            buttonRect.sizeDelta = size;
+
+            TMP_Text label = CreateDefaultLabel(buttonRect, "Label", size, TextAlignmentOptions.Center);
+
+            // The caption stretches with its button, which the row's layout group may resize.
+            RectTransform labelRect = (RectTransform)label.transform;
+            labelRect.anchorMin = Vector2.zero;
+            labelRect.anchorMax = Vector2.one;
+            labelRect.offsetMin = Vector2.zero;
+            labelRect.offsetMax = Vector2.zero;
+        }
+
+        private static TMP_Text CreateDefaultLabel(
+            Transform parent,
+            string objectName,
+            Vector2 size,
+            TextAlignmentOptions alignment)
+        {
+            GameObject labelObject = new GameObject(objectName, typeof(RectTransform));
+            RectTransform labelRect = (RectTransform)labelObject.transform;
+            labelRect.SetParent(parent, false);
+            labelRect.sizeDelta = size;
+
+            TextMeshProUGUI label = labelObject.AddComponent<TextMeshProUGUI>();
+            label.alignment = alignment;
+            label.fontSize = 28f;
+            label.color = Color.white;
+            return label;
+        }
+
+        /// <summary>
+        /// Removes only what this view spawned. The container usually holds authored children too
+        /// (a background, a title), and wiping every child would delete those the first time the
+        /// list is rebuilt. Rows left over from an earlier rebuild are matched by name, since the
+        /// tracking list does not survive an assembly reload.
+        /// </summary>
+        private void ClearRows()
+        {
+            for (int i = 0; i < spawnedRows.Count; i++)
+            {
+                DestroyRow(spawnedRows[i] != null ? spawnedRows[i].Root : null);
+            }
+
+            spawnedRows.Clear();
+
+            Transform parent = container != null ? container : transform;
+            for (int i = parent.childCount - 1; i >= 0; i--)
+            {
+                GameObject child = parent.GetChild(i).gameObject;
+                if (child.name.StartsWith(RowNamePrefix, StringComparison.Ordinal))
+                {
+                    DestroyRow(child);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Unparented before being destroyed: Destroy only takes effect at the end of the frame,
+        /// and until then the layout group would still lay out the old rows alongside the new ones
+        /// spawned right after this.
+        /// </summary>
+        private static void DestroyRow(GameObject rowObject)
+        {
+            if (rowObject == null)
+            {
+                return;
+            }
+
+            rowObject.transform.SetParent(null, false);
+
+            if (Application.isPlaying)
+            {
+                Destroy(rowObject);
+            }
+            else
+            {
+                DestroyImmediate(rowObject);
+            }
+        }
+
+        /// <summary>One spawned row, and the vehicle it stands for.</summary>
+        private sealed class Row
+        {
+            public VehicleDefinition Vehicle;
+            public GameObject Root;
+            public VehicleShopRowView View;
+        }
+    }
+}
