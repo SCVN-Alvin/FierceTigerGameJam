@@ -3,11 +3,25 @@ using GameJam.Gameplay.Wall;
 
 namespace GameJam.Gameplay
 {
+    /// <summary>
+    /// Applies per-placement tuning to blocks the map has just laid out.
+    ///
+    /// It used to build them too - a collider, a body and a KnockdownBlock added to every block
+    /// at run start. On a 471-block map that was over nine hundred AddComponent calls inside the
+    /// frame the player is waiting on. The block prefabs carry all three now, so this only has to
+    /// hand each block the grid position and footprint it was placed at, which is the part that
+    /// cannot be known until the map is read.
+    ///
+    /// The AddComponent path is kept as a fallback for prefabs built before the bake, and says so
+    /// once per session rather than once per block.
+    /// </summary>
     public class WallBlockPhysicsSetup : MonoBehaviour
     {
         [SerializeField] private Transform blocksRoot;
         [SerializeField] private bool includeInactiveBlocks;
         [SerializeField] private bool addMeshColliders;
+
+        private bool warnedAboutMissingComponents;
 
         private void Awake()
         {
@@ -67,6 +81,27 @@ namespace GameJam.Gameplay
             EnsureKnockdownBlock(block, authoring);
         }
 
+        /// <summary>
+        /// Said once, not once per block: a map that missed the bake would otherwise print the
+        /// same warning several hundred times in the frame it can least afford it.
+        /// </summary>
+        private void WarnAboutMissingComponent(string componentName, GameObject block)
+        {
+            GameJam.Diagnostics.RuntimeProfileLogger.Count("added_" + componentName);
+
+            if (warnedAboutMissingComponents)
+            {
+                return;
+            }
+
+            warnedAboutMissingComponents = true;
+            Debug.LogWarning(
+                $"{block.name} has no {componentName}, so it was added at run start. That costs a "
+                + "frame on a large map. Rebuild the block prefabs with "
+                + "Tools > Smashdown > Build Block Prefabs.",
+                block);
+        }
+
         private void EnsureCollider(GameObject block)
         {
             if (block.TryGetComponent(out Collider _))
@@ -74,7 +109,7 @@ namespace GameJam.Gameplay
                 return;
             }
 
-            GameJam.Diagnostics.RuntimeProfileLogger.Count("added_collider");
+            WarnAboutMissingComponent("collider", block);
 
             if (addMeshColliders && block.TryGetComponent(out MeshFilter meshFilter) && meshFilter.sharedMesh != null)
             {
@@ -96,8 +131,10 @@ namespace GameJam.Gameplay
         {
             if (!block.TryGetComponent(out Rigidbody blockRigidbody))
             {
-                GameJam.Diagnostics.RuntimeProfileLogger.Count("added_rigidbody");
+                WarnAboutMissingComponent("rigidbody", block);
                 blockRigidbody = block.AddComponent<Rigidbody>();
+                blockRigidbody.interpolation = RigidbodyInterpolation.None;
+                blockRigidbody.collisionDetectionMode = CollisionDetectionMode.Discrete;
             }
 
             if (authoring != null)
@@ -105,6 +142,8 @@ namespace GameJam.Gameplay
                 blockRigidbody.mass = authoring.Mass;
             }
 
+            // Reasserted whether the body was baked or added: a prefab is saved awake, and a
+            // block has to start frozen in the wall until something knocks it.
             blockRigidbody.isKinematic = true;
             blockRigidbody.useGravity = false;
         }
@@ -113,7 +152,7 @@ namespace GameJam.Gameplay
         {
             if (!block.TryGetComponent(out KnockdownBlock knockdownBlock))
             {
-                GameJam.Diagnostics.RuntimeProfileLogger.Count("added_knockdown_block");
+                WarnAboutMissingComponent("knockdown_block", block);
                 knockdownBlock = block.AddComponent<KnockdownBlock>();
             }
 

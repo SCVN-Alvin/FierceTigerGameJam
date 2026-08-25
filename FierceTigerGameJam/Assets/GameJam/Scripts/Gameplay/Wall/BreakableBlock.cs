@@ -11,9 +11,11 @@ namespace GameJam.Gameplay.Wall
     /// damage and still reports Broken, it just vanishes instead of coming apart.
     /// </summary>
     /// <remarks>
-    /// Deliberately not [RequireComponent(typeof(KnockdownBlock))]: the block component and its
-    /// rigidbody are added at runtime by <see cref="WallBlockPhysicsSetup"/>, so requiring them
-    /// would bake a second, unconfigured copy into every block prefab at author time.
+    /// Still not [RequireComponent(typeof(KnockdownBlock))], though the reason has changed. The
+    /// block prefabs now carry a configured KnockdownBlock from the prefab builder, so requiring
+    /// one would be harmless on them - but a BreakableBlock added to something else by hand
+    /// would silently gain an unconfigured one, and the damage model is meant to work on
+    /// anything, whether or not it can be knocked over.
     /// </remarks>
     [DisallowMultipleComponent]
     public sealed class BreakableBlock : MonoBehaviour

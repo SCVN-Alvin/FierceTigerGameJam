@@ -436,6 +436,21 @@ namespace GameJam.EditorTools
                 KnockdownBlockAuthoring authoring = root.AddComponent<KnockdownBlockAuthoring>();
                 ApplyAuthoringValues(authoring, spec, logicalSize);
 
+                // Baked rather than added when the map is built. Adding a Rigidbody and a
+                // KnockdownBlock to every block at run start cost 942 AddComponent calls and
+                // 845 KB of garbage for a 471-block map on the test device, all of it inside the
+                // frame the player is waiting on. Added before KnockdownBlock, which requires a
+                // Rigidbody and would otherwise add an unconfigured one itself.
+                Rigidbody blockBody = root.AddComponent<Rigidbody>();
+                blockBody.mass = spec.Mass;
+                blockBody.isKinematic = true;
+                blockBody.useGravity = false;
+                blockBody.interpolation = RigidbodyInterpolation.None;
+                blockBody.collisionDetectionMode = CollisionDetectionMode.Discrete;
+
+                KnockdownBlock knockdownBlock = root.AddComponent<KnockdownBlock>();
+                ApplyKnockdownBlockValues(knockdownBlock, spec, logicalSize);
+
                 BreakableBlock breakable = root.AddComponent<BreakableBlock>();
                 ApplyBreakableValues(breakable, spec, debrisPrefab);
 
@@ -1504,6 +1519,32 @@ namespace GameJam.EditorTools
             serializedAuthoring.FindProperty("logicalSize").vector3IntValue = logicalSize;
             serializedAuthoring.FindProperty("gridPosition").vector3IntValue = Vector3Int.zero;
             serializedAuthoring.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        /// <summary>
+        /// Writes the same tuning into the baked KnockdownBlock that it would otherwise read off
+        /// the authoring component at run start. The runtime still calls ApplyAuthoring, because
+        /// grid position and rotated footprint are properties of where the block was placed
+        /// rather than of what it is - but everything knowable at author time is already here.
+        /// </summary>
+        private static void ApplyKnockdownBlockValues(
+            KnockdownBlock block,
+            BlockSpec spec,
+            Vector3Int logicalSize)
+        {
+            SerializedObject serializedBlock = new SerializedObject(block);
+            serializedBlock.FindProperty("startAsleep").boolValue = true;
+            serializedBlock.FindProperty("mass").floatValue = spec.Mass;
+            serializedBlock.FindProperty("collisionActivationVelocity").floatValue = spec.CollisionActivationVelocity;
+            serializedBlock.FindProperty("allowCollisionCascade").boolValue = spec.AllowCollisionCascade;
+            serializedBlock.FindProperty("supportCascadeMode").enumValueIndex = (int)spec.SupportCascadeMode;
+            serializedBlock.FindProperty("supportReleaseImpulse").floatValue = spec.SupportReleaseImpulse;
+            serializedBlock.FindProperty("countsTowardKnockdown").boolValue = spec.CountsTowardKnockdown;
+            serializedBlock.FindProperty("maxKnockHorizontalSpeed").floatValue = spec.MaxKnockHorizontalSpeed;
+            serializedBlock.FindProperty("maxKnockVerticalSpeed").floatValue = spec.MaxKnockVerticalSpeed;
+            serializedBlock.FindProperty("logicalSize").vector3IntValue = logicalSize;
+            serializedBlock.FindProperty("gridPosition").vector3IntValue = Vector3Int.zero;
+            serializedBlock.ApplyModifiedPropertiesWithoutUndo();
         }
 
         private static Material ResolveOverrideMaterial(BlockSpec spec)

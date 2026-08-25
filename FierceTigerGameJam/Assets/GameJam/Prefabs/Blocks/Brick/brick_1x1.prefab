@@ -101,6 +101,8 @@ GameObject:
   - component: {fileID: 6939059185922452596}
   - component: {fileID: 3460024810494842006}
   - component: {fileID: 3185764614563772407}
+  - component: {fileID: 1326079735355689199}
+  - component: {fileID: 2509887106160866496}
   - component: {fileID: 8145027330375482389}
   m_Layer: 0
   m_Name: brick_1x1
@@ -167,6 +169,59 @@ MonoBehaviour:
   logicalSize: {x: 1, y: 1, z: 1}
   maxKnockHorizontalSpeed: 8.5
   maxKnockVerticalSpeed: 1.35
+  gridPosition: {x: 0, y: 0, z: 0}
+--- !u!54 &1326079735355689199
+Rigidbody:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6583969056837762699}
+  serializedVersion: 5
+  m_Mass: 1.2
+  m_LinearDamping: 0
+  m_AngularDamping: 0.05
+  m_CenterOfMass: {x: 0, y: 0, z: 0}
+  m_InertiaTensor: {x: 1, y: 1, z: 1}
+  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ImplicitCom: 1
+  m_ImplicitTensor: 1
+  m_UseGravity: 0
+  m_IsKinematic: 1
+  m_Interpolate: 0
+  m_Constraints: 0
+  m_CollisionDetection: 0
+--- !u!114 &2509887106160866496
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6583969056837762699}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b0270ccb3b284da89734b43a6f244243, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GameJam.Gameplay.KnockdownBlock
+  startAsleep: 1
+  mass: 1.2
+  angularDrag: 0.05
+  linearDrag: 0
+  collisionActivationVelocity: 1.75
+  allowCollisionCascade: 1
+  supportCascadeMode: 2
+  supportReleaseImpulse: 0.35
+  countsTowardKnockdown: 1
+  logicalSize: {x: 1, y: 1, z: 1}
+  maxKnockHorizontalSpeed: 8.5
+  maxKnockVerticalSpeed: 1.35
+  logClampedKnocks: 0
   gridPosition: {x: 0, y: 0, z: 0}
 --- !u!114 &8145027330375482389
 MonoBehaviour:

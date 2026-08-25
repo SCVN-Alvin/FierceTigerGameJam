@@ -101,6 +101,8 @@ GameObject:
   - component: {fileID: 5871719251726321778}
   - component: {fileID: 6364980207537145739}
   - component: {fileID: 2711462722232613860}
+  - component: {fileID: 4732962622333643271}
+  - component: {fileID: 813805654589044267}
   - component: {fileID: 6231768799140324838}
   m_Layer: 0
   m_Name: concrete_1x1
@@ -167,6 +169,59 @@ MonoBehaviour:
   logicalSize: {x: 1, y: 1, z: 1}
   maxKnockHorizontalSpeed: 8.5
   maxKnockVerticalSpeed: 1.35
+  gridPosition: {x: 0, y: 0, z: 0}
+--- !u!54 &4732962622333643271
+Rigidbody:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8273714671908165584}
+  serializedVersion: 5
+  m_Mass: 2
+  m_LinearDamping: 0
+  m_AngularDamping: 0.05
+  m_CenterOfMass: {x: 0, y: 0, z: 0}
+  m_InertiaTensor: {x: 1, y: 1, z: 1}
+  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ImplicitCom: 1
+  m_ImplicitTensor: 1
+  m_UseGravity: 0
+  m_IsKinematic: 1
+  m_Interpolate: 0
+  m_Constraints: 0
+  m_CollisionDetection: 0
+--- !u!114 &813805654589044267
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8273714671908165584}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b0270ccb3b284da89734b43a6f244243, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GameJam.Gameplay.KnockdownBlock
+  startAsleep: 1
+  mass: 2
+  angularDrag: 0.05
+  linearDrag: 0
+  collisionActivationVelocity: 2.5
+  allowCollisionCascade: 1
+  supportCascadeMode: 2
+  supportReleaseImpulse: 0.25
+  countsTowardKnockdown: 1
+  logicalSize: {x: 1, y: 1, z: 1}
+  maxKnockHorizontalSpeed: 8.5
+  maxKnockVerticalSpeed: 1.35
+  logClampedKnocks: 0
   gridPosition: {x: 0, y: 0, z: 0}
 --- !u!114 &6231768799140324838
 MonoBehaviour:
