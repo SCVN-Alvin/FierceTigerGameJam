@@ -75,6 +75,8 @@ MonoBehaviour:
   supportCascadeMode: 2
   supportReleaseImpulse: 0.35
   logicalSize: {x: 2, y: 1, z: 1}
+  maxKnockHorizontalSpeed: 8.5
+  maxKnockVerticalSpeed: 1.35
   gridPosition: {x: 0, y: 0, z: 0}
 --- !u!114 &6719387252904061819
 MonoBehaviour:
@@ -88,6 +90,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d7597f644d66043b9ba0ece252b32233, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameJam.Gameplay.Wall.BreakableBlock
+  materialId: brick
   maxHitPoints: 5
   minimumImpactSpeed: 2.5
   damagePerImpactSpeed: 0.5
