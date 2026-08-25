@@ -14,11 +14,13 @@ namespace GameJam.Data
     public static class UserData
     {
         private const string BulletsKey = "user.bullets";
+        private const string VehiclesKey = "user.vehicles";
         private const string InventoryKey = "user.inventory";
         private const string MapProgressKey = "user.maps";
 
         private static ISaveStore store = new PlayerPrefsSaveStore();
         private static UserBulletData bullets;
+        private static UserVehicleData vehicles;
         private static UserInventoryData inventory;
         private static UserMapProgressData maps;
 
@@ -38,6 +40,8 @@ namespace GameJam.Data
 
         public static UserBulletData Bullets => bullets ??= Load<UserBulletData>(BulletsKey);
 
+        public static UserVehicleData Vehicles => vehicles ??= Load<UserVehicleData>(VehiclesKey);
+
         public static UserInventoryData Inventory => inventory ??= Load<UserInventoryData>(InventoryKey);
 
         public static UserMapProgressData Maps => maps ??= Load<UserMapProgressData>(MapProgressKey);
@@ -52,6 +56,11 @@ namespace GameJam.Data
             if (bullets != null)
             {
                 store.Save(BulletsKey, JsonUtility.ToJson(bullets));
+            }
+
+            if (vehicles != null)
+            {
+                store.Save(VehiclesKey, JsonUtility.ToJson(vehicles));
             }
 
             if (inventory != null)
@@ -72,6 +81,7 @@ namespace GameJam.Data
         public static void Reload()
         {
             bullets = null;
+            vehicles = null;
             inventory = null;
             maps = null;
             Changed?.Invoke();
@@ -81,6 +91,7 @@ namespace GameJam.Data
         public static void ResetAll()
         {
             store.Delete(BulletsKey);
+            store.Delete(VehiclesKey);
             store.Delete(InventoryKey);
             store.Delete(MapProgressKey);
             store.Flush();
@@ -90,7 +101,7 @@ namespace GameJam.Data
         /// <summary>
         /// A record that fails to parse is replaced rather than allowed to throw. A corrupt save
         /// costing the player their progress is bad; a corrupt save bricking the game is worse,
-        /// and one bad record cannot touch the other two because each has its own key.
+        /// and one bad record cannot touch the others because each has its own key.
         /// </summary>
         private static T Load<T>(string key) where T : class, new()
         {
@@ -119,6 +130,7 @@ namespace GameJam.Data
         private static void ResetOnEnterPlayMode()
         {
             bullets = null;
+            vehicles = null;
             inventory = null;
             maps = null;
         }
