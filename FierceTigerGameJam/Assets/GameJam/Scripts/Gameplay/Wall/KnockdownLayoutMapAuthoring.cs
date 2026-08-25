@@ -133,6 +133,20 @@ namespace GameJam.Gameplay.Wall
         private const float RotationEpsilon = 0.01f;
 
         /// <summary>
+        /// Every mesh this component made. A wall's mesh is generated, not an asset: stretching a
+        /// panel copies it and welding blocks builds a new one. Clearing the map destroys the
+        /// objects but would leave the meshes behind, so each retry used to leak one per wall for
+        /// the lifetime of the process.
+        /// </summary>
+        private readonly List<Mesh> builtMeshes = new List<Mesh>();
+
+        /// <summary>
+        /// The walls the last build produced, kept so they can be handed their bodies without
+        /// searching the tree for them again.
+        /// </summary>
+        private readonly List<BreakableWall> builtWalls = new List<BreakableWall>();
+
+        /// <summary>
         /// How many blocks the last build placed, counting the blocks a wall stands for rather
         /// than the wall. This is the denominator clear progress is measured against, so it has
         /// to be the count the player sees, not the count of objects in the scene.
@@ -235,6 +249,7 @@ namespace GameJam.Gameplay.Wall
 
             Transform generatedRoot = EnsureGeneratedChild(parent, GeneratedBlocksRootName);
             ClearGeneratedBlocks(generatedRoot);
+            ReleaseBuiltMeshes();
 
             // Sits on the root the blocks are parented to, so each one finds it with a single
             // walk up the hierarchy and never has to search its siblings again.
@@ -279,11 +294,12 @@ namespace GameJam.Gameplay.Wall
 
             // Only now do the walls have a KnockdownBlock to listen to: the physics setup adds it
             // after everything is built, so the subscription cannot happen while the wall is made.
-            SubscribeWalls(generatedRoot);
+            // Driven from the list the build just produced rather than a search of the tree.
+            SubscribeWalls();
 
             if (createStructureCenter)
             {
-                SetupStructureCenter(parent, generatedRoot, map);
+                SetupStructureCenter(parent, ResolveStructureCenterLocalPosition(placed, map));
             }
 
             // The panel/welded split is the number that says whether merging actually bought
@@ -314,18 +330,37 @@ namespace GameJam.Gameplay.Wall
             }
 
             PlacedBlockCount = 0;
+            ReleaseBuiltMeshes();
+        }
+
+        private void OnDestroy()
+        {
+            ReleaseBuiltMeshes();
+        }
+
+        /// <summary>
+        /// Destroys the generated meshes. They are owned by this component rather than by the
+        /// objects that referenced them, because a wall's mesh outlives the wall: the wall is
+        /// destroyed when the map is cleared and the mesh is not.
+        /// </summary>
+        private void ReleaseBuiltMeshes()
+        {
+            for (int i = 0; i < builtMeshes.Count; i++)
+            {
+                DestroyMesh(builtMeshes[i]);
+            }
+
+            builtMeshes.Clear();
         }
 
         /// <summary>
         /// Places a "Structure Center" marker at the middle of what was actually built and hands
         /// it to the spinner, which rotates around a vertical axis through that point.
         /// </summary>
-        private void SetupStructureCenter(Transform parent, Transform generatedRoot, KnockdownMapDefinition map)
+        private void SetupStructureCenter(Transform parent, Vector3 centerLocalPosition)
         {
             Transform center = EnsureGeneratedChild(parent, StructureLayout.CenterObjectName);
-            center.SetLocalPositionAndRotation(
-                ResolveStructureCenterLocalPosition(parent, generatedRoot, map),
-                Quaternion.identity);
+            center.SetLocalPositionAndRotation(centerLocalPosition, Quaternion.identity);
             center.localScale = Vector3.one;
 
             SpinOnAxis spinner = ResolveSpinner();
@@ -346,20 +381,28 @@ namespace GameJam.Gameplay.Wall
         /// grid still spins about its own middle rather than the grid's.
         /// </summary>
         private Vector3 ResolveStructureCenterLocalPosition(
-            Transform parent,
-            Transform generatedRoot,
+            List<PlacedBlock> placed,
             KnockdownMapDefinition map)
         {
-            Renderer[] renderers = generatedRoot.GetComponentsInChildren<Renderer>(true);
-            if (renderers.Length > 0)
+            // Measured from the placements rather than from a walk of every Renderer under the
+            // generated root. The blocks are already in hand and their sizes come off the
+            // prefabs, so this costs a loop over a list instead of a hierarchy search plus a
+            // world-space bounds encapsulation per renderer. The generated root sits at its
+            // parent's origin, so a placement's local position is already in parent space.
+            if (placed.Count > 0)
             {
-                Bounds bounds = renderers[0].bounds;
-                for (int i = 1; i < renderers.Length; i++)
+                Vector3 half = ResolveBlockSize(placed[0].Prefab) * 0.5f;
+                Vector3 min = placed[0].LocalPosition - half;
+                Vector3 max = placed[0].LocalPosition + half;
+
+                for (int i = 1; i < placed.Count; i++)
                 {
-                    bounds.Encapsulate(renderers[i].bounds);
+                    half = ResolveBlockSize(placed[i].Prefab) * 0.5f;
+                    min = Vector3.Min(min, placed[i].LocalPosition - half);
+                    max = Vector3.Max(max, placed[i].LocalPosition + half);
                 }
 
-                return parent.InverseTransformPoint(bounds.center);
+                return (min + max) * 0.5f;
             }
 
             // Nothing was placed, so fall back to the middle of the declared grid.
@@ -474,6 +517,7 @@ namespace GameJam.Gameplay.Wall
 
             if (wallGrouping == WallGroupingMode.None)
             {
+                builtWalls.Clear();
                 for (int i = 0; i < placed.Count; i++)
                 {
                     SpawnPlacedBlock(placed[i], generatedRoot);
@@ -481,6 +525,8 @@ namespace GameJam.Gameplay.Wall
 
                 return 0;
             }
+
+            builtWalls.Clear();
 
             List<WallBuild> walls = new List<WallBuild>();
             List<PlacedBlock> loose = new List<PlacedBlock>();
@@ -723,12 +769,15 @@ namespace GameJam.Gameplay.Wall
         /// Hands every wall the body it should watch. A wall comes apart when it is knocked, and
         /// what does the knocking is the KnockdownBlock the physics setup just added to it.
         /// </summary>
-        private static void SubscribeWalls(Transform generatedRoot)
+        private void SubscribeWalls()
         {
-            BreakableWall[] walls = generatedRoot.GetComponentsInChildren<BreakableWall>(true);
-            for (int i = 0; i < walls.Length; i++)
+            for (int i = 0; i < builtWalls.Count; i++)
             {
-                walls[i].Listen(walls[i].GetComponent<KnockdownBlock>());
+                BreakableWall wall = builtWalls[i];
+                if (wall != null)
+                {
+                    wall.Listen(wall.GetComponent<KnockdownBlock>());
+                }
             }
         }
 
@@ -808,6 +857,9 @@ namespace GameJam.Gameplay.Wall
                 return false;
             }
 
+            // Owned from here on, whichever path made it, so clearing the map can destroy it.
+            builtMeshes.Add(wallMesh);
+
             GameObject wall = new GameObject(build.Name);
             wall.transform.SetParent(generatedRoot, false);
             wall.transform.SetLocalPositionAndRotation(center, Quaternion.identity);
@@ -835,7 +887,9 @@ namespace GameJam.Gameplay.Wall
             // Durability is summed from the blocks the wall stands for, so a long wall is harder
             // to bring down than a short one and much harder than a lone block.
             ResolveWallDurability(build.Blocks, out string wallMaterialId, out float wallHitPoints);
-            wall.AddComponent<BreakableWall>().Initialize(manifest, physicsSetup, wallMaterialId, wallHitPoints);
+            BreakableWall breakableWall = wall.AddComponent<BreakableWall>();
+            breakableWall.Initialize(manifest, physicsSetup, wallMaterialId, wallHitPoints);
+            builtWalls.Add(breakableWall);
             return true;
         }
 
