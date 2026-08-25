@@ -11,6 +11,29 @@ using UnityEditor;
 namespace GameJam.Gameplay.Wall
 {
     /// <summary>
+    /// How much of the map's block list is allowed to become a wall. Merging is a decision the
+    /// map makes, so the default only honours walls the map named; the automatic detection that
+    /// came before it is kept for maps written when there was nothing else.
+    /// </summary>
+    public enum WallGroupingMode
+    {
+        /// <summary>Never merge. Every block is its own body.</summary>
+        None,
+
+        /// <summary>
+        /// Merge only blocks that name a wall in the JSON ("wall": { "wall_id": ... }).
+        /// Blocks without a wall id are single blocks. Default.
+        /// </summary>
+        NamedOnly,
+
+        /// <summary>
+        /// NamedOnly, plus the legacy fallback: same-type single-cell blocks in one layer are
+        /// grouped into rectangles automatically when no wall id was given.
+        /// </summary>
+        NamedAndDetected,
+    }
+
+    /// <summary>
     /// Builds a knockdown structure from a map JSON file. Each layer is a vertical XY slice:
     /// position.x runs along the grid width and position.y upward from the floor, while the
     /// layer's level is its Z index, one layerDepth further back per step.
@@ -41,13 +64,18 @@ namespace GameJam.Gameplay.Wall
         [SerializeField] private SpinOnAxis structureSpinner;
 
         [Header("Wall Grouping")]
-        [Tooltip("Runs of same-type blocks in a layer are built as one wall, which comes apart "
-                 + "into its blocks the moment anything knocks it.")]
-        [SerializeField] private bool groupBlocksIntoWalls = true;
+        [Tooltip("NamedOnly: a block is merged into a wall only when the map gives it a wall_id. "
+                 + "NamedAndDetected adds the old automatic rectangle grouping for blocks without one.")]
+        [SerializeField] private WallGroupingMode wallGrouping = WallGroupingMode.NamedOnly;
 
-        [Tooltip("Smallest run worth merging. Below this a wall costs more than the blocks it "
-                 + "replaces, and single blocks still need to behave like single blocks.")]
+        [Tooltip("Smallest automatically detected run worth merging. Only used by NamedAndDetected. "
+                 + "Below this a wall costs more than the blocks it replaces, and single blocks "
+                 + "still need to behave like single blocks.")]
         [SerializeField] private int minimumWallCells = 3;
+
+        // Legacy field kept for migration. Read once in OnValidate and never written again.
+        [SerializeField, HideInInspector] private bool groupBlocksIntoWalls = true;
+        [SerializeField, HideInInspector] private bool wallGroupingMigrated;
 
         [Tooltip("Draw walls with the wall art from the block database instead of welding the "
                  + "block meshes. A panel is a couple of hundred vertices whatever the run's "
@@ -112,9 +140,24 @@ namespace GameJam.Gameplay.Wall
         public int PlacedBlockCount { get; private set; }
 
         public BlockDatabase BlockDatabase => blockDatabase;
+        public WallGroupingMode WallGrouping => wallGrouping;
+        public int MinimumWallCells => minimumWallCells;
         public TextAsset MapJson => ResolveMapJson();
         public Transform StructureRoot => ResolveStructureRoot();
         public SpinOnAxis StructureSpinner => ResolveSpinner();
+
+        private void OnValidate()
+        {
+            if (!wallGroupingMigrated)
+            {
+                // Scenes saved before the enum existed: a disabled bool meant "never group".
+                // An enabled bool is mapped to NamedOnly, which is the new intended default.
+                wallGrouping = groupBlocksIntoWalls ? WallGroupingMode.NamedOnly : WallGroupingMode.None;
+                wallGroupingMigrated = true;
+            }
+
+            minimumWallCells = Mathf.Max(2, minimumWallCells);
+        }
 
         private void Start()
         {
@@ -205,7 +248,7 @@ namespace GameJam.Gameplay.Wall
 
             int spawned = placed.Count;
             PlacedBlockCount = spawned;
-            int walls = BuildPlacedBlocks(placed, generatedRoot);
+            int walls = BuildPlacedBlocks(placed, generatedRoot, out int panelWalls);
 
             if (physicsSetup != null)
             {
@@ -221,9 +264,15 @@ namespace GameJam.Gameplay.Wall
                 SetupStructureCenter(parent, generatedRoot, map);
             }
 
+            // The panel/welded split is the number that says whether merging actually bought
+            // anything: a panel is a couple of hundred vertices however long the wall is, while a
+            // welded wall still costs every vertex of the blocks it replaced.
             Debug.Log(
-                $"Built map \"{map.id}\" with {spawned} block(s) under {generatedRoot.name}"
-                + (walls > 0 ? $", grouped into {walls} wall(s)." : "."),
+                $"Built map \"{map.id}\" with {spawned} block(s) under {generatedRoot.name} "
+                + $"in {wallGrouping} mode"
+                + (walls > 0
+                    ? $", grouped into {walls} wall(s): {panelWalls} panel, {walls - panelWalls} welded."
+                    : "."),
                 this);
         }
 
@@ -391,14 +440,17 @@ namespace GameJam.Gameplay.Wall
         }
 
         /// <summary>
-        /// Turns accepted placements into objects. Blocks that name a wall are built as that
-        /// wall whatever their type or layer; everything left over falls back to finding runs of
-        /// the same type inside a single layer.
+        /// Turns accepted placements into objects. Which blocks may be merged is the mode's
+        /// decision: blocks that name a wall are built as that wall whatever their type or layer,
+        /// and only NamedAndDetected still looks for runs of the same type to merge on its own.
         /// </summary>
+        /// <param name="panelWalls">How many of the walls were drawn with a stretched panel.</param>
         /// <returns>How many walls were built.</returns>
-        private int BuildPlacedBlocks(List<PlacedBlock> placed, Transform generatedRoot)
+        private int BuildPlacedBlocks(List<PlacedBlock> placed, Transform generatedRoot, out int panelWalls)
         {
-            if (!groupBlocksIntoWalls)
+            panelWalls = 0;
+
+            if (wallGrouping == WallGroupingMode.None)
             {
                 for (int i = 0; i < placed.Count; i++)
                 {
@@ -413,14 +465,29 @@ namespace GameJam.Gameplay.Wall
             List<PlacedBlock> unassigned = new List<PlacedBlock>();
 
             CollectNamedWalls(placed, walls, loose, unassigned);
-            CollectDetectedWalls(unassigned, walls, loose);
+
+            if (wallGrouping == WallGroupingMode.NamedAndDetected)
+            {
+                CollectDetectedWalls(unassigned, walls, loose);
+            }
+            else
+            {
+                // NamedOnly: a block the map did not put in a wall is a block.
+                loose.AddRange(unassigned);
+            }
 
             for (int i = 0; i < walls.Count; i++)
             {
-                if (!TryBuildWall(walls[i], generatedRoot))
+                if (!TryBuildWall(walls[i], generatedRoot, out bool usedPanel))
                 {
                     loose.AddRange(walls[i].Blocks);
                     walls.RemoveAt(i--);
+                    continue;
+                }
+
+                if (usedPanel)
+                {
+                    panelWalls++;
                 }
             }
 
@@ -434,8 +501,9 @@ namespace GameJam.Gameplay.Wall
 
         /// <summary>
         /// Walls the map named explicitly. An author who put a wall id on a block meant it, so
-        /// these are taken whatever their types, layers or shape - the only rejection is a wall
-        /// with a single block in it, which is just a block.
+        /// these are taken whatever their types, layers or shape. Only two things are refused: a
+        /// wall holding a single block, which is just a block, and a wall whose blocks do not
+        /// touch, which is split into one wall per cluster.
         /// </summary>
         private void CollectNamedWalls(
             List<PlacedBlock> placed,
@@ -477,7 +545,58 @@ namespace GameJam.Gameplay.Wall
                     continue;
                 }
 
-                walls.Add(CreateWallBuild($"Wall_{order[i]}", members));
+                AddNamedWall(order[i], members, walls, loose);
+            }
+        }
+
+        /// <summary>
+        /// One wall per set of blocks that actually touch. A named wall whose blocks sit in two
+        /// separate clusters would get a single box collider stretched across the gap between
+        /// them, which stops shots in empty air, so it is split into a wall per cluster and the
+        /// map is told about it.
+        /// </summary>
+        private void AddNamedWall(
+            string wallId,
+            List<PlacedBlock> members,
+            List<WallBuild> walls,
+            List<PlacedBlock> loose)
+        {
+            List<WallGrouping.CellBox> boxes = new List<WallGrouping.CellBox>(members.Count);
+            for (int i = 0; i < members.Count; i++)
+            {
+                boxes.Add(new WallGrouping.CellBox(members[i].GridPosition, members[i].Footprint));
+            }
+
+            // Qualified because this class exposes a WallGrouping property, which would otherwise
+            // hide the helper of the same name.
+            List<List<int>> parts = GameJam.Gameplay.Wall.WallGrouping.FindConnectedGroups(boxes);
+            if (parts.Count <= 1)
+            {
+                walls.Add(CreateWallBuild($"Wall_{wallId}", members));
+                return;
+            }
+
+            Debug.LogWarning(
+                $"Wall \"{wallId}\" is {parts.Count} groups of blocks that do not touch each other, "
+                + "so it is built as one wall per group rather than one body spanning the gaps.",
+                this);
+
+            for (int i = 0; i < parts.Count; i++)
+            {
+                List<PlacedBlock> part = new List<PlacedBlock>(parts[i].Count);
+                for (int m = 0; m < parts[i].Count; m++)
+                {
+                    part.Add(members[parts[i][m]]);
+                }
+
+                // A cluster of one is a block, the same as a named wall of one.
+                if (part.Count < 2)
+                {
+                    loose.AddRange(part);
+                    continue;
+                }
+
+                walls.Add(CreateWallBuild($"Wall_{wallId}_part{i + 1}", part));
             }
         }
 
@@ -519,7 +638,7 @@ namespace GameJam.Gameplay.Wall
                     typeByCell[cell.Key] = group.Key.type;
                 }
 
-                List<WallGrouping.WallRect> rects = WallGrouping.Find(typeByCell);
+                List<WallGrouping.WallRect> rects = GameJam.Gameplay.Wall.WallGrouping.Find(typeByCell);
                 for (int i = 0; i < rects.Count; i++)
                 {
                     WallGrouping.WallRect rect = rects[i];
@@ -621,8 +740,9 @@ namespace GameJam.Gameplay.Wall
         /// Builds one wall: its blocks drawn as a single mesh, with a single collider and a
         /// single body, plus the manifest it needs to put those blocks back when it is knocked.
         /// </summary>
-        private bool TryBuildWall(WallBuild build, Transform generatedRoot)
+        private bool TryBuildWall(WallBuild build, Transform generatedRoot, out bool usedPanel)
         {
+            usedPanel = false;
             ResolveWallBounds(build.Blocks, out Vector3 center, out Vector3 span);
 
             List<BreakableWall.Cell> manifest = new List<BreakableWall.Cell>(build.Blocks.Count);
@@ -652,6 +772,7 @@ namespace GameJam.Gameplay.Wall
                 if (wallMesh != null)
                 {
                     materials = new[] { panelMaterial };
+                    usedPanel = true;
                 }
             }
 
