@@ -27,11 +27,10 @@ namespace GameJam.EditorTools
         private static void BuildSpriteScreens(Transform canvas, GameFlowController flow, GameObject hud, EconomyService economy)
         {
             GameObject mainMenu = BuildMainMenu(
-                canvas, out Button playButton, out Button settingsButton, out Button vehicleButton);
+                canvas, out Button playButton, out Button settingsButton);
             GameObject bottomBar = BuildBottomBar(canvas, out Button iapButton, out Button homeButton, out Button wrenchButton);
             GameObject iapShop = BuildIapShop(canvas, economy);
-            GameObject bulletShop = BuildBulletShop(canvas, economy);
-            GameObject vehicleShop = BuildVehicleShop(canvas, economy);
+            GameObject shop = BuildShop(canvas, economy, out ShopTabsView shopTabs);
             GameObject settings = BuildSettings(canvas, out Button closeSettings, out Button settingsMainMenu);
             Button runSettingsButton = BuildRunChrome(hud);
 
@@ -45,14 +44,13 @@ namespace GameJam.EditorTools
             SetIfEmpty(serialized, "mainMenuRoot", mainMenu);
             SetIfEmpty(serialized, "bottomBarRoot", bottomBar);
             SetIfEmpty(serialized, "iapShopRoot", iapShop);
-            SetIfEmpty(serialized, "bulletShopRoot", bulletShop);
-            SetIfEmpty(serialized, "vehicleShopRoot", vehicleShop);
+            SetIfEmpty(serialized, "shopRoot", shop);
+            SetIfEmpty(serialized, "shopTabs", shopTabs);
             SetIfEmpty(serialized, "settingsRoot", settings);
             SetIfEmpty(serialized, "playButton", playButton);
             SetIfEmpty(serialized, "iapShopButton", iapButton);
             SetIfEmpty(serialized, "homeButton", homeButton);
-            SetIfEmpty(serialized, "bulletShopButton", wrenchButton);
-            SetIfEmpty(serialized, "vehicleShopButton", vehicleButton);
+            SetIfEmpty(serialized, "shopButton", wrenchButton);
             SetIfEmpty(serialized, "openSettingsButton", settingsButton);
             SetIfEmpty(serialized, "openSettingsInRunButton", runSettingsButton);
             SetIfEmpty(serialized, "closeSettingsButton", closeSettings);
@@ -71,8 +69,7 @@ namespace GameJam.EditorTools
         private static GameObject BuildMainMenu(
             Transform canvas,
             out Button playButton,
-            out Button settingsButton,
-            out Button vehicleShopButton)
+            out Button settingsButton)
         {
             RectTransform root = EnsureRect("MainMenuScreen", canvas, Vector2.zero, Vector2.one);
             EnsureSpriteImage("Background", root, $"{MenuTextures}/UI_MainMenu_BG.png", Vector2.zero, Vector2.one);
@@ -91,8 +88,10 @@ namespace GameJam.EditorTools
                 new Vector2(0.785f, 0.903f), new Vector2(0.87f, 0.957f));
             playButton = EnsureSpriteButton("PlayButton", root, $"{MenuTextures}/Btn_Play.png",
                 new Vector2(0.30f, 0.196f), new Vector2(0.70f, 0.272f));
-            vehicleShopButton = EnsureButton("VehicleShopButton", root, "VEHICLES",
-                new Vector2(0.36f, 0.296f), new Vector2(0.64f, 0.352f));
+            // The stand-in VEHICLES button is gone: vehicles are a tab inside the one shop, so
+            // the main menu is back to the three slots its art actually draws. Removed rather
+            // than left hidden, so a rebuild does not resurrect it.
+            DestroyIfPresent(root, "VehicleShopButton");
 
             MapProgressView progress = Ensure<MapProgressView>(mission.gameObject);
             SerializedObject progressObject = new SerializedObject(progress);
@@ -120,7 +119,10 @@ namespace GameJam.EditorTools
 
             iapButton = EnsureSpriteButton("IapShopButton", root, null, new Vector2(0.10f, 0.12f), new Vector2(0.27f, 0.78f));
             homeButton = EnsureSpriteButton("HomeButton", root, null, new Vector2(0.38f, 0.05f), new Vector2(0.62f, 0.95f));
-            wrenchButton = EnsureSpriteButton("BulletShopButton", root, $"{MenuTextures}/Btn_Setting_Vehicle.png",
+            // The wrench opens the shop. Its sprite is named for vehicles, which is a fair
+            // clue about what the slot was always meant to be; now it reaches both.
+            RenameIfPresent(root, "BulletShopButton", "ShopButton");
+            wrenchButton = EnsureSpriteButton("ShopButton", root, $"{MenuTextures}/Btn_Setting_Vehicle.png",
                 new Vector2(0.77f, 0.12f), new Vector2(0.92f, 0.78f));
 
             // The bar art already draws the three slots, so the left and middle buttons are
@@ -143,25 +145,73 @@ namespace GameJam.EditorTools
             return root.gameObject;
         }
 
-        private static GameObject BuildBulletShop(Transform canvas, EconomyService economy)
+        /// <summary>
+        /// One shop, a tab per thing sold. The title, the gold chip and the panel behind them
+        /// are shared; only the list changes, which is the point - the player is spending the
+        /// same gold whichever tab they are on, and should be able to see it move.
+        /// </summary>
+        private static GameObject BuildShop(Transform canvas, EconomyService economy, out ShopTabsView tabs)
         {
-            RectTransform root = EnsureShopPanel("BulletShopScreen", canvas, "AMMUNITION", out RectTransform rows, out TMP_Text goldLabel);
+            // Was two screens. Rename rather than build a third, so an existing scene keeps the
+            // object the flow controller is already pointing at.
+            RenameIfPresent(canvas, "BulletShopScreen", "ShopScreen");
+            DestroyIfPresent(canvas, "VehicleShopScreen");
 
-            BulletShopView view = Ensure<BulletShopView>(root.gameObject);
+            RectTransform root = EnsureShopPanel("ShopScreen", canvas, "SHOP", out RectTransform rows, out TMP_Text goldLabel);
+
+            // The shared Rows the single-shop layout used is now split per tab, so the old one
+            // would sit behind both lists catching taps.
+            DestroyIfPresent(root, "Rows");
+
+            RectTransform tabStrip = EnsureRect("Tabs", root, new Vector2(0.06f, 0.78f), new Vector2(0.94f, 0.86f));
+            Button bulletTab = EnsureButton("BulletsTab", tabStrip, "AMMO", new Vector2(0f, 0f), new Vector2(0.49f, 1f));
+            Button vehicleTab = EnsureButton("VehiclesTab", tabStrip, "VEHICLES", new Vector2(0.51f, 0f), new Vector2(1f, 1f));
+
+            GameObject bulletPanel = BuildBulletSection(root, economy, goldLabel);
+            GameObject vehiclePanel = BuildVehicleSection(root, economy, goldLabel);
+
+            tabs = Ensure<ShopTabsView>(root.gameObject);
+            SerializedObject serializedTabs = new SerializedObject(tabs);
+            SerializedProperty entries = serializedTabs.FindProperty("tabs");
+            if (entries.arraySize == 0)
+            {
+                entries.arraySize = 2;
+                FillTab(entries.GetArrayElementAtIndex(0), "Ammunition", bulletTab, bulletPanel);
+                FillTab(entries.GetArrayElementAtIndex(1), "Vehicles", vehicleTab, vehiclePanel);
+            }
+
+            serializedTabs.ApplyModifiedPropertiesWithoutUndo();
+            return root.gameObject;
+        }
+
+        private static void FillTab(SerializedProperty entry, string name, Button button, GameObject panel)
+        {
+            entry.FindPropertyRelative("name").stringValue = name;
+            entry.FindPropertyRelative("button").objectReferenceValue = button;
+            entry.FindPropertyRelative("panel").objectReferenceValue = panel;
+        }
+
+        private static GameObject BuildBulletSection(RectTransform shop, EconomyService economy, TMP_Text goldLabel)
+        {
+            RectTransform panel = EnsureRect("AmmoPanel", shop, new Vector2(0f, 0f), new Vector2(1f, 1f));
+            RectTransform rows = EnsureRect("Rows", panel, new Vector2(0.06f, 0.06f), new Vector2(0.94f, 0.76f));
+
+            BulletShopView view = Ensure<BulletShopView>(panel.gameObject);
             SerializedObject serialized = new SerializedObject(view);
             SetIfEmpty(serialized, "economy", economy);
             SetIfEmpty(serialized, "loadout", LoadFirstAsset<GameJam.Gameplay.Combat.BulletLoadout>());
             SetIfEmpty(serialized, "container", rows);
             SetIfEmpty(serialized, "goldLabel", goldLabel);
             serialized.ApplyModifiedPropertiesWithoutUndo();
-            return root.gameObject;
+            return panel.gameObject;
         }
 
-        private static GameObject BuildVehicleShop(Transform canvas, EconomyService economy)
+        private static GameObject BuildVehicleSection(RectTransform shop, EconomyService economy, TMP_Text goldLabel)
         {
-            RectTransform root = EnsureShopPanel("VehicleShopScreen", canvas, "VEHICLES", out RectTransform rows, out TMP_Text goldLabel);
+            RectTransform panel = EnsureRect("VehiclePanel", shop, new Vector2(0f, 0f), new Vector2(1f, 1f));
+            RectTransform rows = EnsureRect("Rows", panel, new Vector2(0.06f, 0.06f), new Vector2(0.94f, 0.76f));
 
-            VehicleShopView view = Ensure<VehicleShopView>(root.gameObject);
+            VehicleShopView view = Ensure<VehicleShopView>(panel.gameObject);
             SerializedObject serialized = new SerializedObject(view);
             SetIfEmpty(serialized, "economy", economy);
             SetIfEmpty(serialized, "loadout", LoadFirstAsset<GameJam.Gameplay.Combat.VehicleLoadout>());
@@ -171,7 +221,32 @@ namespace GameJam.EditorTools
             // rowPrefab is deliberately left empty until VehicleShopRow.prefab is authored: the
             // view generates a plain two-button row, so the shop is usable in the meantime.
             serialized.ApplyModifiedPropertiesWithoutUndo();
-            return root.gameObject;
+            return panel.gameObject;
+        }
+
+        /// <summary>Renames a child that an earlier layout left behind, keeping its references.</summary>
+        private static void RenameIfPresent(Transform parent, string from, string to)
+        {
+            if (parent.Find(to) != null)
+            {
+                return;
+            }
+
+            Transform existing = parent.Find(from);
+            if (existing != null)
+            {
+                existing.name = to;
+            }
+        }
+
+        /// <summary>Removes a child an earlier layout created and this one no longer wants.</summary>
+        private static void DestroyIfPresent(Transform parent, string name)
+        {
+            Transform existing = parent.Find(name);
+            if (existing != null)
+            {
+                UnityEngine.Object.DestroyImmediate(existing.gameObject);
+            }
         }
 
         /// <summary>
