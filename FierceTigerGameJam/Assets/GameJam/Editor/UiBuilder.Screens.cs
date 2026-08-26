@@ -168,9 +168,33 @@ namespace GameJam.EditorTools
             // Was two screens. Rename rather than build a third, so an existing scene keeps the
             // object the flow controller is already pointing at.
             RenameIfPresent(canvas, "BulletShopScreen", "ShopScreen");
-            DestroyIfPresent(canvas, "VehicleShopScreen");
+            DestroyIfNotPrefabInstance(canvas, "VehicleShopScreen");
 
             RectTransform root = EnsureRect("ShopScreen", canvas, new Vector2(0f, 0.135f), new Vector2(1f, 1f));
+
+            // The screens in this project are prefab instances, and this builder is not the
+            // right tool for restructuring one. EnsureRect hands back an object that already
+            // exists without re-anchoring it, so everything below would be appended inside the
+            // prefab's own layout - and a UI draws in child order, so an opaque Background added
+            // last covers the screen it was meant to sit behind. That is exactly what happened.
+            // Children of a prefab instance cannot be removed from a scene either.
+            //
+            // So: build the garage only into a screen this builder owns. An instance keeps
+            // whatever the prefab says, and the layout is authored in the prefab itself.
+            if (PrefabUtility.IsPartOfPrefabInstance(root.gameObject))
+            {
+                Debug.LogWarning(
+                    "ShopScreen is a prefab instance, so its layout was left alone. Author the "
+                    + "garage inside Prefabs/UI/BulletShop/BulletShopScreen.prefab - a Tabs strip "
+                    + "with VehicleTypeTab and BulletTypeTab, a VehiclePanel and an AmmoPanel each "
+                    + "holding a Preview and a Rows - then add ShopTabsView to the prefab root and "
+                    + "point its two entries at them.",
+                    root.gameObject);
+
+                tabs = root.GetComponent<ShopTabsView>();
+                return root.gameObject;
+            }
+
             EnsureColorImage("Background", root, GaragePanelColor, new Vector2(0.03f, 0.02f), new Vector2(0.97f, 0.9f));
 
             EnsureLabel("Title", root, "GARAGE", 46, TextAlignmentOptions.Center,
@@ -184,7 +208,7 @@ namespace GameJam.EditorTools
                 new Vector2(0.2f, 0.1f), new Vector2(0.82f, 0.9f));
 
             // The list left over from the single-shop layout would otherwise sit behind both
-            // tabs catching taps.
+            // tabs catching taps. Safe here: this branch only runs for a screen the builder made.
             DestroyIfPresent(root, "Rows");
 
             RectTransform tabStrip = EnsureRect("Tabs", root, new Vector2(0.06f, 0.825f), new Vector2(0.94f, 0.888f));
@@ -310,6 +334,31 @@ namespace GameJam.EditorTools
             {
                 UnityEngine.Object.DestroyImmediate(existing.gameObject);
             }
+        }
+
+        /// <summary>
+        /// The same, but refuses to touch a prefab instance. Unity does not allow a child of one
+        /// to be deleted from a scene, and an instance of a screen somebody authored is not this
+        /// builder's to throw away in any case.
+        /// </summary>
+        private static void DestroyIfNotPrefabInstance(Transform parent, string name)
+        {
+            Transform existing = parent.Find(name);
+            if (existing == null)
+            {
+                return;
+            }
+
+            if (PrefabUtility.IsPartOfPrefabInstance(existing.gameObject))
+            {
+                Debug.LogWarning(
+                    $"\"{name}\" is a prefab instance, so it was left in the scene. Remove it by "
+                    + "hand once the garage tabs replace it.",
+                    existing.gameObject);
+                return;
+            }
+
+            UnityEngine.Object.DestroyImmediate(existing.gameObject);
         }
 
         /// <summary>

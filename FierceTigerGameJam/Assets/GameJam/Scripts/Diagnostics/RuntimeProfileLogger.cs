@@ -61,7 +61,14 @@ namespace GameJam.Diagnostics
         private static RuntimeProfileLogger instance;
 
         private readonly List<Window> phases = new List<Window>();
-        private Window rolling;
+
+        /// <summary>
+        /// Built at field level rather than in Awake. A duplicate instance is told to destroy
+        /// itself, but Destroy is deferred to the end of the frame and Update runs first, so an
+        /// Awake that bailed early used to leave this null and throw once a frame until the
+        /// object actually went away.
+        /// </summary>
+        private Window rolling = new Window { Name = "rolling" };
 
         private ProfilerRecorder gcAllocated;
         private ProfilerRecorder drawCalls;
@@ -192,7 +199,6 @@ namespace GameJam.Diagnostics
             }
 
             instance = this;
-            rolling = new Window { Name = "rolling" };
             StartRecorders();
             LogDeviceHeader();
         }
@@ -309,6 +315,11 @@ namespace GameJam.Diagnostics
 
         private void Sample(Window window, float frameMs, long gc, long physicsNs)
         {
+            if (window == null)
+            {
+                return;
+            }
+
             window.Frames++;
             window.TotalSeconds += Time.unscaledDeltaTime;
             window.GcAllocated += gc;

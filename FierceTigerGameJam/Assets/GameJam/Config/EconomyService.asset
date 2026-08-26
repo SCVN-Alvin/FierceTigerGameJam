@@ -16,3 +16,6 @@ MonoBehaviour:
   upgradeConfig: {fileID: 11400000, guid: f6e05dce6a15c484fa3efd0e8959b631, type: 2}
   rewardConfig: {fileID: 11400000, guid: 6979e1e62fa654f4faf377c1b92392b6, type: 2}
   loadout: {fileID: 11400000, guid: ea232b2781ddf4fa39b17ced7cdbaba1, type: 2}
+  purchaseVehicleConfig: {fileID: 11400000, guid: 288abb6200d0945518834aac0d39ca46, type: 2}
+  upgradeVehicleConfig: {fileID: 11400000, guid: 4e723ce0ddf8045b580d714d00b486e3, type: 2}
+  vehicleLoadout: {fileID: 11400000, guid: 0bd7574c5d49e4ce99e48be84046a4d4, type: 2}
