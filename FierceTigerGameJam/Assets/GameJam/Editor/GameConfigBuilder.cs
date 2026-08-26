@@ -28,11 +28,22 @@ namespace GameJam.EditorTools
     {
         private const string ConfigFolder = "Assets/GameJam/Config";
         private const string BulletFolder = "Assets/GameJam/Config/Bullets";
+        private const string VehicleFolder = "Assets/GameJam/Config/Vehicles";
 
         /// <summary>What a map pays the first time it is passed, and the first time it is cleared.</summary>
         private const int BasePassReward = 100;
         private const int BaseClearReward = 250;
         private const int RewardStepPerMap = 50;
+
+        /// <summary>
+        /// What a vehicle costs to unlock, and what each level past the first costs. The starter
+        /// is deliberately cheaper to level than the tank is to buy, so the first few maps have
+        /// something to spend on rather than one purchase the player saves at for an hour.
+        /// </summary>
+        private const int VehicleUnlockPrice = 800;
+
+        private static readonly int[] StarterVehicleUpgradePrices = { 300, 700 };
+        private static readonly int[] VehicleUpgradePrices = { 1200, 2000 };
 
         private const int DefaultBulletPickLimit = 10;
         private const float DefaultRequiredClearPercent = 0.8f;
@@ -42,9 +53,12 @@ namespace GameJam.EditorTools
         {
             EnsureFolder(ConfigFolder);
             EnsureFolder(BulletFolder);
+            EnsureFolder(VehicleFolder);
 
             BulletLoadout loadout = LoadFirst<BulletLoadout>();
             List<BulletDefinition> bullets = LoadAll<BulletDefinition>();
+            VehicleLoadout vehicleLoadout = LoadFirst<VehicleLoadout>();
+            List<VehicleDefinition> vehicles = LoadAll<VehicleDefinition>();
             MapConfig mapConfig = LoadFirst<MapConfig>();
 
             if (bullets.Count == 0)
@@ -54,20 +68,31 @@ namespace GameJam.EditorTools
                     + "Run Create Default Bullet Definitions first, or prices will be empty.");
             }
 
+            if (vehicles.Count == 0)
+            {
+                Debug.LogWarning(
+                    $"{nameof(GameConfigBuilder)} found no {nameof(VehicleDefinition)} assets. "
+                    + "Run Create Default Vehicle Definitions first, or the vehicle prices will be empty.");
+            }
+
             RewardConfig rewards = EnsureAsset<RewardConfig>($"{ConfigFolder}/RewardConfig.asset");
             PurchaseBulletConfig purchase = EnsureAsset<PurchaseBulletConfig>($"{ConfigFolder}/PurchaseBulletConfig.asset");
             UpgradeBulletConfig upgrade = EnsureAsset<UpgradeBulletConfig>($"{ConfigFolder}/UpgradeBulletConfig.asset");
+            PurchaseVehicleConfig purchaseVehicle = EnsureAsset<PurchaseVehicleConfig>($"{ConfigFolder}/PurchaseVehicleConfig.asset");
+            UpgradeVehicleConfig upgradeVehicle = EnsureAsset<UpgradeVehicleConfig>($"{ConfigFolder}/UpgradeVehicleConfig.asset");
             MapProgressionConfig progression = EnsureAsset<MapProgressionConfig>($"{ConfigFolder}/MapProgressionConfig.asset");
             BulletInventory inventory = EnsureAsset<BulletInventory>($"{BulletFolder}/BulletInventory.asset");
 
             FillRewards(rewards, mapConfig);
             FillPurchasePrices(purchase, bullets, ResolveStarterBullet(loadout));
             FillUpgradePrices(upgrade, bullets);
+            FillVehiclePurchasePrices(purchaseVehicle, vehicles, ResolveStarterVehicle(vehicleLoadout));
+            FillVehicleUpgradePrices(upgradeVehicle, vehicles, ResolveStarterVehicle(vehicleLoadout));
             FillMapRules(progression, mapConfig);
 
             EconomyService economy = EnsureAsset<EconomyService>($"{ConfigFolder}/EconomyService.asset");
-            WireEconomy(economy, purchase, upgrade, rewards, loadout);
-            WireScene(economy, progression, inventory, loadout);
+            WireEconomy(economy, purchase, upgrade, rewards, loadout, purchaseVehicle, upgradeVehicle, vehicleLoadout);
+            WireScene(economy, progression, inventory, loadout, vehicleLoadout);
 
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
@@ -189,6 +214,80 @@ namespace GameJam.EditorTools
             EditorUtility.SetDirty(upgrade);
         }
 
+        /// <summary>
+        /// Every vehicle is listed, the starter at nothing. Unlike the bullet table, which leaves
+        /// the starter out entirely, a free row here is harmless and says what it means: the
+        /// starter is always owned, so the shop never offers the row anyway, and a reader of the
+        /// asset can see there is no hidden price on it.
+        /// </summary>
+        private static void FillVehiclePurchasePrices(
+            PurchaseVehicleConfig purchase,
+            List<VehicleDefinition> vehicles,
+            VehicleDefinition starter)
+        {
+            if (purchase == null || !IsEmptyArray(purchase, "entries"))
+            {
+                return;
+            }
+
+            SerializedObject serialized = new SerializedObject(purchase);
+            SerializedProperty entries = serialized.FindProperty("entries");
+            entries.arraySize = vehicles.Count;
+
+            for (int i = 0; i < vehicles.Count; i++)
+            {
+                SerializedProperty entry = entries.GetArrayElementAtIndex(i);
+                entry.FindPropertyRelative("vehicleId").stringValue = vehicles[i].Id;
+                entry.FindPropertyRelative("goldPrice").intValue = vehicles[i] == starter ? 0 : VehicleUnlockPrice;
+            }
+
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(purchase);
+        }
+
+        /// <summary>
+        /// A price for every level the vehicle actually defines beyond the first, so a vehicle
+        /// authored with two levels never gets a third one priced that it could not deliver. The
+        /// starter is on its own cheaper ladder: it is what the player can afford to improve
+        /// before they can afford to replace it.
+        /// </summary>
+        private static void FillVehicleUpgradePrices(
+            UpgradeVehicleConfig upgrade,
+            List<VehicleDefinition> vehicles,
+            VehicleDefinition starter)
+        {
+            if (upgrade == null || !IsEmptyArray(upgrade, "entries"))
+            {
+                return;
+            }
+
+            SerializedObject serialized = new SerializedObject(upgrade);
+            SerializedProperty entries = serialized.FindProperty("entries");
+            entries.arraySize = vehicles.Count;
+
+            for (int i = 0; i < vehicles.Count; i++)
+            {
+                SerializedProperty entry = entries.GetArrayElementAtIndex(i);
+                entry.FindPropertyRelative("vehicleId").stringValue = vehicles[i].Id;
+
+                int[] prices = vehicles[i] == starter ? StarterVehicleUpgradePrices : VehicleUpgradePrices;
+
+                SerializedProperty levels = entry.FindPropertyRelative("levels");
+                int upgradeCount = Mathf.Clamp(vehicles[i].LevelCount - 1, 0, prices.Length);
+                levels.arraySize = upgradeCount;
+
+                for (int level = 0; level < upgradeCount; level++)
+                {
+                    SerializedProperty levelPrice = levels.GetArrayElementAtIndex(level);
+                    levelPrice.FindPropertyRelative("targetLevel").intValue = level + 2;
+                    levelPrice.FindPropertyRelative("goldPrice").intValue = prices[level];
+                }
+            }
+
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(upgrade);
+        }
+
         private static void FillMapRules(MapProgressionConfig progression, MapConfig mapConfig)
         {
             if (progression == null || !IsEmptyArray(progression, "entries"))
@@ -221,7 +320,10 @@ namespace GameJam.EditorTools
             PurchaseBulletConfig purchase,
             UpgradeBulletConfig upgrade,
             RewardConfig rewards,
-            BulletLoadout loadout)
+            BulletLoadout loadout,
+            PurchaseVehicleConfig purchaseVehicle,
+            UpgradeVehicleConfig upgradeVehicle,
+            VehicleLoadout vehicleLoadout)
         {
             if (economy == null)
             {
@@ -233,6 +335,9 @@ namespace GameJam.EditorTools
             SetIfEmpty(serialized, "upgradeConfig", upgrade);
             SetIfEmpty(serialized, "rewardConfig", rewards);
             SetIfEmpty(serialized, "loadout", loadout);
+            SetIfEmpty(serialized, "purchaseVehicleConfig", purchaseVehicle);
+            SetIfEmpty(serialized, "upgradeVehicleConfig", upgradeVehicle);
+            SetIfEmpty(serialized, "vehicleLoadout", vehicleLoadout);
             serialized.ApplyModifiedPropertiesWithoutUndo();
             EditorUtility.SetDirty(economy);
         }
@@ -245,7 +350,8 @@ namespace GameJam.EditorTools
             EconomyService economy,
             MapProgressionConfig progression,
             BulletInventory inventory,
-            BulletLoadout loadout)
+            BulletLoadout loadout,
+            VehicleLoadout vehicleLoadout)
         {
             LevelRunController run = Object.FindFirstObjectByType<LevelRunController>(FindObjectsInactive.Include);
             if (run != null)
@@ -275,6 +381,19 @@ namespace GameJam.EditorTools
                 SerializedObject serialized = new SerializedObject(fire);
                 SetIfEmpty(serialized, "bulletInventory", inventory);
                 SetIfEmpty(serialized, "bulletLoadout", loadout);
+                SetIfEmpty(serialized, "vehicleLoadout", vehicleLoadout);
+                serialized.ApplyModifiedPropertiesWithoutUndo();
+            }
+
+            // Every mount in the scene, not the first: the cannon has one and a shop preview rig
+            // would have another, and a preview left unwired looks like the vehicle failing to
+            // load rather than a reference nobody filled in.
+            VehicleMount[] mounts = Object.FindObjectsByType<VehicleMount>(
+                FindObjectsInactive.Include, FindObjectsSortMode.None);
+            for (int i = 0; i < mounts.Length; i++)
+            {
+                SerializedObject serialized = new SerializedObject(mounts[i]);
+                SetIfEmpty(serialized, "loadout", vehicleLoadout);
                 serialized.ApplyModifiedPropertiesWithoutUndo();
             }
         }
@@ -289,6 +408,18 @@ namespace GameJam.EditorTools
             SerializedObject serialized = new SerializedObject(loadout);
             SerializedProperty defaultBullet = serialized.FindProperty("defaultBullet");
             return defaultBullet?.objectReferenceValue as BulletDefinition;
+        }
+
+        private static VehicleDefinition ResolveStarterVehicle(VehicleLoadout loadout)
+        {
+            if (loadout == null)
+            {
+                return null;
+            }
+
+            SerializedObject serialized = new SerializedObject(loadout);
+            SerializedProperty defaultVehicle = serialized.FindProperty("defaultVehicle");
+            return defaultVehicle?.objectReferenceValue as VehicleDefinition;
         }
 
         private static List<string> ResolveMapIds(MapConfig mapConfig)

@@ -30,6 +30,16 @@ namespace GameJam.Economy
         [Tooltip("The catalogue this service unlocks and upgrades against.")]
         [SerializeField] private BulletLoadout loadout;
 
+        [Tooltip("What it costs to unlock each vehicle. A vehicle missing from it is not for "
+                 + "sale, which is not the same as being free.")]
+        [SerializeField] private PurchaseVehicleConfig purchaseVehicleConfig;
+
+        [Tooltip("What it costs to raise each vehicle to a given level.")]
+        [SerializeField] private UpgradeVehicleConfig upgradeVehicleConfig;
+
+        [Tooltip("The vehicle catalogue this service unlocks and upgrades against.")]
+        [SerializeField] private VehicleLoadout vehicleLoadout;
+
         /// <summary>
         /// Raised after gold changes, so a wallet display can redraw without polling. This asset
         /// outlives a scene, so subscribers must unsubscribe when they are disabled.
@@ -38,6 +48,9 @@ namespace GameJam.Economy
 
         /// <summary>The catalogue this service works against, for UI that wants to list it.</summary>
         public BulletLoadout Loadout => loadout;
+
+        /// <summary>The vehicle catalogue this service works against, for UI that wants to list it.</summary>
+        public VehicleLoadout VehicleLoadout => vehicleLoadout;
 
         /// <summary>What the player can spend right now.</summary>
         public int Gold => UserData.Inventory.gold;
@@ -203,6 +216,182 @@ namespace GameJam.Economy
         }
 
         /// <summary>
+        /// Price of unlocking a vehicle. False means it is not for sale at all, so a caller must
+        /// not fall back to treating it as free.
+        /// </summary>
+        public bool TryGetVehiclePurchasePrice(VehicleDefinition vehicle, out int price)
+        {
+            price = 0;
+            if (vehicle == null || purchaseVehicleConfig == null)
+            {
+                return false;
+            }
+
+            return purchaseVehicleConfig.TryGetPrice(vehicle.Id, out price);
+        }
+
+        /// <summary>
+        /// Whether the player could buy this vehicle this instant. Every reason it might fail is
+        /// checked here so that <see cref="TryPurchaseVehicle"/> never has to undo a half-finished
+        /// sale.
+        /// </summary>
+        public bool CanPurchaseVehicle(VehicleDefinition vehicle)
+        {
+            if (vehicle == null || IsVehicleUnlocked(vehicle))
+            {
+                return false;
+            }
+
+            return TryGetVehiclePurchasePrice(vehicle, out int price) && UserData.Inventory.CanAfford(price);
+        }
+
+        /// <summary>
+        /// Unlocks the vehicle and charges for it, or does neither. Returns false when the
+        /// purchase was refused, in which case nothing at all was written. A bought vehicle stays
+        /// at level 1 and stays unselected: owning it and driving it are two decisions.
+        /// </summary>
+        public bool TryPurchaseVehicle(VehicleDefinition vehicle)
+        {
+            if (purchaseVehicleConfig == null)
+            {
+                Debug.LogWarning($"{name} has no {nameof(PurchaseVehicleConfig)}, so no vehicle can be bought.", this);
+                return false;
+            }
+
+            if (!CanPurchaseVehicle(vehicle) || !TryGetVehiclePurchasePrice(vehicle, out int price))
+            {
+                return false;
+            }
+
+            // The charge comes last of the checks and first of the writes, exactly as the bullet
+            // purchase does: a refused charge leaves the save as it was.
+            if (!UserData.Inventory.TrySpend(price))
+            {
+                return false;
+            }
+
+            // Written straight to the record rather than through the loadout, which saves on its
+            // own: the whole transaction should commit exactly once, at the end. Unlocking is
+            // also the one vehicle change nothing visual reads, since the mount only cares about
+            // what is selected.
+            UserData.Vehicles.Unlock(vehicle.Id);
+            UserData.Save();
+            GoldChanged?.Invoke();
+            return true;
+        }
+
+        /// <summary>
+        /// Price of the next level for this vehicle, and which level that is. False means there is
+        /// nothing to buy, either because the level is unpriced or because it does not exist.
+        /// </summary>
+        public bool TryGetVehicleUpgradePrice(VehicleDefinition vehicle, out int price, out int targetLevel)
+        {
+            price = 0;
+            targetLevel = 0;
+            if (vehicle == null)
+            {
+                return false;
+            }
+
+            targetLevel = GetVehicleLevel(vehicle) + 1;
+            if (upgradeVehicleConfig == null || targetLevel > GetVehicleMaxLevel(vehicle))
+            {
+                return false;
+            }
+
+            return upgradeVehicleConfig.TryGetUpgradePrice(vehicle.Id, targetLevel, out price);
+        }
+
+        /// <summary>
+        /// The highest level this vehicle can actually reach: the stricter of the levels the
+        /// definition authored and the levels the config priced, for the same reason
+        /// <see cref="GetMaxLevel"/> is. A level that was priced but never authored would clamp
+        /// back down the moment it was bought, so it is never offered.
+        /// </summary>
+        public int GetVehicleMaxLevel(VehicleDefinition vehicle)
+        {
+            if (vehicle == null)
+            {
+                return 1;
+            }
+
+            int defined = Mathf.Max(1, vehicle.LevelCount);
+
+            // A vehicle the config does not list has no buyable levels, so it sits at its floor.
+            int priced = 1;
+            if (upgradeVehicleConfig != null && upgradeVehicleConfig.TryGetMaxLevel(vehicle.Id, out int configured))
+            {
+                priced = Mathf.Max(1, configured);
+            }
+
+            return Mathf.Min(defined, priced);
+        }
+
+        /// <summary>
+        /// Whether the player could upgrade this vehicle this instant. A locked vehicle cannot be
+        /// levelled: it has to be bought first. It does not have to be the selected one, though -
+        /// levelling the vehicle the player is saving toward is the point of the shop.
+        /// </summary>
+        public bool CanUpgradeVehicle(VehicleDefinition vehicle)
+        {
+            if (vehicle == null || !IsVehicleUnlocked(vehicle))
+            {
+                return false;
+            }
+
+            if (GetVehicleLevel(vehicle) >= GetVehicleMaxLevel(vehicle))
+            {
+                return false;
+            }
+
+            return TryGetVehicleUpgradePrice(vehicle, out int price, out int _) && UserData.Inventory.CanAfford(price);
+        }
+
+        /// <summary>
+        /// Raises the vehicle one level and charges for it, or does neither. Returns false when
+        /// the upgrade was refused, in which case nothing at all was written.
+        /// </summary>
+        public bool TryUpgradeVehicle(VehicleDefinition vehicle)
+        {
+            if (upgradeVehicleConfig == null)
+            {
+                Debug.LogWarning($"{name} has no {nameof(UpgradeVehicleConfig)}, so no vehicle can be upgraded.", this);
+                return false;
+            }
+
+            if (!CanUpgradeVehicle(vehicle) || !TryGetVehicleUpgradePrice(vehicle, out int price, out int targetLevel))
+            {
+                return false;
+            }
+
+            if (!UserData.Inventory.TrySpend(price))
+            {
+                return false;
+            }
+
+            // Unlike the bullet upgrade above, this goes through the loadout rather than writing
+            // UserData directly. A vehicle level is not only a number: the model standing under
+            // the cannon is spawned from it, and the mount is told to swap it by the loadout's
+            // LevelChanged. Writing the record here would leave the player looking at the level
+            // they just paid to replace until they left the scene and came back.
+            //
+            // The loadout saves as part of that, which commits the charge made just above, so the
+            // transaction still lands in one write.
+            if (vehicleLoadout != null)
+            {
+                vehicleLoadout.SetLevel(vehicle, targetLevel);
+            }
+            else
+            {
+                UserData.Vehicles.SetLevel(vehicle.Id, targetLevel);
+                UserData.Save();
+            }
+
+            GoldChanged?.Invoke();
+            return true;
+        }
+
+        /// <summary>
         /// Pays out an authored reward. False means the id is unknown, which is how a typo in a
         /// config shows up as "nothing was granted" rather than as a crash at the end of a run.
         /// </summary>
@@ -303,6 +492,34 @@ namespace GameJam.Economy
             }
 
             return loadout != null ? loadout.GetLevel(bullet) : UserData.Bullets.GetLevel(bullet.Id);
+        }
+
+        /// <summary>
+        /// Ownership goes through the loadout when there is one, because the starter vehicle
+        /// counts as owned without ever appearing in the save.
+        /// </summary>
+        private bool IsVehicleUnlocked(VehicleDefinition vehicle)
+        {
+            if (vehicle == null)
+            {
+                return false;
+            }
+
+            return vehicleLoadout != null
+                ? vehicleLoadout.IsUnlocked(vehicle)
+                : UserData.Vehicles.IsUnlocked(vehicle.Id);
+        }
+
+        private int GetVehicleLevel(VehicleDefinition vehicle)
+        {
+            if (vehicle == null)
+            {
+                return 1;
+            }
+
+            return vehicleLoadout != null
+                ? vehicleLoadout.GetLevel(vehicle)
+                : UserData.Vehicles.GetLevel(vehicle.Id);
         }
     }
 }

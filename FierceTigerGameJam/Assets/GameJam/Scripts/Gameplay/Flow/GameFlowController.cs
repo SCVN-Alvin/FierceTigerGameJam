@@ -21,6 +21,10 @@ namespace GameJam.Gameplay.Flow
             MainMenu,
             IapShop,
             BulletShop,
+
+            /// <summary>Buying, upgrading and mounting the machine the cannon stands on.</summary>
+            VehicleShop,
+
             MapSelection,
 
             /// <summary>Choosing what ammunition to take into the chosen map.</summary>
@@ -42,6 +46,7 @@ namespace GameJam.Gameplay.Flow
         [SerializeField] private GameObject ammoPickRoot;
         [SerializeField] private GameObject iapShopRoot;
         [SerializeField] private GameObject bulletShopRoot;
+        [SerializeField] private GameObject vehicleShopRoot;
 
         [Tooltip("The slingshot, the structure and anything else only alive in play.")]
         [SerializeField] private GameObject gameplayRoot;
@@ -64,6 +69,7 @@ namespace GameJam.Gameplay.Flow
         [SerializeField] private Button iapShopButton;
         [SerializeField] private Button homeButton;
         [SerializeField] private Button bulletShopButton;
+        [SerializeField] private Button vehicleShopButton;
         [SerializeField] private Button startRunButton;
         [Tooltip("Leaves the result for the main menu.")]
         [SerializeField] private Button resultContinueButton;
@@ -133,6 +139,7 @@ namespace GameJam.Gameplay.Flow
             Wire(iapShopButton, EnterIapShop);
             Wire(homeButton, ReturnToMainMenu);
             Wire(bulletShopButton, EnterBulletShop);
+            Wire(vehicleShopButton, EnterVehicleShop);
             Wire(startRunButton, ConfirmAmmoPick);
             Wire(resultContinueButton, ReturnToMainMenu);
             Wire(retryButton, RetryMap);
@@ -159,6 +166,7 @@ namespace GameJam.Gameplay.Flow
             Unwire(iapShopButton, EnterIapShop);
             Unwire(homeButton, ReturnToMainMenu);
             Unwire(bulletShopButton, EnterBulletShop);
+            Unwire(vehicleShopButton, EnterVehicleShop);
             Unwire(startRunButton, ConfirmAmmoPick);
             Unwire(resultContinueButton, ReturnToMainMenu);
             Unwire(retryButton, RetryMap);
@@ -202,6 +210,11 @@ namespace GameJam.Gameplay.Flow
         public void EnterBulletShop()
         {
             Enter(GameState.BulletShop);
+        }
+
+        public void EnterVehicleShop()
+        {
+            Enter(GameState.VehicleShop);
         }
 
         /// <summary>
@@ -294,6 +307,7 @@ namespace GameJam.Gameplay.Flow
                 case GameState.MapSelection:
                 case GameState.IapShop:
                 case GameState.BulletShop:
+                case GameState.VehicleShop:
                 case GameState.Playing:
                 case GameState.Result:
                     ReturnToMainMenu();
@@ -341,6 +355,7 @@ namespace GameJam.Gameplay.Flow
             SetRootActive(ammoPickRoot, state == GameState.AmmoPick);
             SetRootActive(iapShopRoot, state == GameState.IapShop);
             SetRootActive(bulletShopRoot, state == GameState.BulletShop);
+            SetRootActive(vehicleShopRoot, state == GameState.VehicleShop);
             SetRootActive(gameplayRoot, state == GameState.Playing);
             SetRootActive(hudRoot, state == GameState.Playing);
             SetRootActive(resultRoot, false);
@@ -397,7 +412,10 @@ namespace GameJam.Gameplay.Flow
 
         private static bool IsMenuState(GameState state)
         {
-            return state == GameState.MainMenu || state == GameState.IapShop || state == GameState.BulletShop;
+            return state == GameState.MainMenu
+                   || state == GameState.IapShop
+                   || state == GameState.BulletShop
+                   || state == GameState.VehicleShop;
         }
 
         private static bool IsPlayState(GameState state)

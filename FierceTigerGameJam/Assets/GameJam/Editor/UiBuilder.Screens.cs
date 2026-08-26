@@ -26,10 +26,12 @@ namespace GameJam.EditorTools
 
         private static void BuildSpriteScreens(Transform canvas, GameFlowController flow, GameObject hud, EconomyService economy)
         {
-            GameObject mainMenu = BuildMainMenu(canvas, out Button playButton, out Button settingsButton);
+            GameObject mainMenu = BuildMainMenu(
+                canvas, out Button playButton, out Button settingsButton, out Button vehicleButton);
             GameObject bottomBar = BuildBottomBar(canvas, out Button iapButton, out Button homeButton, out Button wrenchButton);
             GameObject iapShop = BuildIapShop(canvas, economy);
             GameObject bulletShop = BuildBulletShop(canvas, economy);
+            GameObject vehicleShop = BuildVehicleShop(canvas, economy);
             GameObject settings = BuildSettings(canvas, out Button closeSettings, out Button settingsMainMenu);
             Button runSettingsButton = BuildRunChrome(hud);
 
@@ -44,11 +46,13 @@ namespace GameJam.EditorTools
             SetIfEmpty(serialized, "bottomBarRoot", bottomBar);
             SetIfEmpty(serialized, "iapShopRoot", iapShop);
             SetIfEmpty(serialized, "bulletShopRoot", bulletShop);
+            SetIfEmpty(serialized, "vehicleShopRoot", vehicleShop);
             SetIfEmpty(serialized, "settingsRoot", settings);
             SetIfEmpty(serialized, "playButton", playButton);
             SetIfEmpty(serialized, "iapShopButton", iapButton);
             SetIfEmpty(serialized, "homeButton", homeButton);
             SetIfEmpty(serialized, "bulletShopButton", wrenchButton);
+            SetIfEmpty(serialized, "vehicleShopButton", vehicleButton);
             SetIfEmpty(serialized, "openSettingsButton", settingsButton);
             SetIfEmpty(serialized, "openSettingsInRunButton", runSettingsButton);
             SetIfEmpty(serialized, "closeSettingsButton", closeSettings);
@@ -59,8 +63,16 @@ namespace GameJam.EditorTools
         /// <summary>
         /// Background, the two chips along the top, the gear, and PLAY. The chips sit at the top
         /// corners and the button near the bottom, matching the mock-up.
+        ///
+        /// The vehicle shop button is the one thing here the mock-ups do not draw: the tab bar's
+        /// three slots are already spoken for, so it is a plain button above PLAY rather than a
+        /// fourth slot invented on top of the supplied art. It is a way in, not a design.
         /// </summary>
-        private static GameObject BuildMainMenu(Transform canvas, out Button playButton, out Button settingsButton)
+        private static GameObject BuildMainMenu(
+            Transform canvas,
+            out Button playButton,
+            out Button settingsButton,
+            out Button vehicleShopButton)
         {
             RectTransform root = EnsureRect("MainMenuScreen", canvas, Vector2.zero, Vector2.one);
             EnsureSpriteImage("Background", root, $"{MenuTextures}/UI_MainMenu_BG.png", Vector2.zero, Vector2.one);
@@ -79,6 +91,8 @@ namespace GameJam.EditorTools
                 new Vector2(0.785f, 0.903f), new Vector2(0.87f, 0.957f));
             playButton = EnsureSpriteButton("PlayButton", root, $"{MenuTextures}/Btn_Play.png",
                 new Vector2(0.30f, 0.196f), new Vector2(0.70f, 0.272f));
+            vehicleShopButton = EnsureButton("VehicleShopButton", root, "VEHICLES",
+                new Vector2(0.36f, 0.296f), new Vector2(0.64f, 0.352f));
 
             MapProgressView progress = Ensure<MapProgressView>(mission.gameObject);
             SerializedObject progressObject = new SerializedObject(progress);
@@ -139,6 +153,23 @@ namespace GameJam.EditorTools
             SetIfEmpty(serialized, "loadout", LoadFirstAsset<GameJam.Gameplay.Combat.BulletLoadout>());
             SetIfEmpty(serialized, "container", rows);
             SetIfEmpty(serialized, "goldLabel", goldLabel);
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            return root.gameObject;
+        }
+
+        private static GameObject BuildVehicleShop(Transform canvas, EconomyService economy)
+        {
+            RectTransform root = EnsureShopPanel("VehicleShopScreen", canvas, "VEHICLES", out RectTransform rows, out TMP_Text goldLabel);
+
+            VehicleShopView view = Ensure<VehicleShopView>(root.gameObject);
+            SerializedObject serialized = new SerializedObject(view);
+            SetIfEmpty(serialized, "economy", economy);
+            SetIfEmpty(serialized, "loadout", LoadFirstAsset<GameJam.Gameplay.Combat.VehicleLoadout>());
+            SetIfEmpty(serialized, "container", rows);
+            SetIfEmpty(serialized, "goldLabel", goldLabel);
+
+            // rowPrefab is deliberately left empty until VehicleShopRow.prefab is authored: the
+            // view generates a plain two-button row, so the shop is usable in the meantime.
             serialized.ApplyModifiedPropertiesWithoutUndo();
             return root.gameObject;
         }

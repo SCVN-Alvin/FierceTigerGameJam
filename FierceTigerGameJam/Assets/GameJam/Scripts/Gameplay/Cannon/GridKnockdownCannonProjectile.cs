@@ -40,6 +40,10 @@ namespace GameJam.Gameplay.Cannon
         [Tooltip("Hit points taken off blocks in the blast radius, when no ammunition is set.")]
         [SerializeField] private float splashDamage = 1f;
 
+        [Tooltip("Multiplies the ammunition's damage. Set per shot by the fire controller from "
+                 + "the selected vehicle; 1 when no vehicle system is wired.")]
+        [SerializeField] private float damageMultiplier = 1f;
+
         /// <summary>
         /// Shared by every shot, and only ever touched between a collision and the end of the
         /// same call. A blast reaches a couple of dozen colliders at most, and overflowing the
@@ -88,6 +92,7 @@ namespace GameJam.Gameplay.Cannon
             directHitDamage = Mathf.Max(0f, directHitDamage);
             splashDamage = Mathf.Max(0f, splashDamage);
             bulletLevelOverride = Mathf.Max(1, bulletLevelOverride);
+            damageMultiplier = Mathf.Max(0f, damageMultiplier);
         }
 
         /// <summary>
@@ -98,6 +103,16 @@ namespace GameJam.Gameplay.Cannon
         {
             bulletOverride = bullet;
             bulletLevelOverride = Mathf.Max(1, level);
+        }
+
+        /// <summary>
+        /// Tells the shot what the cannon is mounted on. Kept apart from the ammunition because
+        /// the two progressions are bought separately: a vehicle boosts whatever bullet the
+        /// player loaded, so neither knows the other's level.
+        /// </summary>
+        public void SetDamageMultiplier(float multiplier)
+        {
+            damageMultiplier = Mathf.Max(0f, multiplier);
         }
 
         public void Launch(Vector3 direction, float speed, float lifetime)
@@ -156,6 +171,13 @@ namespace GameJam.Gameplay.Cannon
         private void OnDisable()
         {
             ClearIgnoredCollisions();
+
+            // Per-shot, like the ignore pairs above, and cleared in the same place for the same
+            // reason: the next shot out of this instance is told its multiplier before it is
+            // launched, and one that is somehow not told must fall back to the bullet's authored
+            // damage rather than inherit the last vehicle the player was driving. Resetting in
+            // Launch instead would be too late - the fire controller sets it before that call.
+            damageMultiplier = 1f;
         }
 
         private void Despawn()
@@ -335,6 +357,14 @@ namespace GameJam.Gameplay.Cannon
             }
 
             float amount = isWall ? damage.wallDamage : damage.blockDamage;
+
+            // Before the early return, so the splash path below is boosted too. A material the
+            // ammunition cannot hurt is authored as 0 and stays 0 however good the vehicle is,
+            // which is what keeps the vehicle from quietly unlocking matchups the bullet is
+            // meant to be bought for. The flat fallback above is deliberately left alone: it
+            // only runs when nothing is configured, and boosting it would hide that.
+            amount *= damageMultiplier;
+
             if (amount <= 0f || direct)
             {
                 return amount;
