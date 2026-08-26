@@ -1,7 +1,9 @@
 using System;
 using GameJam.Gameplay.Cannon;
 using GameJam.Gameplay.Wall;
+using GameJam.UI;
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 namespace GameJam.Gameplay.Flow
@@ -20,10 +22,13 @@ namespace GameJam.Gameplay.Flow
         {
             MainMenu,
             IapShop,
-            BulletShop,
 
-            /// <summary>Buying, upgrading and mounting the machine the cannon stands on.</summary>
-            VehicleShop,
+            /// <summary>
+            /// Everything bought with gold, in one screen with a tab per kind. Was a state per
+            /// shop; that does not scale past two, and it made the player leave one shop to
+            /// reach another showing the same gold in the same corner.
+            /// </summary>
+            Shop,
 
             MapSelection,
 
@@ -45,8 +50,12 @@ namespace GameJam.Gameplay.Flow
         [SerializeField] private GameObject mapSelectionRoot;
         [SerializeField] private GameObject ammoPickRoot;
         [SerializeField] private GameObject iapShopRoot;
-        [SerializeField] private GameObject bulletShopRoot;
-        [SerializeField] private GameObject vehicleShopRoot;
+        [Tooltip("The one shop screen, with a tab per thing sold.")]
+        [FormerlySerializedAs("bulletShopRoot")]
+        [SerializeField] private GameObject shopRoot;
+
+        [Tooltip("Optional. Lets a menu button open the shop on a particular tab.")]
+        [SerializeField] private ShopTabsView shopTabs;
 
         [Tooltip("The slingshot, the structure and anything else only alive in play.")]
         [SerializeField] private GameObject gameplayRoot;
@@ -68,8 +77,8 @@ namespace GameJam.Gameplay.Flow
         [SerializeField] private Button playButton;
         [SerializeField] private Button iapShopButton;
         [SerializeField] private Button homeButton;
-        [SerializeField] private Button bulletShopButton;
-        [SerializeField] private Button vehicleShopButton;
+        [FormerlySerializedAs("bulletShopButton")]
+        [SerializeField] private Button shopButton;
         [SerializeField] private Button startRunButton;
         [Tooltip("Leaves the result for the main menu.")]
         [SerializeField] private Button resultContinueButton;
@@ -138,8 +147,7 @@ namespace GameJam.Gameplay.Flow
             Wire(playButton, EnterMapSelection);
             Wire(iapShopButton, EnterIapShop);
             Wire(homeButton, ReturnToMainMenu);
-            Wire(bulletShopButton, EnterBulletShop);
-            Wire(vehicleShopButton, EnterVehicleShop);
+            Wire(shopButton, EnterShop);
             Wire(startRunButton, ConfirmAmmoPick);
             Wire(resultContinueButton, ReturnToMainMenu);
             Wire(retryButton, RetryMap);
@@ -165,8 +173,7 @@ namespace GameJam.Gameplay.Flow
             Unwire(playButton, EnterMapSelection);
             Unwire(iapShopButton, EnterIapShop);
             Unwire(homeButton, ReturnToMainMenu);
-            Unwire(bulletShopButton, EnterBulletShop);
-            Unwire(vehicleShopButton, EnterVehicleShop);
+            Unwire(shopButton, EnterShop);
             Unwire(startRunButton, ConfirmAmmoPick);
             Unwire(resultContinueButton, ReturnToMainMenu);
             Unwire(retryButton, RetryMap);
@@ -207,14 +214,23 @@ namespace GameJam.Gameplay.Flow
             Enter(GameState.IapShop);
         }
 
-        public void EnterBulletShop()
+        public void EnterShop()
         {
-            Enter(GameState.BulletShop);
+            Enter(GameState.Shop);
         }
 
-        public void EnterVehicleShop()
+        /// <summary>
+        /// Opens the shop on a particular tab, for a menu button that means a specific section.
+        /// Without a tab strip wired it is the same as <see cref="EnterShop"/>.
+        /// </summary>
+        public void EnterShopTab(int tab)
         {
-            Enter(GameState.VehicleShop);
+            Enter(GameState.Shop);
+
+            if (shopTabs != null)
+            {
+                shopTabs.Show(tab);
+            }
         }
 
         /// <summary>
@@ -306,8 +322,7 @@ namespace GameJam.Gameplay.Flow
                     break;
                 case GameState.MapSelection:
                 case GameState.IapShop:
-                case GameState.BulletShop:
-                case GameState.VehicleShop:
+                case GameState.Shop:
                 case GameState.Playing:
                 case GameState.Result:
                     ReturnToMainMenu();
@@ -354,8 +369,7 @@ namespace GameJam.Gameplay.Flow
             SetRootActive(selectionRoot, state == GameState.MapSelection);
             SetRootActive(ammoPickRoot, state == GameState.AmmoPick);
             SetRootActive(iapShopRoot, state == GameState.IapShop);
-            SetRootActive(bulletShopRoot, state == GameState.BulletShop);
-            SetRootActive(vehicleShopRoot, state == GameState.VehicleShop);
+            SetRootActive(shopRoot, state == GameState.Shop);
             SetRootActive(gameplayRoot, state == GameState.Playing);
             SetRootActive(hudRoot, state == GameState.Playing);
             SetRootActive(resultRoot, false);
@@ -414,8 +428,7 @@ namespace GameJam.Gameplay.Flow
         {
             return state == GameState.MainMenu
                    || state == GameState.IapShop
-                   || state == GameState.BulletShop
-                   || state == GameState.VehicleShop;
+                   || state == GameState.Shop;
         }
 
         private static bool IsPlayState(GameState state)
