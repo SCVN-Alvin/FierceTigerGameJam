@@ -145,10 +145,23 @@ namespace GameJam.EditorTools
             return root.gameObject;
         }
 
+        // Read off RefAI/Garage_Vehicle.png and Garage_Ammo.png. Placeholder colours stand in
+        // for panel art that does not exist yet; the shapes and proportions are the mock's.
+        private static readonly Color GaragePanelColor = new Color(0.106f, 0.341f, 0.839f, 1f);
+        private static readonly Color GarageInsetColor = new Color(0.078f, 0.259f, 0.682f, 1f);
+        private static readonly Color GarageTabOnColor = new Color(1f, 0.75f, 0.16f, 1f);
+        private static readonly Color GarageTabOffColor = new Color(0.09f, 0.28f, 0.72f, 1f);
+        private static readonly Color GaragePreviewColor = new Color(0.85f, 0.88f, 0.92f, 1f);
+
         /// <summary>
         /// One shop, a tab per thing sold. The title, the gold chip and the panel behind them
-        /// are shared; only the list changes, which is the point - the player is spending the
-        /// same gold whichever tab they are on, and should be able to see it move.
+        /// are shared; only the preview and the list change, which is the point - the player is
+        /// spending the same gold whichever tab they are on, and should be able to see it move.
+        ///
+        /// Laid out from RefAI/Garage_Vehicle.png and RefAI/Garage_Ammo.png: a tab strip across
+        /// the top, a preview of whatever is currently equipped under it, and the list below
+        /// that. Vehicles are a grid of cards because they are chosen by looking at them; ammo
+        /// is a list of rows because a row has to carry a level and its progress.
         /// </summary>
         private static GameObject BuildShop(Transform canvas, EconomyService economy, out ShopTabsView tabs)
         {
@@ -157,18 +170,29 @@ namespace GameJam.EditorTools
             RenameIfPresent(canvas, "BulletShopScreen", "ShopScreen");
             DestroyIfPresent(canvas, "VehicleShopScreen");
 
-            RectTransform root = EnsureShopPanel("ShopScreen", canvas, "SHOP", out RectTransform rows, out TMP_Text goldLabel);
+            RectTransform root = EnsureRect("ShopScreen", canvas, new Vector2(0f, 0.135f), new Vector2(1f, 1f));
+            EnsureColorImage("Background", root, GaragePanelColor, new Vector2(0.03f, 0.02f), new Vector2(0.97f, 0.9f));
 
-            // The shared Rows the single-shop layout used is now split per tab, so the old one
-            // would sit behind both lists catching taps.
+            EnsureLabel("Title", root, "GARAGE", 46, TextAlignmentOptions.Center,
+                new Vector2(0.34f, 0.905f), new Vector2(0.78f, 0.975f));
+
+            // Its own gold chip, not the menu's: the main menu root is switched off while the
+            // shop is up, and a shop that cannot show what the player is spending is no use.
+            RectTransform money = EnsureSpriteImage("MoneyChip", root, $"{MenuTextures}/UI_Money.png",
+                new Vector2(0.04f, 0.905f), new Vector2(0.30f, 0.972f));
+            TMP_Text goldLabel = EnsureLabel("GoldLabel", money, "0", 34, TextAlignmentOptions.Center,
+                new Vector2(0.2f, 0.1f), new Vector2(0.82f, 0.9f));
+
+            // The list left over from the single-shop layout would otherwise sit behind both
+            // tabs catching taps.
             DestroyIfPresent(root, "Rows");
 
-            RectTransform tabStrip = EnsureRect("Tabs", root, new Vector2(0.06f, 0.78f), new Vector2(0.94f, 0.86f));
-            Button bulletTab = EnsureButton("BulletsTab", tabStrip, "AMMO", new Vector2(0f, 0f), new Vector2(0.49f, 1f));
-            Button vehicleTab = EnsureButton("VehiclesTab", tabStrip, "VEHICLES", new Vector2(0.51f, 0f), new Vector2(1f, 1f));
+            RectTransform tabStrip = EnsureRect("Tabs", root, new Vector2(0.06f, 0.825f), new Vector2(0.94f, 0.888f));
+            Button vehicleTab = EnsureButton("VehicleTypeTab", tabStrip, "VEHICLES", new Vector2(0f, 0f), new Vector2(0.485f, 1f));
+            Button bulletTab = EnsureButton("BulletTypeTab", tabStrip, "AMMO", new Vector2(0.515f, 0f), new Vector2(1f, 1f));
 
-            GameObject bulletPanel = BuildBulletSection(root, economy, goldLabel);
             GameObject vehiclePanel = BuildVehicleSection(root, economy, goldLabel);
+            GameObject bulletPanel = BuildBulletSection(root, economy, goldLabel);
 
             tabs = Ensure<ShopTabsView>(root.gameObject);
             SerializedObject serializedTabs = new SerializedObject(tabs);
@@ -176,8 +200,10 @@ namespace GameJam.EditorTools
             if (entries.arraySize == 0)
             {
                 entries.arraySize = 2;
-                FillTab(entries.GetArrayElementAtIndex(0), "Ammunition", bulletTab, bulletPanel);
-                FillTab(entries.GetArrayElementAtIndex(1), "Vehicles", vehicleTab, vehiclePanel);
+                FillTab(entries.GetArrayElementAtIndex(0), "Vehicles", vehicleTab, vehiclePanel);
+                FillTab(entries.GetArrayElementAtIndex(1), "Ammunition", bulletTab, bulletPanel);
+                serializedTabs.FindProperty("selectedTint").colorValue = GarageTabOnColor;
+                serializedTabs.FindProperty("unselectedTint").colorValue = GarageTabOffColor;
             }
 
             serializedTabs.ApplyModifiedPropertiesWithoutUndo();
@@ -191,25 +217,42 @@ namespace GameJam.EditorTools
             entry.FindPropertyRelative("panel").objectReferenceValue = panel;
         }
 
-        private static GameObject BuildBulletSection(RectTransform shop, EconomyService economy, TMP_Text goldLabel)
+        /// <summary>
+        /// A tab's page: a preview of what is equipped, and the list underneath. Both tabs are
+        /// the same two boxes in the same places, so switching between them moves nothing.
+        /// </summary>
+        private static RectTransform EnsureGaragePage(
+            RectTransform shop,
+            string name,
+            out RectTransform preview,
+            out RectTransform rows)
         {
-            RectTransform panel = EnsureRect("AmmoPanel", shop, new Vector2(0f, 0f), new Vector2(1f, 1f));
-            RectTransform rows = EnsureRect("Rows", panel, new Vector2(0.06f, 0.06f), new Vector2(0.94f, 0.76f));
+            RectTransform panel = EnsureRect(name, shop, new Vector2(0.06f, 0.04f), new Vector2(0.94f, 0.81f));
 
-            BulletShopView view = Ensure<BulletShopView>(panel.gameObject);
-            SerializedObject serialized = new SerializedObject(view);
-            SetIfEmpty(serialized, "economy", economy);
-            SetIfEmpty(serialized, "loadout", LoadFirstAsset<GameJam.Gameplay.Combat.BulletLoadout>());
-            SetIfEmpty(serialized, "container", rows);
-            SetIfEmpty(serialized, "goldLabel", goldLabel);
-            serialized.ApplyModifiedPropertiesWithoutUndo();
-            return panel.gameObject;
+            preview = EnsureColorImage("Preview", panel, GaragePreviewColor, new Vector2(0f, 0.6f), new Vector2(1f, 1f));
+            EnsureColorImage("ListBackground", panel, GarageInsetColor, new Vector2(0f, 0f), new Vector2(1f, 0.56f));
+            rows = EnsureRect("Rows", panel, new Vector2(0.04f, 0.03f), new Vector2(0.96f, 0.53f));
+            return panel;
         }
 
+        /// <summary>
+        /// Vehicles are picked by looking at them, so they are a grid of cards rather than a
+        /// list of rows: three across, which is what the mock shows and what fits 720 wide.
+        /// </summary>
         private static GameObject BuildVehicleSection(RectTransform shop, EconomyService economy, TMP_Text goldLabel)
         {
-            RectTransform panel = EnsureRect("VehiclePanel", shop, new Vector2(0f, 0f), new Vector2(1f, 1f));
-            RectTransform rows = EnsureRect("Rows", panel, new Vector2(0.06f, 0.06f), new Vector2(0.94f, 0.76f));
+            RectTransform panel = EnsureGaragePage(shop, "VehiclePanel", out RectTransform preview, out RectTransform rows);
+            EnsureLabel("PreviewCaption", preview, "EQUIPPED VEHICLE", 24, TextAlignmentOptions.Center,
+                new Vector2(0.05f, 0.02f), new Vector2(0.95f, 0.14f));
+
+            // The view parents its cards here and does not impose a layout of its own, so the
+            // grid is the container's business.
+            GridLayoutGroup grid = Ensure<GridLayoutGroup>(rows.gameObject);
+            grid.cellSize = new Vector2(196f, 190f);
+            grid.spacing = new Vector2(14f, 14f);
+            grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+            grid.constraintCount = 3;
+            grid.childAlignment = TextAnchor.UpperCenter;
 
             VehicleShopView view = Ensure<VehicleShopView>(panel.gameObject);
             SerializedObject serialized = new SerializedObject(view);
@@ -219,7 +262,27 @@ namespace GameJam.EditorTools
             SetIfEmpty(serialized, "goldLabel", goldLabel);
 
             // rowPrefab is deliberately left empty until VehicleShopRow.prefab is authored: the
-            // view generates a plain two-button row, so the shop is usable in the meantime.
+            // view generates a plain two-button card, so the tab is usable in the meantime.
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            return panel.gameObject;
+        }
+
+        /// <summary>
+        /// Ammunition is a list, because a row has to carry the level it is at and the button
+        /// that raises it - things a card cannot show at this size.
+        /// </summary>
+        private static GameObject BuildBulletSection(RectTransform shop, EconomyService economy, TMP_Text goldLabel)
+        {
+            RectTransform panel = EnsureGaragePage(shop, "AmmoPanel", out RectTransform preview, out RectTransform rows);
+            EnsureLabel("PreviewCaption", preview, "LOADED AMMO", 24, TextAlignmentOptions.Center,
+                new Vector2(0.05f, 0.02f), new Vector2(0.95f, 0.14f));
+
+            BulletShopView view = Ensure<BulletShopView>(panel.gameObject);
+            SerializedObject serialized = new SerializedObject(view);
+            SetIfEmpty(serialized, "economy", economy);
+            SetIfEmpty(serialized, "loadout", LoadFirstAsset<GameJam.Gameplay.Combat.BulletLoadout>());
+            SetIfEmpty(serialized, "container", rows);
+            SetIfEmpty(serialized, "goldLabel", goldLabel);
             serialized.ApplyModifiedPropertiesWithoutUndo();
             return panel.gameObject;
         }
