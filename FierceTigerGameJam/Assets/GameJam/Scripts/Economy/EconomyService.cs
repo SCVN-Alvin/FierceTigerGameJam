@@ -246,9 +246,12 @@ namespace GameJam.Economy
         }
 
         /// <summary>
-        /// Unlocks the vehicle and charges for it, or does neither. Returns false when the
-        /// purchase was refused, in which case nothing at all was written. A bought vehicle stays
-        /// at level 1 and stays unselected: owning it and driving it are two decisions.
+        /// Unlocks the vehicle, charges for it and mounts it, or does none of the three. Returns
+        /// false when the purchase was refused, in which case nothing at all was written.
+        ///
+        /// Buying is the only way a vehicle is equipped: the garage that replaced the old shop
+        /// has one button per row and no Select, so a vehicle nobody mounted here would be one
+        /// the player paid for and never drove.
         /// </summary>
         public bool TryPurchaseVehicle(VehicleDefinition vehicle)
         {
@@ -271,11 +274,19 @@ namespace GameJam.Economy
             }
 
             // Written straight to the record rather than through the loadout, which saves on its
-            // own: the whole transaction should commit exactly once, at the end. Unlocking is
-            // also the one vehicle change nothing visual reads, since the mount only cares about
-            // what is selected.
+            // own: the whole transaction should commit exactly once, at the end. It has to come
+            // before the Select below, which refuses a vehicle that is not yet owned.
             UserData.Vehicles.Unlock(vehicle.Id);
-            UserData.Save();
+
+            // Select saves, which commits the charge and the unlock above along with the choice,
+            // and raises SelectionChanged so the mount swaps the model and the vehicle tab
+            // re-dims its rows without either being told. False means the record already named
+            // this vehicle, in which case nothing has saved yet and the plain write below does it.
+            if (vehicleLoadout == null || !vehicleLoadout.Select(vehicle))
+            {
+                UserData.Save();
+            }
+
             GoldChanged?.Invoke();
             return true;
         }
