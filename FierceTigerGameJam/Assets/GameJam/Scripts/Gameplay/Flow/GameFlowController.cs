@@ -396,7 +396,18 @@ namespace GameJam.Gameplay.Flow
                 return;
             }
 
-            runController.ContinueRun(bulletId, economy.ContinueAmmo);
+            // Checked rather than discarded. Everything this could refuse was already refused
+            // above, so false means the run moved between the last check and the charge - and by
+            // then the gold is gone. Saying so beats handing the player a HUD over a run that is
+            // still finished and letting four thousand gold vanish without a word.
+            if (!runController.ContinueRun(bulletId, economy.ContinueAmmo))
+            {
+                Debug.LogError(
+                    $"{name}: the continue was paid for but the run refused to resume, so "
+                    + $"{economy.ContinuePrice} gold was spent for nothing.",
+                    this);
+                return;
+            }
 
             SetRootActive(failRoot, false);
             SetRootActive(hudRoot, true);
