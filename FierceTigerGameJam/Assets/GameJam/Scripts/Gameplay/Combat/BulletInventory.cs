@@ -84,6 +84,21 @@ namespace GameJam.Gameplay.Combat
             return true;
         }
 
+        /// <summary>
+        /// Adds rounds outside the pick. The pick limit is the rule for what may be carried in, not
+        /// for what may be bought mid-run, so this ignores it; a continue is the only caller.
+        /// </summary>
+        public void Grant(string bulletId, int amount)
+        {
+            if (string.IsNullOrEmpty(bulletId) || amount <= 0)
+            {
+                return;
+            }
+
+            counts[bulletId] = GetCount(bulletId) + amount;
+            Changed?.Invoke();
+        }
+
         public bool TryUnpick(string bulletId, int amount = 1)
         {
             int current = GetCount(bulletId);

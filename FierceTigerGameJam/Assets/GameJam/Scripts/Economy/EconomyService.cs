@@ -40,6 +40,9 @@ namespace GameJam.Economy
         [Tooltip("The vehicle catalogue this service unlocks and upgrades against.")]
         [SerializeField] private VehicleLoadout vehicleLoadout;
 
+        [Tooltip("What picking a failed run back up costs, and how many rounds it buys.")]
+        [SerializeField] private LoseConfig loseConfig;
+
         /// <summary>
         /// Raised after gold changes, so a wallet display can redraw without polling. This asset
         /// outlives a scene, so subscribers must unsubscribe when they are disabled.
@@ -54,6 +57,30 @@ namespace GameJam.Economy
 
         /// <summary>What the player can spend right now.</summary>
         public int Gold => UserData.Inventory.gold;
+
+        /// <summary>Gold one continue costs. Zero with no config, which no caller may read as free.</summary>
+        public int ContinuePrice => loseConfig != null ? loseConfig.continuePrice : 0;
+
+        /// <summary>Rounds one continue buys, of whatever ammunition is loaded.</summary>
+        public int ContinueAmmo => loseConfig != null ? loseConfig.continueAmmo : 0;
+
+        /// <summary>
+        /// Whether the player could pay for a continue this instant. False with no config: nothing
+        /// is sold unpriced, and a missing config must read as "not for sale" rather than "free".
+        /// </summary>
+        public bool CanContinueRun()
+        {
+            return loseConfig != null && loseConfig.continueAmmo > 0 && Gold >= loseConfig.continuePrice;
+        }
+
+        /// <summary>
+        /// Charges for a continue. Goes through <see cref="TrySpendGold"/> so the save and
+        /// GoldChanged happen exactly as they do for any other spend.
+        /// </summary>
+        public bool TryPayContinue()
+        {
+            return CanContinueRun() && TrySpendGold(loseConfig.continuePrice);
+        }
 
         /// <summary>
         /// Price of unlocking a bullet. False means it is not for sale at all, so a caller must

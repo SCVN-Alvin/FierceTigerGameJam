@@ -94,6 +94,12 @@ namespace GameJam.EditorTools
             WireEconomy(economy, purchase, upgrade, rewards, loadout, purchaseVehicle, upgradeVehicle, vehicleLoadout);
             WireScene(economy, progression, inventory, loadout, vehicleLoadout);
 
+            // After the economy asset exists, because this wires itself into it. Its own method
+            // rather than another argument on WireEconomy: the fail-screen builder needs exactly
+            // this one config and none of the rest of this pass, and two callers must not end up
+            // with two copies of the path.
+            EnsureLoseConfig();
+
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
             Debug.Log(
@@ -313,6 +319,39 @@ namespace GameJam.EditorTools
 
             serialized.ApplyModifiedPropertiesWithoutUndo();
             EditorUtility.SetDirty(progression);
+        }
+
+        /// <summary>
+        /// The price and the ammunition a continue buys, wired into the economy. Safe to call on
+        /// its own: it creates the folder and the asset if they are missing, and never overwrites
+        /// a price somebody has already tuned or a reference already pointed somewhere.
+        /// </summary>
+        internal static LoseConfig EnsureLoseConfig()
+        {
+            EnsureFolder(ConfigFolder);
+            LoseConfig lose = EnsureAsset<LoseConfig>($"{ConfigFolder}/LoseConfig.asset");
+
+            // The asset at the known path first, so a stray second EconomyService somewhere in the
+            // project cannot be the one that gets wired.
+            EconomyService economy = AssetDatabase.LoadAssetAtPath<EconomyService>($"{ConfigFolder}/EconomyService.asset");
+            if (economy == null)
+            {
+                economy = LoadFirst<EconomyService>();
+            }
+
+            if (economy == null)
+            {
+                Debug.LogWarning(
+                    $"{nameof(GameConfigBuilder)} created {nameof(LoseConfig)} but found no {nameof(EconomyService)} "
+                    + "to wire it into, so a continue will have no price and nothing will be sold.");
+                return lose;
+            }
+
+            SerializedObject serialized = new SerializedObject(economy);
+            SetIfEmpty(serialized, "loseConfig", lose);
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(economy);
+            return lose;
         }
 
         private static void WireEconomy(

@@ -15,7 +15,8 @@ namespace GameJam.EditorTools
 {
     /// <summary>
     /// Builds the screens the game loop needs and wires them to each other: the ammunition pick,
-    /// the in-run readouts, the result panel and the gold readout.
+    /// the in-run readouts and the gold readout. The two result screens are not among them: each
+    /// is authored from its own art by its own builder.
     ///
     /// The layout is deliberately plain. This exists so the loop is playable and testable without
     /// anyone hand-authoring four screens first, not to be the final art. Re-running it keeps
@@ -26,7 +27,6 @@ namespace GameJam.EditorTools
     {
         private const string AmmoPickName = "AmmoPickScreen";
         private const string HudName = "RunHud";
-        private const string ResultName = "ResultScreen";
         private const string GoldName = "GoldPanel";
 
         private static readonly Color PanelColor = new Color(0.06f, 0.08f, 0.12f, 0.85f);
@@ -59,9 +59,13 @@ namespace GameJam.EditorTools
 
             GameObject ammoPick = BuildAmmoPick(canvas.transform, inventory, loadout, out Button startButton);
             GameObject hud = BuildHud(canvas.transform, run, tracker, inventory, loadout);
-            GameObject result = BuildResult(canvas.transform, flow, out Button retryButton, out Button resultMainMenuButton);
 
-            WireFlow(flow, run, ammoPick, hud, result, startButton, retryButton, resultMainMenuButton);
+            // No result panel: both outcomes now have an authored screen of their own, built by
+            // ClearedScreenBuilder and FailScreenBuilder. This builder made a plain one and found
+            // it with EnsurePanel, which meant re-running it appended its children into whichever
+            // instance was already in the scene - the same class of bug Brief 06 was written to
+            // stop, latent only because nobody ran this menu item.
+            WireFlow(flow, run, ammoPick, hud, startButton);
 
             // The sprite chrome comes last: it fills the readouts the plain screens left empty,
             // and it needs the roots above to already exist.
@@ -69,7 +73,7 @@ namespace GameJam.EditorTools
 
             EditorSceneManager.MarkSceneDirty(scene);
             Debug.Log(
-                $"{nameof(UiBuilder)} built the ammunition pick, the run HUD, the result panel and the gold readout. "
+                $"{nameof(UiBuilder)} built the ammunition pick, the run HUD and the gold readout. "
                 + "Anything it could not find in the scene or the project is left unassigned on the components.");
         }
 
@@ -119,55 +123,12 @@ namespace GameJam.EditorTools
             return root.gameObject;
         }
 
-        private static GameObject BuildResult(
-            Transform canvas,
-            GameFlowController flow,
-            out Button retryButton,
-            out Button mainMenuButton)
-        {
-            RectTransform root = EnsurePanel(ResultName, canvas);
-
-            TMP_Text headline = EnsureLabel("Headline", root, "LEVEL CLEAR", 64, TextAlignmentOptions.Center,
-                new Vector2(0.1f, 0.66f), new Vector2(0.9f, 0.8f));
-            TMP_Text percent = EnsureLabel("ClearPercent", root, "0%", 96, TextAlignmentOptions.Center,
-                new Vector2(0.1f, 0.5f), new Vector2(0.9f, 0.66f));
-            TMP_Text detail = EnsureLabel("Detail", root, string.Empty, 28, TextAlignmentOptions.Center,
-                new Vector2(0.1f, 0.42f), new Vector2(0.9f, 0.5f));
-
-            RectTransform rewardRoot = EnsureRect("Reward", root, new Vector2(0.3f, 0.3f), new Vector2(0.7f, 0.4f));
-            TMP_Text reward = EnsureLabel("RewardLabel", rewardRoot, "+0", 48, TextAlignmentOptions.Center,
-                Vector2.zero, Vector2.one);
-
-            // Stacked rather than side by side: full width gives each a bigger tap target, and
-            // reading down the screen puts the likelier choice first. Retry is on top because a
-            // player who just failed is more often going again than leaving.
-            retryButton = EnsureButton("RetryButton", root, "RETRY",
-                new Vector2(0.22f, 0.20f), new Vector2(0.78f, 0.29f));
-            mainMenuButton = EnsureButton("MainMenuButton", root, "MAIN MENU",
-                new Vector2(0.22f, 0.09f), new Vector2(0.78f, 0.18f));
-
-            RunResultView view = Ensure<RunResultView>(root.gameObject);
-            SerializedObject serialized = new SerializedObject(view);
-            SetIfEmpty(serialized, "flow", flow);
-            SetIfEmpty(serialized, "headlineLabel", headline);
-            SetIfEmpty(serialized, "clearPercentLabel", percent);
-            SetIfEmpty(serialized, "detailLabel", detail);
-            SetIfEmpty(serialized, "rewardLabel", reward);
-            SetIfEmpty(serialized, "rewardRoot", rewardRoot.gameObject);
-            serialized.ApplyModifiedPropertiesWithoutUndo();
-
-            return root.gameObject;
-        }
-
         private static void WireFlow(
             GameFlowController flow,
             LevelRunController run,
             GameObject ammoPick,
             GameObject hud,
-            GameObject result,
-            Button startButton,
-            Button retryButton,
-            Button resultMainMenuButton)
+            Button startButton)
         {
             if (flow == null)
             {
@@ -179,14 +140,7 @@ namespace GameJam.EditorTools
             SetIfEmpty(serialized, "runController", run);
             SetIfEmpty(serialized, "ammoPickRoot", ammoPick);
             SetIfEmpty(serialized, "hudRoot", hud);
-            // "failRoot" rather than "resultRoot": the flow now has a screen per outcome, and the
-            // plain panel this builder makes is the failing one. SerializedObject looks the field
-            // up by its current name and FormerlySerializedAs does not help it, so leaving the old
-            // string here would only log that the field is missing.
-            SetIfEmpty(serialized, "failRoot", result);
             SetIfEmpty(serialized, "startRunButton", startButton);
-            SetIfEmpty(serialized, "retryButton", retryButton);
-            SetIfEmpty(serialized, "resultContinueButton", resultMainMenuButton);
             serialized.ApplyModifiedPropertiesWithoutUndo();
         }
 

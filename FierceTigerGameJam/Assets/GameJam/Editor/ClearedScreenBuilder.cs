@@ -13,8 +13,8 @@ namespace GameJam.EditorTools
 {
     /// <summary>
     /// Authors the cleared screen - what a passed run comes to - out of the supplied art, and puts
-    /// an instance of it in the scene beside the old result panel, which is now only the failing
-    /// half.
+    /// an instance of it in the scene beside the fail screen, which is the other half of the same
+    /// question.
     ///
     /// Built the way the garage is, and for the same reasons: a prefab is the one description of
     /// the screen, the scene holds nothing but an instance of it, and nothing is written twice.
@@ -256,9 +256,9 @@ namespace GameJam.EditorTools
         // ------------------------------------------------------------------ scene
 
         /// <summary>
-        /// Puts the cleared screen into the scene alongside the old result panel and points the
-        /// flow at it. The old panel is left exactly where it is: it is the failing half now, and
-        /// the flow already names it through the field that used to be called resultRoot.
+        /// Puts the cleared screen into the scene alongside the fail screen and points the flow
+        /// at it. The fail screen is left exactly where it is: the two are switched between by
+        /// HandleRunFinished, and neither builder has any business moving the other's instance.
         /// </summary>
         private static void EnsureSceneInstance(GameObject prefab)
         {
