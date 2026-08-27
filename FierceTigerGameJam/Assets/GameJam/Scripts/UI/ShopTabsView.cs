@@ -33,6 +33,12 @@ namespace GameJam.UI
             [Tooltip("Shown while this tab is selected and switched off otherwise. The view "
                      + "inside it refreshes on the way in because it subscribes in OnEnable.")]
             public GameObject panel;
+
+            [Tooltip("Optional. When both are set the tab swaps sprites instead of tinting, and "
+                     + "the tint colours are ignored for it. The text is part of these sprites.")]
+            public Sprite selectedSprite;
+
+            public Sprite unselectedSprite;
         }
 
         [SerializeField] private Tab[] tabs = Array.Empty<Tab>();
@@ -81,7 +87,7 @@ namespace GameJam.UI
                     tab.panel.SetActive(selected);
                 }
 
-                ApplyTint(tab, selected);
+                ApplyState(tab, selected);
             }
         }
 
@@ -113,26 +119,44 @@ namespace GameJam.UI
         }
 
         /// <summary>
-        /// The selected tab reads at full strength and the rest are knocked back. Applied to the
-        /// button's own graphic and its label, so it works whether a tab is a sprite or a plain
-        /// coloured rectangle.
+        /// Shows a tab as open or closed, either of two ways.
+        ///
+        /// A tab that was given both of its sprites swaps between them: the garage's tabs have
+        /// their words painted into the art, so there is no label to tint and tinting the art
+        /// would only wash the whole button out. Anything else falls back to the tint, which is
+        /// what a tab strip made of plain coloured rectangles needs, so a second strip elsewhere
+        /// keeps working without being given art it does not have.
         /// </summary>
-        private void ApplyTint(Tab tab, bool selected)
+        private void ApplyState(Tab tab, bool selected)
         {
+            if (tab.button == null)
+            {
+                return;
+            }
+
+            if (tab.selectedSprite != null && tab.unselectedSprite != null
+                && tab.button.targetGraphic is Image image)
+            {
+                image.sprite = selected ? tab.selectedSprite : tab.unselectedSprite;
+
+                // Back to white: a tint left over from the other path would darken the art the
+                // swap just chose. The button's own ColorTint transition still tints on press,
+                // which is the feedback a tap needs and is undone when the finger lifts.
+                image.color = Color.white;
+                return;
+            }
+
             Color tint = selected ? selectedTint : unselectedTint;
 
-            if (tab.button != null)
+            if (tab.button.targetGraphic != null)
             {
-                if (tab.button.targetGraphic != null)
-                {
-                    tab.button.targetGraphic.color = tint;
-                }
+                tab.button.targetGraphic.color = tint;
+            }
 
-                TMP_Text label = tab.button.GetComponentInChildren<TMP_Text>(true);
-                if (label != null)
-                {
-                    label.color = tint;
-                }
+            TMP_Text label = tab.button.GetComponentInChildren<TMP_Text>(true);
+            if (label != null)
+            {
+                label.color = tint;
             }
         }
     }

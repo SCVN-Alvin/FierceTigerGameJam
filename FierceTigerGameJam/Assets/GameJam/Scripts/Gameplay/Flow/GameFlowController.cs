@@ -79,6 +79,11 @@ namespace GameJam.Gameplay.Flow
         [SerializeField] private Button homeButton;
         [FormerlySerializedAs("bulletShopButton")]
         [SerializeField] private Button shopButton;
+
+        [Tooltip("The X in the garage's top corner. A second way out beside the bottom bar's "
+                 + "Home button, not a replacement: the bar is off screen on a phone held in one "
+                 + "hand as often as it is under a thumb.")]
+        [SerializeField] private Button closeShopButton;
         [SerializeField] private Button startRunButton;
         [Tooltip("Leaves the result for the main menu.")]
         [SerializeField] private Button resultContinueButton;
@@ -148,6 +153,9 @@ namespace GameJam.Gameplay.Flow
             Wire(iapShopButton, EnterIapShop);
             Wire(homeButton, ReturnToMainMenu);
             Wire(shopButton, EnterShop);
+
+            // GoBack already sends Shop to the main menu, so the X needs no state of its own.
+            Wire(closeShopButton, GoBack);
             Wire(startRunButton, ConfirmAmmoPick);
             Wire(resultContinueButton, ReturnToMainMenu);
             Wire(retryButton, RetryMap);
@@ -174,6 +182,7 @@ namespace GameJam.Gameplay.Flow
             Unwire(iapShopButton, EnterIapShop);
             Unwire(homeButton, ReturnToMainMenu);
             Unwire(shopButton, EnterShop);
+            Unwire(closeShopButton, GoBack);
             Unwire(startRunButton, ConfirmAmmoPick);
             Unwire(resultContinueButton, ReturnToMainMenu);
             Unwire(retryButton, RetryMap);

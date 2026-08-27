@@ -42,6 +42,10 @@ namespace GameJam.Gameplay.Combat
             [Tooltip("Share of the damage dealt to everything else caught in the blast radius.")]
             [Range(0f, 1f)]
             public float splashShare = 0.35f;
+
+            [Tooltip("Shown in the shop row and the preview. Left empty, the nearest lower "
+                     + "level's icon is used, so one sprite per ammunition is enough to ship.")]
+            public Sprite icon;
         }
 
         [Tooltip("Stable id used to look this ammunition up, e.g. rock_type.")]
@@ -62,6 +66,30 @@ namespace GameJam.Gameplay.Combat
             // failing keeps a mis-set level from silently doing nothing at all.
             int index = Mathf.Clamp(level - 1, 0, levels.Length - 1);
             return levels.Length == 0 ? null : levels[index];
+        }
+
+        /// <summary>
+        /// Icon for a level, walking down to lower levels when the slot is empty, the same rule
+        /// <see cref="VehicleDefinition.ResolveIcon"/> follows. Null only when no level has one,
+        /// which the shop draws as an empty slot rather than a white square.
+        /// </summary>
+        public Sprite ResolveIcon(int level)
+        {
+            if (levels.Length == 0)
+            {
+                return null;
+            }
+
+            int index = Mathf.Clamp(level - 1, 0, levels.Length - 1);
+            for (int i = index; i >= 0; i--)
+            {
+                if (levels[i] != null && levels[i].icon != null)
+                {
+                    return levels[i].icon;
+                }
+            }
+
+            return null;
         }
 
         /// <summary>

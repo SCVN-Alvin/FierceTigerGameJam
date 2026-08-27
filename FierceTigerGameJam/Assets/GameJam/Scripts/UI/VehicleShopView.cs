@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using GameJam.Data;
 using GameJam.Economy;
 using GameJam.Gameplay.Combat;
@@ -43,7 +44,22 @@ namespace GameJam.UI
                  + "object instead to get the count-up; this is the plain total.")]
         [SerializeField] private TMP_Text goldLabel;
 
+        [Tooltip("Optional. The equipped vehicle, drawn large over the garage table. Disabled "
+                 + "while the equipped vehicle has no icon, so the table is not covered by a "
+                 + "white square.")]
+        [SerializeField] private Image previewImage;
+
+        [Tooltip("Optional. The equipped vehicle's level and what that level is worth, under the "
+                 + "preview, e.g. TRUCK II \u00b7 DAMAGE \u00d71.20.")]
+        [SerializeField] private TMP_Text previewCaption;
+
         private const string RowNamePrefix = "VehicleRow_";
+
+        /// <summary>Nothing left to sell. Dimmed rather than hidden, so the row keeps its shape.</summary>
+        private const string MaxCaption = "MAX";
+
+        /// <summary>Not for sale, or priced nowhere: an authoring gap said out loud.</summary>
+        private const string UnavailableCaption = "N/A";
 
         private readonly List<Row> spawnedRows = new List<Row>();
 
@@ -136,14 +152,32 @@ namespace GameJam.UI
                 // spending on the last vehicle in the catalogue.
                 VehicleDefinition clicked = vehicle;
 
-                if (row.View.PrimaryButton != null)
+                if (row.Item != null)
                 {
-                    row.View.PrimaryButton.onClick.AddListener(() => HandlePrimaryClicked(clicked));
-                }
+                    // Buy spends; the rest of the row mounts. Buying still equips as well, which
+                    // is not made redundant by this: a vehicle bought and left unmounted would be
+                    // gold spent for no visible change.
+                    if (row.Item.BuyButton != null)
+                    {
+                        row.Item.BuyButton.onClick.AddListener(() => HandlePrimaryClicked(clicked));
+                    }
 
-                if (row.View.SelectButton != null)
+                    if (row.Item.SelectButton != null)
+                    {
+                        row.Item.SelectButton.onClick.AddListener(() => HandleSelectClicked(clicked));
+                    }
+                }
+                else if (row.View != null)
                 {
-                    row.View.SelectButton.onClick.AddListener(() => HandleSelectClicked(clicked));
+                    if (row.View.PrimaryButton != null)
+                    {
+                        row.View.PrimaryButton.onClick.AddListener(() => HandlePrimaryClicked(clicked));
+                    }
+
+                    if (row.View.SelectButton != null)
+                    {
+                        row.View.SelectButton.onClick.AddListener(() => HandleSelectClicked(clicked));
+                    }
                 }
 
                 spawnedRows.Add(row);
@@ -170,6 +204,74 @@ namespace GameJam.UI
             {
                 goldLabel.text = economy.Gold.ToString();
             }
+
+            RefreshPreview();
+        }
+
+        /// <summary>
+        /// Draws the equipped vehicle over the garage table, with what its level is worth written
+        /// underneath. The multiplier lives here rather than on the row: the row has room for a
+        /// name, a level and a price and nothing else, and a player asked to pay for level 2 has
+        /// no other way to see what level 2 buys them.
+        ///
+        /// The sprite is the same one the row shows, only larger. A render-texture rig pointed at
+        /// the real model would look better and is deliberately not here: it is a second way for
+        /// a vehicle to be drawn, and one of the two would always be the one nobody updated.
+        /// </summary>
+        private void RefreshPreview()
+        {
+            if (previewImage == null && previewCaption == null)
+            {
+                return;
+            }
+
+            VehicleLoadout catalogue = ResolveLoadout();
+            VehicleDefinition selected = catalogue != null ? catalogue.Selected : null;
+            int level = catalogue != null ? catalogue.SelectedLevel : 1;
+
+            if (previewImage != null)
+            {
+                Sprite sprite = selected != null ? selected.ResolveIcon(level) : null;
+                previewImage.sprite = sprite;
+
+                // Disabled rather than left drawing: an Image with no sprite is a white block
+                // over the table the frame art already draws.
+                previewImage.enabled = sprite != null;
+            }
+
+            if (previewCaption != null)
+            {
+                previewCaption.text = ResolveCaption(selected, level);
+            }
+        }
+
+        /// <summary>
+        /// The level's own name and its multiplier, e.g. "TRUCK II \u00b7 DAMAGE \u00d71.20". An unnamed
+        /// level falls back to the vehicle's name rather than to nothing: a blank caption reads as
+        /// a screen that failed to load, which is worse than one missing its roman numeral.
+        /// </summary>
+        private static string ResolveCaption(VehicleDefinition vehicle, int level)
+        {
+            if (vehicle == null)
+            {
+                return string.Empty;
+            }
+
+            VehicleDefinition.Level shown = vehicle.GetLevel(level);
+            string displayName = shown != null && !string.IsNullOrEmpty(shown.displayName)
+                ? shown.displayName
+                : vehicle.DisplayName;
+
+            if (string.IsNullOrEmpty(displayName))
+            {
+                displayName = string.Empty;
+            }
+
+            return string.Format(
+                CultureInfo.InvariantCulture,
+                "{0} \u00b7 DAMAGE \u00d7{1:0.00}",
+                displayName.ToUpperInvariant(),
+                vehicle.GetDamageMultiplier(level));
         }
 
         /// <summary>
@@ -182,7 +284,7 @@ namespace GameJam.UI
         /// </summary>
         private void RefreshRow(Row row)
         {
-            if (row == null || row.Root == null || row.Vehicle == null || row.View == null)
+            if (row == null || row.Root == null || row.Vehicle == null)
             {
                 return;
             }
@@ -197,6 +299,28 @@ namespace GameJam.UI
             int level = catalogue.GetLevel(row.Vehicle);
             int maxLevel = economy.GetVehicleMaxLevel(row.Vehicle);
             bool selected = catalogue.Selected == row.Vehicle;
+
+            if (row.Item != null)
+            {
+                // Equipped is a reading here, not a control. The garage has no Select: a vehicle
+                // is equipped by being bought, and Selected always resolves to something, so
+                // exactly one row is at full strength and the rest are knocked back.
+                string buyCaption = ResolveBuyCaption(row.Vehicle, unlocked, level, maxLevel, out bool buyInteractable);
+                row.Item.Bind(
+                    row.Vehicle,
+                    level,
+                    maxLevel,
+                    unlocked,
+                    selected,
+                    buyCaption,
+                    buyInteractable);
+                return;
+            }
+
+            if (row.View == null)
+            {
+                return;
+            }
 
             string levelText;
             string primaryText;
@@ -248,6 +372,58 @@ namespace GameJam.UI
         }
 
         /// <summary>
+        /// What the garage row's one button says, and whether it is live. The button is never
+        /// hidden: it is positioned rather than laid out, so hiding it would gain nothing and
+        /// cost the row its shape.
+        ///
+        /// The price carries no "Buy" or "Upgrade" in front of it, because the coin is painted
+        /// into the button art and which of the two a tap does is already said by the row - a
+        /// locked row buys, an owned one levels up.
+        /// </summary>
+        private string ResolveBuyCaption(
+            VehicleDefinition vehicle,
+            bool unlocked,
+            int level,
+            int maxLevel,
+            out bool interactable)
+        {
+            if (!unlocked)
+            {
+                interactable = economy.CanPurchaseVehicle(vehicle);
+
+                // False means the vehicle is not for sale at all, which is said outright: a blank
+                // button would read as a price that failed to load.
+                return economy.TryGetVehiclePurchasePrice(vehicle, out int purchasePrice)
+                    ? FormatPrice(purchasePrice)
+                    : UnavailableCaption;
+            }
+
+            if (level >= maxLevel)
+            {
+                interactable = false;
+                return MaxCaption;
+            }
+
+            interactable = economy.CanUpgradeVehicle(vehicle);
+
+            // Between the floor and the ceiling but unpriced is an authoring gap, so the row
+            // names it rather than pretending the vehicle is finished.
+            return economy.TryGetVehicleUpgradePrice(vehicle, out int upgradePrice, out int _)
+                ? FormatPrice(upgradePrice)
+                : UnavailableCaption;
+        }
+
+        /// <summary>
+        /// Grouped, and always with a comma rather than whatever the device's locale prefers:
+        /// the button is 145 px of art wide, and a separator that changes width by locale is one
+        /// the layout was never measured against.
+        /// </summary>
+        private static string FormatPrice(int price)
+        {
+            return price.ToString("N0", CultureInfo.InvariantCulture);
+        }
+
+        /// <summary>
         /// What the primary button does is decided here rather than when it was wired, so a
         /// vehicle bought in one click can be upgraded by the next one without the row being
         /// rebuilt underneath the player's finger.
@@ -283,6 +459,9 @@ namespace GameJam.UI
         /// Mounting costs nothing, so this does not go through the economy. It still goes through
         /// the loadout rather than the save, which is what refuses a locked vehicle and what tells
         /// the mount to swap the model.
+        ///
+        /// Reached from the garage row itself and from the fallback row's Select button, which are
+        /// the same decision made on two different pictures.
         /// </summary>
         private void HandleSelectClicked(VehicleDefinition vehicle)
         {
@@ -323,14 +502,39 @@ namespace GameJam.UI
         /// <summary>
         /// Rows describe themselves here, unlike in the bullet shop. That shop has to find labels
         /// by name and the button by being the only one, which cannot tell two buttons apart, so
-        /// a vehicle row without a <see cref="VehicleShopRowView"/> gets one added rather than
-        /// being guessed at.
+        /// a vehicle row without a <see cref="VehicleTypeViewItem"/> or a
+        /// <see cref="VehicleShopRowView"/> gets the second one added rather than being guessed at.
         /// </summary>
         private Row CreateRow(Transform parent, VehicleDefinition vehicle)
         {
             GameObject rowObject = rowPrefab != null
                 ? Instantiate(rowPrefab, parent)
                 : CreateDefaultRow(parent);
+
+            // The garage row, checked before anything else. No VehicleShopRowView is added
+            // alongside it: that component would go looking for a Select button this row does not
+            // have and warn about it every time the tab opens.
+            VehicleTypeViewItem item = rowObject.GetComponent<VehicleTypeViewItem>();
+            if (item != null)
+            {
+                Button buy = item.BuyButton;
+                rowObject.name = RowNamePrefix + vehicle.Id;
+
+                if (buy == null)
+                {
+                    Debug.LogWarning(
+                        $"{name}: the row for {vehicle.DisplayName} has no Buy button, so it can be read but "
+                        + "not bought from. The row prefab needs a child named Buy carrying one.",
+                        this);
+                }
+
+                return new Row
+                {
+                    Vehicle = vehicle,
+                    Root = rowObject,
+                    Item = item,
+                };
+            }
 
             VehicleShopRowView view = rowObject.GetComponent<VehicleShopRowView>();
             if (view == null)
@@ -480,6 +684,11 @@ namespace GameJam.UI
         {
             public VehicleDefinition Vehicle;
             public GameObject Root;
+
+            /// <summary>Set for the garage row, which draws itself from one state.</summary>
+            public VehicleTypeViewItem Item;
+
+            /// <summary>Set for the older two-button row, which is the fallback.</summary>
             public VehicleShopRowView View;
         }
     }
