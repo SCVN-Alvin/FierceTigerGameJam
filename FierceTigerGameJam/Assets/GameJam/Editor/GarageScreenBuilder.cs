@@ -157,8 +157,17 @@ namespace GameJam.EditorTools
                 RectTransform rect = (RectTransform)root.transform;
                 PlaceTop(rect, RowSize);
 
-                EnsureImage("Frame", rect, RowFrameSprite,
+                RectTransform frame = EnsureImage("Frame", rect, RowFrameSprite,
                     Vector2.zero, Vector2.one, Image.Type.Sliced, false);
+
+                // The one graphic on the row that takes input. Everything else is decoration with
+                // its raycast off, so a tap anywhere the Buy button does not cover lands here and
+                // equips the item; a tap on Buy is handled by Buy and never reaches the row.
+                Image frameImage = frame.GetComponent<Image>();
+                if (frameImage != null)
+                {
+                    frameImage.raycastTarget = true;
+                }
 
                 // The dark slot the icon sits in is baked into the row art's left border, so the
                 // icon is only the picture, centred in a slot that never stretches.
@@ -238,8 +247,20 @@ namespace GameJam.EditorTools
                 price.raycastTarget = false;
 
                 // On the root: dimming a child would leave the row's own frame lit. interactable
-                // is left alone on purpose, so a dimmed row can still be bought from.
+                // is left alone on purpose, so a dimmed row can still be bought from and tapped.
                 UiBuilder.Ensure<CanvasGroup>(root);
+
+                // The row is a button. No art of its own - the frame it tints is the row art -
+                // so the only thing the player sees is the press, which is the point: the row
+                // should read as a thing you tap without looking like a second Buy.
+                Button select = UiBuilder.Ensure<Button>(root);
+                select.transition = Selectable.Transition.ColorTint;
+                if (select.targetGraphic == null)
+                {
+                    // Assigned rather than found: Selectable only picks up a Graphic on its own
+                    // object, and the row root deliberately has none.
+                    select.targetGraphic = frameImage;
+                }
 
                 ShopItemView item = vehicle
                     ? (ShopItemView)UiBuilder.Ensure<VehicleTypeViewItem>(root)
@@ -252,6 +273,7 @@ namespace GameJam.EditorTools
                 UiBuilder.SetIfEmpty(serialized, "levels", bar);
                 UiBuilder.SetIfEmpty(serialized, "buyButton", buy);
                 UiBuilder.SetIfEmpty(serialized, "buyLabel", price);
+                UiBuilder.SetIfEmpty(serialized, "selectButton", select);
                 UiBuilder.SetIfEmpty(serialized, "group", root.GetComponent<CanvasGroup>());
                 serialized.ApplyModifiedPropertiesWithoutUndo();
             });

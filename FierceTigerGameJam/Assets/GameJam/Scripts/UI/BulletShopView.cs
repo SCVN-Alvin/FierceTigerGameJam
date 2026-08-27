@@ -159,12 +159,18 @@ namespace GameJam.UI
                 // what is for sale is the whole point of a shop.
                 Row row = CreateRow(parent, bullet);
 
+                // Captured per iteration, otherwise every button on the screen would end up
+                // spending on, or equipping, the last kind of ammunition in the catalogue.
+                BulletDefinition clicked = bullet;
+
                 if (row.Action != null)
                 {
-                    // Captured per iteration, otherwise every button on the screen would end up
-                    // buying the last kind of ammunition in the catalogue.
-                    BulletDefinition clicked = bullet;
                     row.Action.onClick.AddListener(() => HandleRowClicked(clicked));
+                }
+
+                if (row.Item != null && row.Item.SelectButton != null)
+                {
+                    row.Item.SelectButton.onClick.AddListener(() => HandleRowSelected(clicked));
                 }
 
                 spawnedRows.Add(row);
@@ -431,6 +437,30 @@ namespace GameJam.UI
 
             // A successful transaction already announced itself through GoldChanged, so this is
             // for the refused one: nothing changed, and the row should still show why.
+            Refresh();
+        }
+
+        /// <summary>
+        /// Loads the ammunition the row describes. Equipping costs nothing, so unlike the Buy
+        /// button this does not go through the economy - but it still goes through the loadout
+        /// rather than the save, because that is what refuses ammunition the player does not own
+        /// and what tells the rest of the game the choice moved.
+        ///
+        /// The garage is now the second place this can be done; the pre-run pick screen is still
+        /// the first, and both call the same Select, so neither has an opinion the other does not
+        /// hear about.
+        /// </summary>
+        private void HandleRowSelected(BulletDefinition bullet)
+        {
+            BulletLoadout catalogue = ResolveLoadout();
+            if (catalogue == null || bullet == null)
+            {
+                return;
+            }
+
+            // Refused for locked ammunition and for the row already loaded, in which case nothing
+            // was announced; the redraw below is what keeps the screen honest either way.
+            catalogue.Select(bullet);
             Refresh();
         }
 

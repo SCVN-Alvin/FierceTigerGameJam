@@ -154,11 +154,17 @@ namespace GameJam.UI
 
                 if (row.Item != null)
                 {
-                    // One button, and no Select: buying a vehicle equips it, so the garage has
-                    // nothing left for a second button to do.
+                    // Buy spends; the rest of the row mounts. Buying still equips as well, which
+                    // is not made redundant by this: a vehicle bought and left unmounted would be
+                    // gold spent for no visible change.
                     if (row.Item.BuyButton != null)
                     {
                         row.Item.BuyButton.onClick.AddListener(() => HandlePrimaryClicked(clicked));
+                    }
+
+                    if (row.Item.SelectButton != null)
+                    {
+                        row.Item.SelectButton.onClick.AddListener(() => HandleSelectClicked(clicked));
                     }
                 }
                 else if (row.View != null)
@@ -453,6 +459,9 @@ namespace GameJam.UI
         /// Mounting costs nothing, so this does not go through the economy. It still goes through
         /// the loadout rather than the save, which is what refuses a locked vehicle and what tells
         /// the mount to swap the model.
+        ///
+        /// Reached from the garage row itself and from the fallback row's Select button, which are
+        /// the same decision made on two different pictures.
         /// </summary>
         private void HandleSelectClicked(VehicleDefinition vehicle)
         {

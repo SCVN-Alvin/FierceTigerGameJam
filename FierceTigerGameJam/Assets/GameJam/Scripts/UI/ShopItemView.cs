@@ -9,11 +9,14 @@ namespace GameJam.UI
     /// One row of the garage: what the item looks like, what it is called and how far it has been
     /// taken, the strip of level pips, and the one button that buys or upgrades it.
     ///
-    /// One button, not two. The garage buys and upgrades and does nothing else - ammunition is
-    /// chosen on the pre-run pick screen and a vehicle is equipped by buying it - so a row never
-    /// has to offer the player two decisions at once, and never has to explain why one of them is
-    /// dead. What it does show is which item is equipped, by standing at full strength while the
-    /// others are knocked back.
+    /// Two things can be tapped, but only one of them looks like a button. The Buy button spends
+    /// gold; the rest of the row equips what it describes. Making the row itself the equip target
+    /// rather than adding a second button is what keeps the row readable at 490x91 - there is no
+    /// room for a Select beside a price, and a row the player can already see is the biggest tap
+    /// target on the screen.
+    ///
+    /// Which item is equipped is shown by standing at full strength while the others are knocked
+    /// back, so the tap that changes it also changes the only thing that was saying it.
     ///
     /// The shop decides every word and every state; this only knows where to put them. That is
     /// what lets the ammunition row and the vehicle row be the same picture: the two subclasses
@@ -86,6 +89,11 @@ namespace GameJam.UI
 
         [SerializeField] private TMP_Text buyLabel;
 
+        [Tooltip("On the row root, over the frame. Equips what the row describes; a tap that "
+                 + "lands on Buy is handled by Buy and never reaches this. The shop wires the "
+                 + "click, since only the shop knows which loadout the item belongs to.")]
+        [SerializeField] private Button selectButton;
+
         [Tooltip("On the row root. The equipped row is drawn at full strength and the rest are "
                  + "knocked back; interactable is never touched, a dimmed row can still be bought.")]
         [SerializeField] private CanvasGroup group;
@@ -95,6 +103,14 @@ namespace GameJam.UI
 
         /// <summary>The shop wires the click, since what it does depends on what is owned.</summary>
         public Button BuyButton => buyButton;
+
+        /// <summary>
+        /// The whole row as a tap target. Left interactable whatever the state, the same way the
+        /// <see cref="CanvasGroup"/> is never made uninteractable: the loadout refuses to equip
+        /// something locked or already equipped, so a refusal is decided in one place rather than
+        /// guessed at here, and a row greyed out by a disabled Button would read as unbuyable too.
+        /// </summary>
+        public Button SelectButton => selectButton;
 
         /// <summary>
         /// Fills the row in. Any part the prefab does not have is skipped rather than folded in
@@ -204,6 +220,13 @@ namespace GameJam.UI
             {
                 // On the row itself: dimming a child would leave the row's own frame lit.
                 group = GetComponent<CanvasGroup>();
+            }
+
+            if (selectButton == null)
+            {
+                // On the row itself too, and never a child: the one on Buy is a different
+                // decision, and a search by type would find whichever came first.
+                selectButton = GetComponent<Button>();
             }
         }
 
