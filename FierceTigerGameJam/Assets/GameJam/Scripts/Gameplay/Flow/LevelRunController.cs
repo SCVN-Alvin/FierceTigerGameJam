@@ -176,6 +176,32 @@ namespace GameJam.Gameplay.Flow
             }
         }
 
+        /// <summary>Only a judged run can be continued; anything else has nothing to come back from.</summary>
+        public bool CanContinueRun()
+        {
+            return State == RunState.Finished && bulletInventory != null;
+        }
+
+        /// <summary>
+        /// Picks the run back up where it stopped. The structure is left as it is and the tracker
+        /// keeps counting, so a continue is worth exactly the rounds it adds. The attempt Judge
+        /// recorded stays recorded; when these rounds run out the run is judged again, on top of it.
+        /// </summary>
+        public bool ContinueRun(string bulletId, int amount)
+        {
+            if (!CanContinueRun() || string.IsNullOrEmpty(bulletId) || amount <= 0)
+            {
+                return false;
+            }
+
+            bulletInventory.Grant(bulletId, amount);
+
+            // HandleInventoryEmptied and the full-clear path both refuse to act outside Playing, so
+            // this is what re-arms the losing condition for the rounds just bought.
+            SetState(RunState.Playing);
+            return true;
+        }
+
         /// <summary>Abandons the attempt without judging it, for a Back button mid-run.</summary>
         public void CancelRun()
         {
