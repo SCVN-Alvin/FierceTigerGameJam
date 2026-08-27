@@ -24,9 +24,15 @@ namespace GameJam.EditorTools
     ///
     /// Everything is positioned by anchor fractions of its parent, read off the frame sprite's
     /// own pixel geometry, so <see cref="FrameSize"/> is the single number that scales the whole
-    /// screen. References are only ever filled in when empty; geometry is written every run,
-    /// because the layout is what this tool is for and re-running it has to be able to put a
-    /// nudged panel back.
+    /// screen at the point the prefab is first written.
+    ///
+    /// After that, nothing is written twice. Every position, every component setting and every
+    /// reference is filled in only when the thing it belongs to did not already exist, because
+    /// the numbers below are a starting point and the prefab is where the screen is actually
+    /// tuned: an icon nudged in the inspector, a tab switched from Sliced to Simple, a sprite
+    /// given a pixels-per-unit multiplier. A builder that rewrote those on every run would make
+    /// re-running it cost the tuning, which is the same as not being able to run it again.
+    /// Deleting the prefab is how you ask for the numbers below back.
     /// </summary>
     public static class GarageScreenBuilder
     {
@@ -121,10 +127,13 @@ namespace GameJam.EditorTools
         /// </summary>
         private static GameObject BuildPipPrefab()
         {
-            return EnsurePrefab(PipPrefabPath, "UpgradeLevelView", root =>
+            return EnsurePrefab(PipPrefabPath, "UpgradeLevelView", (root, created) =>
             {
                 RectTransform rect = (RectTransform)root.transform;
-                PlaceFixed(rect, PipSize);
+                if (created)
+                {
+                    PlaceFixed(rect, PipSize);
+                }
 
                 RectTransform unfilled = EnsureImage("Unfilled", rect, LevelUnfilledSprite,
                     Vector2.zero, Vector2.one, Image.Type.Simple, false);
@@ -152,72 +161,81 @@ namespace GameJam.EditorTools
         /// </summary>
         private static GameObject BuildRowPrefab(string path, string rootName, GameObject pipPrefab, bool vehicle)
         {
-            return EnsurePrefab(path, rootName, root =>
+            return EnsurePrefab(path, rootName, (root, created) =>
             {
                 RectTransform rect = (RectTransform)root.transform;
-                PlaceTop(rect, RowSize);
+                if (created)
+                {
+                    PlaceTop(rect, RowSize);
+                }
 
                 RectTransform frame = EnsureImage("Frame", rect, RowFrameSprite,
-                    Vector2.zero, Vector2.one, Image.Type.Sliced, false);
-
-                // The one graphic on the row that takes input. Everything else is decoration with
-                // its raycast off, so a tap anywhere the Buy button does not cover lands here and
-                // equips the item; a tap on Buy is handled by Buy and never reaches the row.
+                    Vector2.zero, Vector2.one, Image.Type.Sliced, false, true);
                 Image frameImage = frame.GetComponent<Image>();
-                if (frameImage != null)
-                {
-                    frameImage.raycastTarget = true;
-                }
 
                 // The dark slot the icon sits in is baked into the row art's left border, so the
                 // icon is only the picture, centred in a slot that never stretches.
                 RectTransform icon = EnsureImage("Icon", rect, null,
                     new Vector2(0.053f, 0.25f), new Vector2(0.143f, 0.74f), Image.Type.Simple, true);
 
-                RectTransform header = UiBuilder.EnsureRect("Header", rect,
+                RectTransform header = EnsureRect("Header", rect,
                     new Vector2(0.214f, 0.45f), new Vector2(0.97f, 0.80f));
-                Place(header, new Vector2(0.214f, 0.45f), new Vector2(0.97f, 0.80f));
 
-                HorizontalLayoutGroup headerLayout = UiBuilder.Ensure<HorizontalLayoutGroup>(header.gameObject);
-                headerLayout.spacing = 8f;
-                headerLayout.childAlignment = TextAnchor.MiddleLeft;
-                headerLayout.childControlWidth = true;
-                headerLayout.childControlHeight = true;
-                headerLayout.childForceExpandWidth = false;
-                headerLayout.childForceExpandHeight = false;
+                HorizontalLayoutGroup headerLayout = EnsureComponent<HorizontalLayoutGroup>(
+                    header.gameObject, out bool headerLayoutCreated);
+                if (headerLayoutCreated)
+                {
+                    headerLayout.spacing = 8f;
+                    headerLayout.childAlignment = TextAnchor.MiddleLeft;
+                    headerLayout.childControlWidth = true;
+                    headerLayout.childControlHeight = true;
+                    headerLayout.childForceExpandWidth = false;
+                    headerLayout.childForceExpandHeight = false;
+                }
 
                 RectTransform locked = EnsureImage("Locked", header, LockedSprite,
                     Vector2.zero, Vector2.one, Image.Type.Simple, true);
-                // A minimum as well as a preferred size: a layout group short of room takes it
-                // from every child in proportion, and the graphic that says LOCKED is the one
-                // reading on the row that must not be squeezed. The name gives way instead.
-                LayoutElement lockedSize = UiBuilder.Ensure<LayoutElement>(locked.gameObject);
-                lockedSize.minWidth = 144f;
-                lockedSize.minHeight = 34f;
-                lockedSize.preferredWidth = 144f;
-                lockedSize.preferredHeight = 34f;
 
-                TMP_Text label = UiBuilder.EnsureLabel("Label", header, "ITEM", 26,
-                    TextAlignmentOptions.Left, Vector2.zero, Vector2.one);
-                label.fontStyle = FontStyles.Bold;
-                label.raycastTarget = false;
+                LayoutElement lockedSize = EnsureComponent<LayoutElement>(
+                    locked.gameObject, out bool lockedSizeCreated);
+                if (lockedSizeCreated)
+                {
+                    // A minimum as well as a preferred size: a layout group short of room takes
+                    // it from every child in proportion, and the graphic that says LOCKED is the
+                    // one reading on the row that must not be squeezed. The name gives way.
+                    lockedSize.minWidth = 144f;
+                    lockedSize.minHeight = 34f;
+                    lockedSize.preferredWidth = 144f;
+                    lockedSize.preferredHeight = 34f;
+                }
 
-                // The row is a fixed 490x91 in every state, so a long name has to be cut rather
-                // than allowed to wrap onto a second line the row has no height for.
-                label.textWrappingMode = TextWrappingModes.NoWrap;
-                label.overflowMode = TextOverflowModes.Ellipsis;
+                TMP_Text label = EnsureLabel("Label", header, "ITEM", 26,
+                    TextAlignmentOptions.Left, Vector2.zero, Vector2.one, out bool labelCreated);
+                if (labelCreated)
+                {
+                    label.fontStyle = FontStyles.Bold;
+                    label.raycastTarget = false;
 
-                RectTransform levels = UiBuilder.EnsureRect("Levels", rect,
+                    // The row is a fixed 490x91 in every state, so a long name has to be cut
+                    // rather than allowed to wrap onto a line the row has no height for.
+                    label.textWrappingMode = TextWrappingModes.NoWrap;
+                    label.overflowMode = TextOverflowModes.Ellipsis;
+                }
+
+                RectTransform levels = EnsureRect("Levels", rect,
                     new Vector2(0.214f, 0.06f), new Vector2(0.754f, 0.36f));
-                Place(levels, new Vector2(0.214f, 0.06f), new Vector2(0.754f, 0.36f));
 
-                HorizontalLayoutGroup levelsLayout = UiBuilder.Ensure<HorizontalLayoutGroup>(levels.gameObject);
-                levelsLayout.spacing = 3f;
-                levelsLayout.childAlignment = TextAnchor.MiddleLeft;
-                levelsLayout.childControlWidth = false;
-                levelsLayout.childControlHeight = false;
-                levelsLayout.childForceExpandWidth = false;
-                levelsLayout.childForceExpandHeight = false;
+                HorizontalLayoutGroup levelsLayout = EnsureComponent<HorizontalLayoutGroup>(
+                    levels.gameObject, out bool levelsLayoutCreated);
+                if (levelsLayoutCreated)
+                {
+                    levelsLayout.spacing = 3f;
+                    levelsLayout.childAlignment = TextAnchor.MiddleLeft;
+                    levelsLayout.childControlWidth = false;
+                    levelsLayout.childControlHeight = false;
+                    levelsLayout.childForceExpandWidth = false;
+                    levelsLayout.childForceExpandHeight = false;
+                }
 
                 UpgradeLevelBarView bar = UiBuilder.Ensure<UpgradeLevelBarView>(levels.gameObject);
                 SerializedObject serializedBar = new SerializedObject(bar);
@@ -225,41 +243,60 @@ namespace GameJam.EditorTools
                     pipPrefab != null ? pipPrefab.GetComponent<UpgradeLevelView>() : null);
                 serializedBar.ApplyModifiedPropertiesWithoutUndo();
 
+                bool buyCreated = rect.Find("Buy") == null;
                 Button buy = UiBuilder.EnsureSpriteButton("Buy", rect, BuySprite,
                     new Vector2(0.786f, 0.074f), new Vector2(0.969f, 0.412f));
-                Place((RectTransform)buy.transform, new Vector2(0.786f, 0.074f), new Vector2(0.969f, 0.412f));
-                if (buy.targetGraphic is Image buyImage)
+                if (buyCreated)
                 {
-                    // Sliced, so the price can be as wide as it needs without stretching the coin
-                    // baked into the button's left edge.
-                    buyImage.type = Image.Type.Sliced;
+                    Place((RectTransform)buy.transform, new Vector2(0.786f, 0.074f), new Vector2(0.969f, 0.412f));
+
+                    if (buy.targetGraphic is Image buyImage)
+                    {
+                        // Sliced, so the price can be as wide as it needs without stretching the
+                        // coin baked into the button's left edge.
+                        buyImage.type = Image.Type.Sliced;
+                    }
                 }
 
                 // The price starts to the right of that coin.
-                TMP_Text price = UiBuilder.EnsureLabel("Price", buy.transform, "0", 16,
-                    TextAlignmentOptions.Center, new Vector2(0.30f, 0.05f), new Vector2(0.97f, 0.95f));
-                Place((RectTransform)price.transform, new Vector2(0.30f, 0.05f), new Vector2(0.97f, 0.95f));
-                price.fontStyle = FontStyles.Bold;
+                TMP_Text price = EnsureLabel("Price", buy.transform, "0", 16,
+                    TextAlignmentOptions.Center, new Vector2(0.30f, 0.05f), new Vector2(0.97f, 0.95f),
+                    out bool priceCreated);
+                if (priceCreated)
+                {
+                    Place((RectTransform)price.transform, new Vector2(0.30f, 0.05f), new Vector2(0.97f, 0.95f));
+                    price.fontStyle = FontStyles.Bold;
 
-                // Off, so the caption cannot be the thing a tap lands on. The click would still
-                // reach the button by bubbling, but a text that eats the raycast is also what
-                // makes a disabled button feel pressable.
-                price.raycastTarget = false;
+                    // Off, so the caption cannot be the thing a tap lands on. The click would
+                    // still reach the button by bubbling, but a text that eats the raycast is
+                    // also what makes a disabled button feel pressable.
+                    price.raycastTarget = false;
+                }
 
                 // On the root: dimming a child would leave the row's own frame lit. interactable
                 // is left alone on purpose, so a dimmed row can still be bought from and tapped.
                 UiBuilder.Ensure<CanvasGroup>(root);
 
-                // The row is a button. No art of its own - the frame it tints is the row art -
-                // so the only thing the player sees is the press, which is the point: the row
-                // should read as a thing you tap without looking like a second Buy.
-                Button select = UiBuilder.Ensure<Button>(root);
-                select.transition = Selectable.Transition.ColorTint;
-                if (select.targetGraphic == null)
+                // The row is a button. No art of its own - the frame it tints is the row art - so
+                // the only thing the player sees is the press, which is the point: the row should
+                // read as a thing you tap without looking like a second Buy.
+                Button select = EnsureComponent<Button>(root, out bool selectCreated);
+                if (selectCreated)
                 {
+                    select.transition = Selectable.Transition.ColorTint;
+
                     // Assigned rather than found: Selectable only picks up a Graphic on its own
                     // object, and the row root deliberately has none.
                     select.targetGraphic = frameImage;
+
+                    // The frame is what the tap has to land on, and on a row built before the row
+                    // became a button it is still decoration. Turned on here rather than where
+                    // the frame is made, so this migrates such a row exactly once and touches
+                    // nothing on a row that already had its button.
+                    if (frameImage != null)
+                    {
+                        frameImage.raycastTarget = true;
+                    }
                 }
 
                 ShopItemView item = vehicle
@@ -288,26 +325,32 @@ namespace GameJam.EditorTools
         /// </summary>
         private static GameObject BuildScreenPrefab(GameObject bulletRow, GameObject vehicleRow)
         {
-            return EnsurePrefab(ScreenPrefabPath, ScreenName, root =>
+            return EnsurePrefab(ScreenPrefabPath, ScreenName, (root, created) =>
             {
                 RectTransform rect = (RectTransform)root.transform;
-                Place(rect, ScreenAnchorMin, ScreenAnchorMax);
+                if (created)
+                {
+                    Place(rect, ScreenAnchorMin, ScreenAnchorMax);
+                }
 
+                bool frameCreated = rect.Find("Frame") == null;
                 RectTransform frame = EnsureImage("Frame", rect, FrameSprite,
                     Vector2.zero, Vector2.one, Image.Type.Simple, false);
 
-                // Pinned to the top edge at a fixed size rather than stretched: the frame art has
-                // one aspect, and a taller phone should leave more room under it, not a taller
-                // frame.
-                frame.anchorMin = new Vector2(0.5f, 1f);
-                frame.anchorMax = new Vector2(0.5f, 1f);
-                frame.pivot = new Vector2(0.5f, 1f);
-                frame.sizeDelta = FrameSize;
-                frame.anchoredPosition = FrameOffset;
+                if (frameCreated)
+                {
+                    // Pinned to the top edge at a fixed size rather than stretched: the frame art
+                    // has one aspect, and a taller phone should leave more room under it, not a
+                    // taller frame.
+                    frame.anchorMin = new Vector2(0.5f, 1f);
+                    frame.anchorMax = new Vector2(0.5f, 1f);
+                    frame.pivot = new Vector2(0.5f, 1f);
+                    frame.sizeDelta = FrameSize;
+                    frame.anchoredPosition = FrameOffset;
+                }
 
-                RectTransform tabs = UiBuilder.EnsureRect("Tabs", frame,
+                RectTransform tabs = EnsureRect("Tabs", frame,
                     new Vector2(0.048f, 0.847f), new Vector2(0.956f, 0.907f));
-                Place(tabs, new Vector2(0.048f, 0.847f), new Vector2(0.956f, 0.907f));
 
                 // No label under either tab: the words are painted into the sprites, which is why
                 // ShopTabsView swaps them rather than tinting.
@@ -323,17 +366,25 @@ namespace GameJam.EditorTools
                 // garage is up, and a shop that cannot show what the player is spending is no use.
                 RectTransform money = EnsureImage("MoneyChip", rect, MoneySprite,
                     new Vector2(0.046f, 0.926f), new Vector2(0.268f, 0.975f), Image.Type.Simple, false);
-                TMP_Text goldLabel = UiBuilder.EnsureLabel("GoldLabel", money, "0", 34,
-                    TextAlignmentOptions.Center, new Vector2(0.2f, 0.1f), new Vector2(0.82f, 0.9f));
-                Place((RectTransform)goldLabel.transform, new Vector2(0.2f, 0.1f), new Vector2(0.82f, 0.9f));
-                goldLabel.raycastTarget = false;
+                TMP_Text goldLabel = EnsureLabel("GoldLabel", money, "0", 34,
+                    TextAlignmentOptions.Center, new Vector2(0.2f, 0.1f), new Vector2(0.82f, 0.9f),
+                    out bool goldCreated);
+                if (goldCreated)
+                {
+                    Place((RectTransform)goldLabel.transform, new Vector2(0.2f, 0.1f), new Vector2(0.82f, 0.9f));
+                    goldLabel.raycastTarget = false;
+                }
 
+                bool closeCreated = rect.Find("CloseButton") == null;
                 Button close = UiBuilder.EnsureSpriteButton("CloseButton", rect, CloseSprite,
                     new Vector2(0.867f, 0.925f), new Vector2(0.944f, 0.976f));
-                Place((RectTransform)close.transform, new Vector2(0.867f, 0.925f), new Vector2(0.944f, 0.976f));
-                if (close.targetGraphic is Image closeImage)
+                if (closeCreated)
                 {
-                    closeImage.preserveAspect = true;
+                    Place((RectTransform)close.transform, new Vector2(0.867f, 0.925f), new Vector2(0.944f, 0.976f));
+                    if (close.targetGraphic is Image closeImage)
+                    {
+                        closeImage.preserveAspect = true;
+                    }
                 }
 
                 WireShopView(vehiclePanel, true, goldLabel, vehicleRow);
@@ -341,9 +392,14 @@ namespace GameJam.EditorTools
 
                 WireTabs(root, vehicleTab, vehiclePanel, bulletTab, bulletPanel);
 
-                // Inactive in the prefab, not only on the instance: the flow switches screens on,
-                // and a screen that ships active would be an override on every instance of it.
-                root.SetActive(false);
+                if (created)
+                {
+                    // Inactive in the prefab, not only on the instance: the flow switches screens
+                    // on, and a screen that ships active would be an override on every instance
+                    // of it. Only on the first build - whoever turned it back on to look at the
+                    // layout meant to, and the flow hides it on entry either way.
+                    root.SetActive(false);
+                }
             });
         }
 
@@ -353,62 +409,75 @@ namespace GameJam.EditorTools
         /// </summary>
         private static GameObject BuildPanel(RectTransform frame, string name)
         {
-            RectTransform panel = UiBuilder.EnsureRect(name, frame, Vector2.zero, Vector2.one);
-            Place(panel, Vector2.zero, Vector2.one);
+            RectTransform panel = EnsureRect(name, frame, Vector2.zero, Vector2.one);
 
-            RectTransform preview = UiBuilder.EnsureRect("Preview", panel,
+            RectTransform preview = EnsureRect("Preview", panel,
                 new Vector2(0.047f, 0.508f), new Vector2(0.952f, 0.829f));
-            Place(preview, new Vector2(0.047f, 0.508f), new Vector2(0.952f, 0.829f));
 
             // No background of its own: the light garage window is part of the frame art.
-            RectTransform item = EnsureImage("PreviewItem", preview, null,
+            EnsureImage("PreviewItem", preview, null,
                 new Vector2(0.36f, 0.31f), new Vector2(0.64f, 0.84f), Image.Type.Simple, true);
 
-            TMP_Text caption = UiBuilder.EnsureLabel("PreviewCaption", preview, string.Empty, 22,
-                TextAlignmentOptions.Center, new Vector2(0.05f, 0.03f), new Vector2(0.95f, 0.15f));
-            Place((RectTransform)caption.transform, new Vector2(0.05f, 0.03f), new Vector2(0.95f, 0.15f));
-            caption.raycastTarget = false;
+            TMP_Text caption = EnsureLabel("PreviewCaption", preview, string.Empty, 22,
+                TextAlignmentOptions.Center, new Vector2(0.05f, 0.03f), new Vector2(0.95f, 0.15f),
+                out bool captionCreated);
+            if (captionCreated)
+            {
+                Place((RectTransform)caption.transform, new Vector2(0.05f, 0.03f), new Vector2(0.95f, 0.15f));
+                caption.raycastTarget = false;
+            }
 
-            RectTransform list = UiBuilder.EnsureRect("List", panel,
+            RectTransform list = EnsureRect("List", panel,
                 new Vector2(0.047f, 0.038f), new Vector2(0.953f, 0.474f));
-            Place(list, new Vector2(0.047f, 0.038f), new Vector2(0.953f, 0.474f));
 
-            RectTransform viewport = UiBuilder.EnsureRect("Viewport", list, Vector2.zero, Vector2.one);
-            Place(viewport, Vector2.zero, Vector2.one);
+            RectTransform viewport = EnsureRect("Viewport", list, Vector2.zero, Vector2.one);
             UiBuilder.Ensure<RectMask2D>(viewport.gameObject);
 
-            RectTransform rows = UiBuilder.EnsureRect("Rows", viewport, new Vector2(0f, 1f), new Vector2(1f, 1f));
-            rows.anchorMin = new Vector2(0f, 1f);
-            rows.anchorMax = new Vector2(1f, 1f);
-            rows.pivot = new Vector2(0.5f, 1f);
-            rows.anchoredPosition = Vector2.zero;
-            rows.sizeDelta = Vector2.zero;
+            RectTransform rows = EnsureRect("Rows", viewport,
+                new Vector2(0f, 1f), new Vector2(1f, 1f), out bool rowsCreated);
+            if (rowsCreated)
+            {
+                // Hung from the top and growing downward, which is what the fitter below sizes.
+                rows.pivot = new Vector2(0.5f, 1f);
+                rows.anchoredPosition = Vector2.zero;
+                rows.sizeDelta = Vector2.zero;
+            }
 
-            VerticalLayoutGroup rowsLayout = UiBuilder.Ensure<VerticalLayoutGroup>(rows.gameObject);
-            rowsLayout.padding = new RectOffset(26, 26, 20, 20);
-            rowsLayout.spacing = 30f;
-            rowsLayout.childAlignment = TextAnchor.UpperCenter;
+            VerticalLayoutGroup rowsLayout = EnsureComponent<VerticalLayoutGroup>(
+                rows.gameObject, out bool rowsLayoutCreated);
+            if (rowsLayoutCreated)
+            {
+                rowsLayout.padding = new RectOffset(26, 26, 20, 20);
+                rowsLayout.spacing = 30f;
+                rowsLayout.childAlignment = TextAnchor.UpperCenter;
 
-            // All off: a row keeps the size its prefab defines, which is what makes every row the
-            // same shape whatever state it is in.
-            rowsLayout.childControlWidth = false;
-            rowsLayout.childControlHeight = false;
-            rowsLayout.childForceExpandWidth = false;
-            rowsLayout.childForceExpandHeight = false;
+                // All off: a row keeps the size its prefab defines, which is what makes every row
+                // the same shape whatever state it is in.
+                rowsLayout.childControlWidth = false;
+                rowsLayout.childControlHeight = false;
+                rowsLayout.childForceExpandWidth = false;
+                rowsLayout.childForceExpandHeight = false;
+            }
 
-            ContentSizeFitter fitter = UiBuilder.Ensure<ContentSizeFitter>(rows.gameObject);
-            fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
-            fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+            ContentSizeFitter fitter = EnsureComponent<ContentSizeFitter>(rows.gameObject, out bool fitterCreated);
+            if (fitterCreated)
+            {
+                fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+                fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+            }
 
-            ScrollRect scroll = UiBuilder.Ensure<ScrollRect>(list.gameObject);
-            scroll.horizontal = false;
-            scroll.vertical = true;
+            ScrollRect scroll = EnsureComponent<ScrollRect>(list.gameObject, out bool scrollCreated);
+            if (scrollCreated)
+            {
+                scroll.horizontal = false;
+                scroll.vertical = true;
 
-            // Clamped rather than elastic: three rows fill the inset exactly, and a list that
-            // bounces when there is nothing to scroll reads as broken.
-            scroll.movementType = ScrollRect.MovementType.Clamped;
-            scroll.viewport = viewport;
-            scroll.content = rows;
+                // Clamped rather than elastic: three rows fill the inset exactly, and a list that
+                // bounces when there is nothing to scroll reads as broken.
+                scroll.movementType = ScrollRect.MovementType.Clamped;
+                scroll.viewport = viewport;
+                scroll.content = rows;
+            }
 
             return panel.gameObject;
         }
@@ -583,6 +652,7 @@ namespace GameJam.EditorTools
 
             Transform existing = canvas.transform.Find(ScreenName);
             GameObject instance;
+            bool placed = existing == null;
             if (existing != null)
             {
                 instance = existing.gameObject;
@@ -593,14 +663,18 @@ namespace GameJam.EditorTools
                 instance.name = ScreenName;
             }
 
-            // Assigned rather than assumed, and identical to what the prefab already says, so
-            // this puts a nudged instance back without leaving an override behind on a clean one.
-            RectTransform rect = (RectTransform)instance.transform;
-            rect.anchorMin = ScreenAnchorMin;
-            rect.anchorMax = ScreenAnchorMax;
-            rect.offsetMin = Vector2.zero;
-            rect.offsetMax = Vector2.zero;
-            instance.SetActive(false);
+            if (placed)
+            {
+                // Only on the instance this run put there. An instance already in the scene is
+                // left where it is: it may have been moved on purpose, and the flow switches it
+                // on and off by itself whatever state it was saved in.
+                RectTransform rect = (RectTransform)instance.transform;
+                rect.anchorMin = ScreenAnchorMin;
+                rect.anchorMax = ScreenAnchorMax;
+                rect.offsetMin = Vector2.zero;
+                rect.offsetMax = Vector2.zero;
+                instance.SetActive(false);
+            }
 
             tabs = instance.GetComponent<ShopTabsView>();
             Transform close = instance.transform.Find("CloseButton");
@@ -652,7 +726,7 @@ namespace GameJam.EditorTools
         /// the existing asset rather than replacing it is what keeps a reference somebody dragged
         /// in by hand, and what keeps the guid the scene points at.
         /// </summary>
-        private static GameObject EnsurePrefab(string path, string rootName, System.Action<GameObject> build)
+        private static GameObject EnsurePrefab(string path, string rootName, System.Action<GameObject, bool> build)
         {
             bool exists = AssetDatabase.LoadAssetAtPath<GameObject>(path) != null;
 
@@ -662,7 +736,7 @@ namespace GameJam.EditorTools
 
             try
             {
-                build(root);
+                build(root, !exists);
                 return PrefabUtility.SaveAsPrefabAsset(root, path);
             }
             finally
@@ -694,9 +768,31 @@ namespace GameJam.EditorTools
         }
 
         /// <summary>
-        /// Finds or creates an image and gives it the look this layout wants. The sprite is only
-        /// filled in when the image is new, so one swapped by hand survives a rebuild; the type,
-        /// the aspect and the raycast flag are structural and are written every run.
+        /// Finds or creates a rect, and says which it did. Callers shape what they just made and
+        /// leave what was already there alone; that one flag is the whole of this tool's promise
+        /// that running it twice is safe.
+        /// </summary>
+        private static RectTransform EnsureRect(string name, Transform parent, Vector2 anchorMin, Vector2 anchorMax, out bool created)
+        {
+            created = parent.Find(name) == null;
+            return UiBuilder.EnsureRect(name, parent, anchorMin, anchorMax);
+        }
+
+        private static RectTransform EnsureRect(string name, Transform parent, Vector2 anchorMin, Vector2 anchorMax)
+        {
+            return UiBuilder.EnsureRect(name, parent, anchorMin, anchorMax);
+        }
+
+        /// <summary>The same for a component: added and configured, or found and left as it is.</summary>
+        private static T EnsureComponent<T>(GameObject target, out bool created) where T : Component
+        {
+            created = target.GetComponent<T>() == null;
+            return UiBuilder.Ensure<T>(target);
+        }
+
+        /// <summary>
+        /// Finds or creates an image and, only if it had to make one, gives it the look this
+        /// layout wants. An image somebody re-sliced or nudged is handed straight back.
         /// </summary>
         private static RectTransform EnsureImage(
             string name,
@@ -705,9 +801,18 @@ namespace GameJam.EditorTools
             Vector2 anchorMin,
             Vector2 anchorMax,
             Image.Type type,
-            bool preserveAspect)
+            bool preserveAspect,
+            bool raycastTarget = false)
         {
+            Transform found = parent.Find(name);
+            bool created = found == null || found.GetComponent<Image>() == null;
+
             RectTransform rect = UiBuilder.EnsureSpriteImage(name, parent, spritePath, anchorMin, anchorMax);
+            if (!created)
+            {
+                return rect;
+            }
+
             Place(rect, anchorMin, anchorMax);
 
             Image image = rect.GetComponent<Image>();
@@ -716,9 +821,9 @@ namespace GameJam.EditorTools
                 image.type = type;
                 image.preserveAspect = preserveAspect;
 
-                // Decoration, so it never eats a tap meant for the button behind it. Only Buy,
-                // the tabs and the close X take input.
-                image.raycastTarget = false;
+                // Off unless the caller says otherwise: decoration must never eat a tap meant for
+                // something behind it. Only the row frame, Buy, the tabs and the close X take input.
+                image.raycastTarget = raycastTarget;
 
                 // An image with no sprite is a white block, and every slot it could sit in is
                 // already drawn by the art behind it. The views turn it back on when they have
@@ -730,12 +835,40 @@ namespace GameJam.EditorTools
         }
 
         /// <summary>
+        /// A label, configured only when it is new, so a font size or a style set in the
+        /// inspector is not undone by the next run.
+        /// </summary>
+        private static TMP_Text EnsureLabel(
+            string name,
+            Transform parent,
+            string text,
+            int size,
+            TextAlignmentOptions alignment,
+            Vector2 anchorMin,
+            Vector2 anchorMax,
+            out bool created)
+        {
+            Transform found = parent.Find(name);
+            created = found == null || found.GetComponent<TMP_Text>() == null;
+            return UiBuilder.EnsureLabel(name, parent, text, size, alignment, anchorMin, anchorMax);
+        }
+
+        /// <summary>
         /// A tab. Its sprite is set here and swapped at runtime by <see cref="ShopTabsView"/>;
-        /// Sliced, because the strip is a little narrower than the art it is cut from.
+        /// Sliced when it is first made, because the strip is a little narrower than the art it
+        /// is cut from - and left however it was set after that.
         /// </summary>
         private static Button EnsureTabButton(string name, Transform parent, string spritePath, Vector2 anchorMin, Vector2 anchorMax)
         {
+            Transform found = parent.Find(name);
+            bool created = found == null || found.GetComponent<Button>() == null;
+
             Button button = UiBuilder.EnsureSpriteButton(name, parent, spritePath, anchorMin, anchorMax);
+            if (!created)
+            {
+                return button;
+            }
+
             Place((RectTransform)button.transform, anchorMin, anchorMax);
 
             if (button.targetGraphic is Image image)
