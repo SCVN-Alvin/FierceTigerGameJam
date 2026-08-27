@@ -63,7 +63,13 @@ namespace GameJam.Gameplay.Flow
         [Tooltip("In-run readouts. Shown with gameplay, hidden once the result is up.")]
         [SerializeField] private GameObject hudRoot;
 
-        [SerializeField] private GameObject resultRoot;
+        [Tooltip("Shown when the run failed. Until the fail screen is redrawn this is the old "
+                 + "ResultScreen, which is why the field kept its serialized name.")]
+        [FormerlySerializedAs("resultRoot")]
+        [SerializeField] private GameObject failRoot;
+
+        [Tooltip("Shown when the run passed its map.")]
+        [SerializeField] private GameObject clearedRoot;
 
         [Tooltip("The bottom tab bar. Shown on the menu and the shops, since its middle button is "
                  + "what returns from a shop; hidden once the player is on their way into a run.")]
@@ -101,6 +107,16 @@ namespace GameJam.Gameplay.Flow
         [Tooltip("Abandons the run from the settings overlay. Hidden outside a run, where it would "
                  + "only lead to the screen the player is already on.")]
         [SerializeField] private Button settingsMainMenuButton;
+
+        [Header("Cleared Screen Buttons")]
+        [Tooltip("Another go at the map just cleared, the same road RETRY takes.")]
+        [SerializeField] private Button clearedReplayButton;
+
+        [Tooltip("On to the next map in the catalogue.")]
+        [SerializeField] private Button clearedContinueButton;
+
+        [Tooltip("The X on the cleared screen. Leaves for the main menu.")]
+        [SerializeField] private Button clearedCloseButton;
 
         [Header("Reset On Entering A Map")]
         [SerializeField] private CannonAimController aimController;
@@ -164,6 +180,9 @@ namespace GameJam.Gameplay.Flow
             Wire(openSettingsInRunButton, OpenSettings);
             Wire(closeSettingsButton, CloseSettings);
             Wire(settingsMainMenuButton, AbandonRun);
+            Wire(clearedReplayButton, RetryMap);
+            Wire(clearedContinueButton, EnterNextMap);
+            Wire(clearedCloseButton, ReturnToMainMenu);
         }
 
         private void OnDisable()
@@ -191,6 +210,9 @@ namespace GameJam.Gameplay.Flow
             Unwire(openSettingsInRunButton, OpenSettings);
             Unwire(closeSettingsButton, CloseSettings);
             Unwire(settingsMainMenuButton, AbandonRun);
+            Unwire(clearedReplayButton, RetryMap);
+            Unwire(clearedContinueButton, EnterNextMap);
+            Unwire(clearedCloseButton, ReturnToMainMenu);
         }
 
         private void Start()
@@ -311,6 +333,27 @@ namespace GameJam.Gameplay.Flow
             EnterAmmoPick();
         }
 
+        /// <summary>
+        /// The next map in the catalogue, straight into its ammunition pick. Selecting raises
+        /// SelectionChanged, and HandleMapSelected does the rest, which is the same road a tap on
+        /// the mission board takes; there is no second way into a run. Past the last map there is
+        /// nothing to continue to, so the menu it is.
+        /// </summary>
+        [ContextMenu("Next Map")]
+        public void EnterNextMap()
+        {
+            MapConfig config = mapSelection != null ? mapSelection.Config : null;
+            int next = config != null && mapSelection.HasSelection ? config.IndexOf(mapSelection.Selected) + 1 : -1;
+
+            if (config == null || next <= 0 || next >= config.Count)
+            {
+                ReturnToMainMenu();
+                return;
+            }
+
+            mapSelection.SelectByIndex(next);
+        }
+
         /// <summary>Leaves a run early from the settings overlay.</summary>
         public void AbandonRun()
         {
@@ -356,7 +399,11 @@ namespace GameJam.Gameplay.Flow
         {
             // The structure is left standing behind the result: the player should see what they
             // did to it while they read what it was worth.
-            SetRootActive(resultRoot, true);
+            //
+            // Which of the two results is up is decided here rather than inside a screen, because
+            // a pass and a failure ask different questions and only the flow knows which was
+            // asked. Both still hear RunFinished; each screen draws only its own kind.
+            SetRootActive(result.Passed ? clearedRoot : failRoot, true);
             SetRootActive(hudRoot, false);
 
             State = GameState.Result;
@@ -381,7 +428,8 @@ namespace GameJam.Gameplay.Flow
             SetRootActive(shopRoot, state == GameState.Shop);
             SetRootActive(gameplayRoot, state == GameState.Playing);
             SetRootActive(hudRoot, state == GameState.Playing);
-            SetRootActive(resultRoot, false);
+            SetRootActive(failRoot, false);
+            SetRootActive(clearedRoot, false);
 
             // The bar carries the way back out of a shop, so it belongs wherever the player might
             // want that; once they are heading into a run it is only clutter.
