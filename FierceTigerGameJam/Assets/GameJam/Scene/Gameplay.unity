@@ -1943,6 +1943,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 32302313}
     m_Modifications:
+    - target: {fileID: 1257768746038195394, guid: ef65a20a6db914616b5cc21725b05b5a, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 2688669656958018069, guid: ef65a20a6db914616b5cc21725b05b5a, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -2023,9 +2027,17 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3932511033887904550, guid: ef65a20a6db914616b5cc21725b05b5a, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 5556576974134975396, guid: ef65a20a6db914616b5cc21725b05b5a, type: 3}
       propertyPath: m_Name
       value: GarageScreen
+      objectReference: {fileID: 0}
+    - target: {fileID: 5556576974134975396, guid: ef65a20a6db914616b5cc21725b05b5a, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
