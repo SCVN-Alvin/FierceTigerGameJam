@@ -90,6 +90,10 @@ namespace GameJam.Gameplay.Flow
                  + "Home button, not a replacement: the bar is off screen on a phone held in one "
                  + "hand as often as it is under a thumb.")]
         [SerializeField] private Button closeShopButton;
+
+        [Tooltip("The X on the mission screen. The same second way out as the garage's, for the "
+                 + "same reason: the bottom bar's Home is not always under a thumb.")]
+        [SerializeField] private Button closeMissionButton;
         [SerializeField] private Button startRunButton;
         [Tooltip("Leaves the result for the main menu.")]
         [SerializeField] private Button resultContinueButton;
@@ -172,6 +176,9 @@ namespace GameJam.Gameplay.Flow
 
             // GoBack already sends Shop to the main menu, so the X needs no state of its own.
             Wire(closeShopButton, GoBack);
+
+            // GoBack sends MapSelection to the main menu too, so this needs no state of its own.
+            Wire(closeMissionButton, GoBack);
             Wire(startRunButton, ConfirmAmmoPick);
             Wire(resultContinueButton, ReturnToMainMenu);
             Wire(retryButton, RetryMap);
@@ -202,6 +209,7 @@ namespace GameJam.Gameplay.Flow
             Unwire(homeButton, ReturnToMainMenu);
             Unwire(shopButton, EnterShop);
             Unwire(closeShopButton, GoBack);
+            Unwire(closeMissionButton, GoBack);
             Unwire(startRunButton, ConfirmAmmoPick);
             Unwire(resultContinueButton, ReturnToMainMenu);
             Unwire(retryButton, RetryMap);
@@ -435,10 +443,11 @@ namespace GameJam.Gameplay.Flow
             // want that; once they are heading into a run it is only clutter.
             SetRootActive(bottomBarRoot, IsMenuState(state));
 
-            // Back is for the screens the bar does not cover.
+            // Back is for the screens the bar does not cover. The mission screen is no longer one
+            // of them: it carries its own X, and the bar is under it.
             SetRootActive(
                 backButton != null ? backButton.gameObject : null,
-                state == GameState.MapSelection || state == GameState.AmmoPick);
+                state == GameState.AmmoPick);
 
             State = state;
             StateChanged?.Invoke(state);
@@ -485,7 +494,11 @@ namespace GameJam.Gameplay.Flow
         {
             return state == GameState.MainMenu
                    || state == GameState.IapShop
-                   || state == GameState.Shop;
+                   || state == GameState.Shop
+
+                   // The mission screen is a menu screen: it is sized to leave the bar showing
+                   // under it, and the bar's Home is one of the two ways off it.
+                   || state == GameState.MapSelection;
         }
 
         private static bool IsPlayState(GameState state)
@@ -507,20 +520,14 @@ namespace GameJam.Gameplay.Flow
         }
 
         /// <summary>
-        /// The map list spawns its buttons under its own transform, so hiding anything below the
-        /// view switches off the backdrop and leaves the buttons on screen. Whatever was pointed
-        /// at, hide the view that owns them.
+        /// The screen shown for <see cref="GameState.MapSelection"/>, which is simply what was
+        /// assigned. The old map list spawned its buttons under its own transform, so this used
+        /// to climb to the view that owned them or go looking for one; the mission screen is a
+        /// single prefab instance whose root is the thing to switch, so there is nothing to find.
         /// </summary>
         private GameObject ResolveSelectionRoot()
         {
-            if (mapSelectionRoot == null)
-            {
-                MapListView foundView = FindFirstObjectByType<MapListView>(FindObjectsInactive.Include);
-                return foundView != null ? foundView.gameObject : null;
-            }
-
-            MapListView view = mapSelectionRoot.GetComponentInParent<MapListView>(true);
-            return view != null ? view.gameObject : mapSelectionRoot;
+            return mapSelectionRoot;
         }
 
         private static void SetRootActive(GameObject root, bool active)
