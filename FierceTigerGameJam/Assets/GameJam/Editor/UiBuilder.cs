@@ -179,7 +179,11 @@ namespace GameJam.EditorTools
             SetIfEmpty(serialized, "runController", run);
             SetIfEmpty(serialized, "ammoPickRoot", ammoPick);
             SetIfEmpty(serialized, "hudRoot", hud);
-            SetIfEmpty(serialized, "resultRoot", result);
+            // "failRoot" rather than "resultRoot": the flow now has a screen per outcome, and the
+            // plain panel this builder makes is the failing one. SerializedObject looks the field
+            // up by its current name and FormerlySerializedAs does not help it, so leaving the old
+            // string here would only log that the field is missing.
+            SetIfEmpty(serialized, "failRoot", result);
             SetIfEmpty(serialized, "startRunButton", startButton);
             SetIfEmpty(serialized, "retryButton", retryButton);
             SetIfEmpty(serialized, "resultContinueButton", resultMainMenuButton);

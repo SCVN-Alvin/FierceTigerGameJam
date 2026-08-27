@@ -13,9 +13,18 @@ namespace GameJam.Gameplay.Wall
         [SerializeField] private string displayName;
         [SerializeField] private TextAsset mapJson;
 
+        [Tooltip("Shown on the cleared screen. Left empty, the screen shows the banner and reward alone.")]
+        [SerializeField] private Sprite clearedImage;
+
         public string Id => id;
         public string DisplayName => string.IsNullOrEmpty(displayName) ? id : displayName;
         public TextAsset MapJson => mapJson;
+
+        /// <summary>
+        /// The picture of this map on the cleared screen. Optional on purpose: no map has art yet,
+        /// and a missing one is not worth warning about, so the screen hides the image instead.
+        /// </summary>
+        public Sprite ClearedImage => clearedImage;
     }
 
     /// <summary>The list of maps the player can choose from.</summary>
