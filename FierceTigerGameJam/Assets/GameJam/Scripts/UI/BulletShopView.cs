@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
+using GameJam.Data;
 using GameJam.Economy;
 using GameJam.Gameplay.Combat;
 using TMPro;
@@ -45,12 +47,26 @@ namespace GameJam.UI
                  + "object instead to get the count-up; this is the plain total.")]
         [SerializeField] private TMP_Text goldLabel;
 
+        [Tooltip("Optional. The equipped ammunition, drawn large over the garage table. Disabled "
+                 + "while the equipped ammunition has no icon, so the table is not covered by a "
+                 + "white square.")]
+        [SerializeField] private Image previewImage;
+
+        [Tooltip("Optional. The equipped ammunition's level name under the preview, e.g. ROCK II.")]
+        [SerializeField] private TMP_Text previewCaption;
+
         [Header("Layout")]
         [SerializeField] private bool useVerticalLayout = true;
         [SerializeField] private float rowSpacing = 12f;
         [SerializeField] private RectOffset layoutPadding;
 
         private const string RowNamePrefix = "ShopRow_";
+
+        /// <summary>Nothing left to sell. Dimmed rather than hidden, so the row keeps its shape.</summary>
+        private const string MaxCaption = "MAX";
+
+        /// <summary>Not for sale, or priced nowhere: an authoring gap said out loud.</summary>
+        private const string UnavailableCaption = "N/A";
 
         private readonly List<Row> spawnedRows = new List<Row>();
 
@@ -62,6 +78,18 @@ namespace GameJam.UI
                 // clicked, so the whole screen listens rather than each row refreshing itself.
                 economy.GoldChanged += Refresh;
             }
+
+            BulletLoadout catalogue = ResolveLoadout();
+            if (catalogue != null)
+            {
+                // The garage does not choose ammunition - the pre-run pick screen does - but it
+                // is where the choice is shown, as the one row at full strength and the item on
+                // the preview table. So it follows a choice made somewhere else.
+                catalogue.SelectionChanged += HandleSelectionChanged;
+            }
+
+            // A level bought elsewhere - the debug panel, a reward - has to show here too.
+            UserData.Changed += Refresh;
 
             // Rebuilt rather than refreshed: the catalogue may have been re-authored, and rows do
             // not survive an assembly reload.
@@ -76,6 +104,19 @@ namespace GameJam.UI
                 // would keep a destroyed row alive and fire into it on the next run.
                 economy.GoldChanged -= Refresh;
             }
+
+            BulletLoadout catalogue = ResolveLoadout();
+            if (catalogue != null)
+            {
+                catalogue.SelectionChanged -= HandleSelectionChanged;
+            }
+
+            UserData.Changed -= Refresh;
+        }
+
+        private void HandleSelectionChanged(BulletDefinition bullet)
+        {
+            Refresh();
         }
 
         /// <summary>
@@ -150,6 +191,60 @@ namespace GameJam.UI
             {
                 goldLabel.text = economy.Gold.ToString();
             }
+
+            RefreshPreview();
+        }
+
+        /// <summary>
+        /// Draws the equipped ammunition over the garage table. It is the same sprite the row
+        /// shows, only larger: a second piece of art per item would be one more thing to draw
+        /// before a new kind of ammunition could ship.
+        /// </summary>
+        private void RefreshPreview()
+        {
+            if (previewImage == null && previewCaption == null)
+            {
+                return;
+            }
+
+            BulletLoadout catalogue = ResolveLoadout();
+            BulletDefinition selected = catalogue != null ? catalogue.Selected : null;
+            int level = catalogue != null ? catalogue.SelectedLevel : 1;
+
+            if (previewImage != null)
+            {
+                Sprite sprite = selected != null ? selected.ResolveIcon(level) : null;
+                previewImage.sprite = sprite;
+
+                // Disabled rather than left drawing: an Image with no sprite is a white block
+                // over the table the frame art already draws.
+                previewImage.enabled = sprite != null;
+            }
+
+            if (previewCaption != null)
+            {
+                previewCaption.text = ResolveCaption(selected, level);
+            }
+        }
+
+        /// <summary>
+        /// The level's own name, e.g. "ROCK II". An unnamed level falls back to the ammunition's
+        /// name rather than to nothing: a blank caption under the preview reads as a screen that
+        /// failed to load, which is a worse answer than one missing its roman numeral.
+        /// </summary>
+        private static string ResolveCaption(BulletDefinition bullet, int level)
+        {
+            if (bullet == null)
+            {
+                return string.Empty;
+            }
+
+            BulletDefinition.Level shown = bullet.GetLevel(level);
+            string caption = shown != null && !string.IsNullOrEmpty(shown.displayName)
+                ? shown.displayName
+                : bullet.DisplayName;
+
+            return string.IsNullOrEmpty(caption) ? string.Empty : caption.ToUpperInvariant();
         }
 
         /// <summary>
@@ -173,6 +268,24 @@ namespace GameJam.UI
             bool unlocked = catalogue.IsUnlocked(row.Bullet);
             int level = catalogue.GetLevel(row.Bullet);
             int maxLevel = economy.GetMaxLevel(row.Bullet);
+
+            if (row.Item != null)
+            {
+                // Equipped is a reading, not a control: the garage never calls Select, so exactly
+                // one row per tab is at full strength and which one it is was decided on the
+                // pre-run pick screen. Selected always resolves to something, falling back to the
+                // starter, so no tab is ever left with every row dimmed.
+                string buyCaption = ResolveBuyCaption(row.Bullet, unlocked, level, maxLevel, out bool buyInteractable);
+                row.Item.Bind(
+                    row.Bullet,
+                    level,
+                    maxLevel,
+                    unlocked,
+                    catalogue.Selected == row.Bullet,
+                    buyCaption,
+                    buyInteractable);
+                return;
+            }
 
             string caption;
             bool interactable;
@@ -238,6 +351,58 @@ namespace GameJam.UI
         }
 
         /// <summary>
+        /// What the garage row's one button says, and whether it is live. The button is never
+        /// hidden: it is positioned rather than laid out, so hiding it would gain nothing and
+        /// cost the row its shape.
+        ///
+        /// The price carries no "Buy" or "Upgrade" in front of it, because the coin is painted
+        /// into the button art and which of the two a tap does is already said by the row - a
+        /// locked row buys, an owned one levels up.
+        /// </summary>
+        private string ResolveBuyCaption(
+            BulletDefinition bullet,
+            bool unlocked,
+            int level,
+            int maxLevel,
+            out bool interactable)
+        {
+            if (!unlocked)
+            {
+                interactable = economy.CanPurchase(bullet);
+
+                // False means the ammunition is not for sale at all, which is said outright: a
+                // blank button would read as a price that failed to load.
+                return economy.TryGetPurchasePrice(bullet, out int purchasePrice)
+                    ? FormatPrice(purchasePrice)
+                    : UnavailableCaption;
+            }
+
+            if (level >= maxLevel)
+            {
+                interactable = false;
+                return MaxCaption;
+            }
+
+            interactable = economy.CanUpgrade(bullet);
+
+            // Between the floor and the ceiling but unpriced is an authoring gap, so the row
+            // names it rather than pretending the ammunition is finished.
+            return economy.TryGetUpgradePrice(bullet, out int upgradePrice, out int _)
+                ? FormatPrice(upgradePrice)
+                : UnavailableCaption;
+        }
+
+        /// <summary>
+        /// Grouped, and always with a comma rather than whatever the device's locale prefers:
+        /// the button is 145 px of art wide, and a separator that changes width by locale is one
+        /// the layout was never measured against.
+        /// </summary>
+        private static string FormatPrice(int price)
+        {
+            return price.ToString("N0", CultureInfo.InvariantCulture);
+        }
+
+        /// <summary>
         /// What the row's single button does is decided here rather than when it was wired, so a
         /// bullet bought in one click can be upgraded by the next one without the row being
         /// rebuilt underneath the player's finger.
@@ -288,6 +453,31 @@ namespace GameJam.UI
             GameObject rowObject = rowPrefab != null
                 ? Instantiate(rowPrefab, parent)
                 : CreateDefaultRow(parent);
+
+            // The garage row, checked before anything else: it is the row this shop is designed
+            // around, and it already knows every one of its own parts.
+            BulletTypeViewItem item = rowObject.GetComponent<BulletTypeViewItem>();
+            if (item != null)
+            {
+                Button buy = item.BuyButton;
+                rowObject.name = RowNamePrefix + bullet.Id;
+
+                if (buy == null)
+                {
+                    Debug.LogWarning(
+                        $"{name}: the row for {bullet.DisplayName} has no Buy button, so it can be read but "
+                        + "not bought from. The row prefab needs a child named Buy carrying one.",
+                        this);
+                }
+
+                return new Row
+                {
+                    Bullet = bullet,
+                    Root = rowObject,
+                    Action = buy,
+                    Item = item,
+                };
+            }
 
             // A row that describes itself is used as it is. The name and position matching below
             // is only for rows that were not authored for this shop.
@@ -594,6 +784,9 @@ namespace GameJam.UI
             public BulletDefinition Bullet;
             public GameObject Root;
             public Button Action;
+
+            /// <summary>Set for the garage row, which draws itself from one state.</summary>
+            public BulletTypeViewItem Item;
 
             /// <summary>Set when the row prefab describes its own parts; null for a found row.</summary>
             public BulletTypeUpgradeView Typed;
