@@ -111,25 +111,31 @@ namespace GameJam.EditorTools
         /// <summary>
         /// The tab bar. Its own root rather than a child of the menu, because it is also shown
         /// over the shops, and the flow switches it independently.
+        ///
+        /// There is nothing to lay out here any more. The bar is authored in
+        /// Prefabs/UI/MainMenu/BottomBar.prefab by <see cref="BottomBarBuilder"/> - the flat
+        /// strip, the three slots and the plate that raises the one the player is on - and all
+        /// this does is make sure the scene holds an instance of it. The same move the garage
+        /// made, for the same reason: two descriptions of one screen is how the last bug happened.
         /// </summary>
         private static GameObject BuildBottomBar(Transform canvas, out Button iapButton, out Button homeButton, out Button wrenchButton)
         {
-            RectTransform root = EnsureRect("BottomBar", canvas, new Vector2(0f, 0f), new Vector2(1f, 0.135f));
-            EnsureSpriteImage("Panel", root, $"{MenuTextures}/UI_MainMenu_BottomPanel.png", Vector2.zero, Vector2.one);
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(BottomBarBuilder.PrefabPath);
 
-            iapButton = EnsureSpriteButton("IapShopButton", root, null, new Vector2(0.10f, 0.12f), new Vector2(0.27f, 0.78f));
-            homeButton = EnsureSpriteButton("HomeButton", root, null, new Vector2(0.38f, 0.05f), new Vector2(0.62f, 0.95f));
-            // The wrench opens the shop. Its sprite is named for vehicles, which is a fair
-            // clue about what the slot was always meant to be; now it reaches both.
-            RenameIfPresent(root, "BulletShopButton", "ShopButton");
-            wrenchButton = EnsureSpriteButton("ShopButton", root, $"{MenuTextures}/Btn_Setting_Vehicle.png",
-                new Vector2(0.77f, 0.12f), new Vector2(0.92f, 0.78f));
+            if (prefab == null)
+            {
+                Debug.LogWarning(
+                    "There is no BottomBar prefab yet, so the tab bar was left as it is. Run "
+                    + "Tools > Smashdown > Build Bottom Bar, which authors it.");
 
-            // The bar art already draws the three slots, so the left and middle buttons are
-            // invisible hit areas over it rather than a second set of icons on top.
-            MakeInvisibleHitArea(iapButton);
-            MakeInvisibleHitArea(homeButton);
-            return root.gameObject;
+                Transform authored = canvas.Find(BottomBarBuilder.RootName);
+                iapButton = null;
+                homeButton = null;
+                wrenchButton = null;
+                return authored != null ? authored.gameObject : null;
+            }
+
+            return BottomBarBuilder.EnsureSceneInstance(prefab, out iapButton, out homeButton, out wrenchButton);
         }
 
         private static GameObject BuildIapShop(Transform canvas, EconomyService economy)
@@ -177,21 +183,6 @@ namespace GameJam.EditorTools
 
             Transform garage = canvas.Find(GarageScreenBuilder.ScreenName);
             return garage != null ? garage.gameObject : null;
-        }
-
-        /// <summary>Renames a child that an earlier layout left behind, keeping its references.</summary>
-        private static void RenameIfPresent(Transform parent, string from, string to)
-        {
-            if (parent.Find(to) != null)
-            {
-                return;
-            }
-
-            Transform existing = parent.Find(from);
-            if (existing != null)
-            {
-                existing.name = to;
-            }
         }
 
         /// <summary>Removes a child an earlier layout created and this one no longer wants.</summary>
@@ -340,18 +331,6 @@ namespace GameJam.EditorTools
             }
 
             return button;
-        }
-
-        /// <summary>
-        /// A hit area over art that already shows the button. The image has to stay enabled to
-        /// receive taps, so it is made fully transparent rather than switched off.
-        /// </summary>
-        private static void MakeInvisibleHitArea(Button button)
-        {
-            if (button != null && button.targetGraphic is Image image && image.sprite == null)
-            {
-                image.color = new Color(1f, 1f, 1f, 0f);
-            }
         }
 
         internal static Sprite LoadSprite(string path)
