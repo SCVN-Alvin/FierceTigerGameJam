@@ -1,5 +1,7 @@
 using System;
+using GameJam.Economy;
 using GameJam.Gameplay.Cannon;
+using GameJam.Gameplay.Combat;
 using GameJam.Gameplay.Wall;
 using GameJam.UI;
 using UnityEngine;
@@ -45,6 +47,9 @@ namespace GameJam.Gameplay.Flow
         [SerializeField] private KnockdownLayoutMapAuthoring mapBuilder;
         [SerializeField] private LevelRunController runController;
 
+        [Tooltip("Charges the continue; also where the loaded ammunition is read from.")]
+        [SerializeField] private EconomyService economy;
+
         [Header("Screens")]
         [SerializeField] private GameObject mainMenuRoot;
         [SerializeField] private GameObject mapSelectionRoot;
@@ -63,9 +68,7 @@ namespace GameJam.Gameplay.Flow
         [Tooltip("In-run readouts. Shown with gameplay, hidden once the result is up.")]
         [SerializeField] private GameObject hudRoot;
 
-        [Tooltip("Shown when the run failed. Until the fail screen is redrawn this is the old "
-                 + "ResultScreen, which is why the field kept its serialized name.")]
-        [FormerlySerializedAs("resultRoot")]
+        [Tooltip("Shown when the run failed: the Continue? screen that offers to sell more rounds.")]
         [SerializeField] private GameObject failRoot;
 
         [Tooltip("Shown when the run passed its map.")]
@@ -95,12 +98,6 @@ namespace GameJam.Gameplay.Flow
                  + "same reason: the bottom bar's Home is not always under a thumb.")]
         [SerializeField] private Button closeMissionButton;
         [SerializeField] private Button startRunButton;
-        [Tooltip("Leaves the result for the main menu.")]
-        [SerializeField] private Button resultContinueButton;
-
-        [Tooltip("Another go at the same map. Returns to the ammunition pick rather than straight "
-                 + "into a run, because the last attempt is what proved the mix was wrong.")]
-        [SerializeField] private Button retryButton;
         [SerializeField] private Button backButton;
 
         [Header("Settings Buttons")]
@@ -121,6 +118,13 @@ namespace GameJam.Gameplay.Flow
 
         [Tooltip("The X on the cleared screen. Leaves for the main menu.")]
         [SerializeField] private Button clearedCloseButton;
+
+        [Header("Fail Screen Buttons")]
+        [Tooltip("Buys more rounds and picks the failed run back up where it stopped.")]
+        [SerializeField] private Button failContinueButton;
+
+        [Tooltip("The X on the fail screen. Gives the run up for the main menu.")]
+        [SerializeField] private Button failCloseButton;
 
         [Header("Reset On Entering A Map")]
         [SerializeField] private CannonAimController aimController;
@@ -180,8 +184,6 @@ namespace GameJam.Gameplay.Flow
             // GoBack sends MapSelection to the main menu too, so this needs no state of its own.
             Wire(closeMissionButton, GoBack);
             Wire(startRunButton, ConfirmAmmoPick);
-            Wire(resultContinueButton, ReturnToMainMenu);
-            Wire(retryButton, RetryMap);
             Wire(backButton, GoBack);
             Wire(openSettingsButton, OpenSettings);
             Wire(openSettingsInRunButton, OpenSettings);
@@ -190,6 +192,8 @@ namespace GameJam.Gameplay.Flow
             Wire(clearedReplayButton, RetryMap);
             Wire(clearedContinueButton, EnterNextMap);
             Wire(clearedCloseButton, ReturnToMainMenu);
+            Wire(failContinueButton, ContinueRun);
+            Wire(failCloseButton, ReturnToMainMenu);
         }
 
         private void OnDisable()
@@ -211,8 +215,6 @@ namespace GameJam.Gameplay.Flow
             Unwire(closeShopButton, GoBack);
             Unwire(closeMissionButton, GoBack);
             Unwire(startRunButton, ConfirmAmmoPick);
-            Unwire(resultContinueButton, ReturnToMainMenu);
-            Unwire(retryButton, RetryMap);
             Unwire(backButton, GoBack);
             Unwire(openSettingsButton, OpenSettings);
             Unwire(openSettingsInRunButton, OpenSettings);
@@ -221,6 +223,8 @@ namespace GameJam.Gameplay.Flow
             Unwire(clearedReplayButton, RetryMap);
             Unwire(clearedContinueButton, EnterNextMap);
             Unwire(clearedCloseButton, ReturnToMainMenu);
+            Unwire(failContinueButton, ContinueRun);
+            Unwire(failCloseButton, ReturnToMainMenu);
         }
 
         private void Start()
@@ -360,6 +364,55 @@ namespace GameJam.Gameplay.Flow
             }
 
             mapSelection.SelectByIndex(next);
+        }
+
+        /// <summary>
+        /// Pays for more rounds and picks the failed run back up. Checks come first, the charge
+        /// last and only once everything it pays for is certain to happen; nothing here rebuilds
+        /// the map or re-enters a state, because Enter tears a run down and this one is being kept.
+        /// </summary>
+        [ContextMenu("Continue Run")]
+        public void ContinueRun()
+        {
+            if (State != GameState.Result || runController == null || !runController.CanContinueRun())
+            {
+                return;
+            }
+
+            if (economy == null || !economy.CanContinueRun())
+            {
+                return;
+            }
+
+            string bulletId = ResolveContinueBulletId();
+            if (string.IsNullOrEmpty(bulletId))
+            {
+                return;
+            }
+
+            // GoldChanged fires in here, which is what makes the fail screen re-read its button.
+            if (!economy.TryPayContinue())
+            {
+                return;
+            }
+
+            runController.ContinueRun(bulletId, economy.ContinueAmmo);
+
+            SetRootActive(failRoot, false);
+            SetRootActive(hudRoot, true);
+            State = GameState.Playing;
+            StateChanged?.Invoke(State);
+        }
+
+        /// <summary>
+        /// The loaded ammunition. Selected already falls back to the starter bullet, so this is
+        /// only null in a scene where the economy has no catalogue wired.
+        /// </summary>
+        private string ResolveContinueBulletId()
+        {
+            BulletLoadout loadout = economy != null ? economy.Loadout : null;
+            BulletDefinition bullet = loadout != null ? loadout.Selected : null;
+            return bullet != null ? bullet.Id : null;
         }
 
         /// <summary>Leaves a run early from the settings overlay.</summary>
