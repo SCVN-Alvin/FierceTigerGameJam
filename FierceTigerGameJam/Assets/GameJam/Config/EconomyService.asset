@@ -19,3 +19,4 @@ MonoBehaviour:
   purchaseVehicleConfig: {fileID: 11400000, guid: 288abb6200d0945518834aac0d39ca46, type: 2}
   upgradeVehicleConfig: {fileID: 11400000, guid: 4e723ce0ddf8045b580d714d00b486e3, type: 2}
   vehicleLoadout: {fileID: 11400000, guid: 0bd7574c5d49e4ce99e48be84046a4d4, type: 2}
+  loseConfig: {fileID: 11400000, guid: bdff38a9a1f3540c5b16a23d47f1750a, type: 2}

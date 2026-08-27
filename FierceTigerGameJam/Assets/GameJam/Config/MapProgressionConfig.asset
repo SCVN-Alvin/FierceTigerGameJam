@@ -14,17 +14,17 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::GameJam.Config.MapProgressionConfig
   entries:
   - mapId: 1
-    requiredClearPercent: 0.8
+    requiredClearPercent: 0.5
     passMapRewardId: pass_map_1
     clearMapRewardId: clear_map_1
     bulletPickLimit: 10
   - mapId: 2
-    requiredClearPercent: 0.8
+    requiredClearPercent: 0.5
     passMapRewardId: pass_map_2
     clearMapRewardId: clear_map_2
     bulletPickLimit: 20
   - mapId: 3
-    requiredClearPercent: 0.8
+    requiredClearPercent: 0.5
     passMapRewardId: pass_map_3
     clearMapRewardId: clear_map_3
     bulletPickLimit: 30
