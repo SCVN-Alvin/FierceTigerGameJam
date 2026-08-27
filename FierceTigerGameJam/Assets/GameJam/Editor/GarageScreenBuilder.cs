@@ -179,13 +179,19 @@ namespace GameJam.EditorTools
 
                 RectTransform locked = EnsureImage("Locked", header, LockedSprite,
                     Vector2.zero, Vector2.one, Image.Type.Simple, true);
+                // A minimum as well as a preferred size: a layout group short of room takes it
+                // from every child in proportion, and the graphic that says LOCKED is the one
+                // reading on the row that must not be squeezed. The name gives way instead.
                 LayoutElement lockedSize = UiBuilder.Ensure<LayoutElement>(locked.gameObject);
+                lockedSize.minWidth = 144f;
+                lockedSize.minHeight = 34f;
                 lockedSize.preferredWidth = 144f;
                 lockedSize.preferredHeight = 34f;
 
                 TMP_Text label = UiBuilder.EnsureLabel("Label", header, "ITEM", 26,
                     TextAlignmentOptions.Left, Vector2.zero, Vector2.one);
                 label.fontStyle = FontStyles.Bold;
+                label.raycastTarget = false;
 
                 // The row is a fixed 490x91 in every state, so a long name has to be cut rather
                 // than allowed to wrap onto a second line the row has no height for.
@@ -225,6 +231,11 @@ namespace GameJam.EditorTools
                     TextAlignmentOptions.Center, new Vector2(0.30f, 0.05f), new Vector2(0.97f, 0.95f));
                 Place((RectTransform)price.transform, new Vector2(0.30f, 0.05f), new Vector2(0.97f, 0.95f));
                 price.fontStyle = FontStyles.Bold;
+
+                // Off, so the caption cannot be the thing a tap lands on. The click would still
+                // reach the button by bubbling, but a text that eats the raycast is also what
+                // makes a disabled button feel pressable.
+                price.raycastTarget = false;
 
                 // On the root: dimming a child would leave the row's own frame lit. interactable
                 // is left alone on purpose, so a dimmed row can still be bought from.
@@ -293,6 +304,7 @@ namespace GameJam.EditorTools
                 TMP_Text goldLabel = UiBuilder.EnsureLabel("GoldLabel", money, "0", 34,
                     TextAlignmentOptions.Center, new Vector2(0.2f, 0.1f), new Vector2(0.82f, 0.9f));
                 Place((RectTransform)goldLabel.transform, new Vector2(0.2f, 0.1f), new Vector2(0.82f, 0.9f));
+                goldLabel.raycastTarget = false;
 
                 Button close = UiBuilder.EnsureSpriteButton("CloseButton", rect, CloseSprite,
                     new Vector2(0.867f, 0.925f), new Vector2(0.944f, 0.976f));
@@ -333,6 +345,7 @@ namespace GameJam.EditorTools
             TMP_Text caption = UiBuilder.EnsureLabel("PreviewCaption", preview, string.Empty, 22,
                 TextAlignmentOptions.Center, new Vector2(0.05f, 0.03f), new Vector2(0.95f, 0.15f));
             Place((RectTransform)caption.transform, new Vector2(0.05f, 0.03f), new Vector2(0.95f, 0.15f));
+            caption.raycastTarget = false;
 
             RectTransform list = UiBuilder.EnsureRect("List", panel,
                 new Vector2(0.047f, 0.038f), new Vector2(0.953f, 0.474f));
