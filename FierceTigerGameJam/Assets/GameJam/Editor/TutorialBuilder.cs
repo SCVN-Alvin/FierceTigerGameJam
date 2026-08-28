@@ -220,7 +220,9 @@ namespace GameJam.EditorTools
         /// </summary>
         private static string ResolveHoleSpritePath()
         {
-            if (AssetDatabase.LoadAssetAtPath<Sprite>(HoleSprite) != null)
+            // Repaired on the way in rather than only checked, so dropping the artist's file in is
+            // genuinely the whole job even if it arrives imported as something other than a sprite.
+            if (LoadSpriteRepairingImport(HoleSprite) != null)
             {
                 return HoleSprite;
             }
@@ -257,8 +259,16 @@ namespace GameJam.EditorTools
             }
 
             TextureImporter importer = AssetImporter.GetAtPath(path) as TextureImporter;
-            if (importer == null || importer.spriteImportMode == SpriteImportMode.Single)
+            if (importer == null)
             {
+                return null;
+            }
+
+            if (importer.textureType == TextureImporterType.Sprite
+                && importer.spriteImportMode == SpriteImportMode.Single)
+            {
+                // Already imported as exactly what a sprite reference needs, and still not
+                // loading, so the settings are not what is wrong and reimporting would not help.
                 return null;
             }
 
