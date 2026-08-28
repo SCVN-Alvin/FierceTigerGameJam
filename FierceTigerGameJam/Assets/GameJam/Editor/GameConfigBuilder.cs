@@ -100,6 +100,10 @@ namespace GameJam.EditorTools
             // with two copies of the path.
             EnsureLoseConfig();
 
+            // Nothing reads this but the loading screen, and nothing wires into it, so it only
+            // has to exist with its default time in it.
+            EnsureLoadingConfig();
+
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
             Debug.Log(
@@ -352,6 +356,18 @@ namespace GameJam.EditorTools
             serialized.ApplyModifiedPropertiesWithoutUndo();
             EditorUtility.SetDirty(economy);
             return lose;
+        }
+
+        /// <summary>
+        /// How long the splash is held for. Safe to call on its own, the way
+        /// <see cref="EnsureLoseConfig"/> is: the loading screen's builder needs this one asset
+        /// and none of the rest of this pass, and two callers must not end up with two copies of
+        /// the path.
+        /// </summary>
+        internal static LoadingConfig EnsureLoadingConfig()
+        {
+            EnsureFolder(ConfigFolder);
+            return EnsureAsset<LoadingConfig>($"{ConfigFolder}/LoadingConfig.asset");
         }
 
         private static void WireEconomy(
