@@ -242,6 +242,21 @@ namespace GameJam.Gameplay.Flow
 
         private void Start()
         {
+            // Deviation from Brief 14, which has Start enter Loading unconditionally: a Loading
+            // state with no screen wired under it switches every other root off and puts nothing
+            // in their place, which is a black screen with no way out and nothing anywhere saying
+            // why. A scene that has not had Build Loading Screen run over it is still playable,
+            // and is told what it is missing.
+            if (loadingRoot == null)
+            {
+                Debug.LogWarning(
+                    $"{name}: no loading screen is wired, so the game opens on the main menu. "
+                    + "Run Tools > Smashdown > Build Loading Screen.",
+                    this);
+                ReturnToMainMenu();
+                return;
+            }
+
             EnterLoading();
         }
 
