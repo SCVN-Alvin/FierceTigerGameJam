@@ -33,6 +33,11 @@ namespace GameJam.EditorTools
     /// given a pixels-per-unit multiplier. A builder that rewrote those on every run would make
     /// re-running it cost the tuning, which is the same as not being able to run it again.
     /// Deleting the prefab is how you ask for the numbers below back.
+    ///
+    /// There is one exception, and it is meant to be read as one: a row whose equip target is
+    /// still the row root is migrated onto the SELECT button - see
+    /// <see cref="MoveRootSelectToChild"/> - because that reference is no longer a different
+    /// choice, it is a row that would hide itself the moment its item was equipped.
     /// </summary>
     public static class GarageScreenBuilder
     {
@@ -48,6 +53,8 @@ namespace GameJam.EditorTools
         private const string LevelFillSprite = GarageTextures + "/UI_Level_Fill.png";
         private const string LevelUnfilledSprite = GarageTextures + "/UI_Level_Unfilled.png";
         private const string BuySprite = GarageTextures + "/Btn_Buy.png";
+        private const string SelectSprite = GarageTextures + "/Btn_Select.png";
+        private const string EquippedSprite = GarageTextures + "/UI_Equipped.png";
         private const string LockedSprite = GarageTextures + "/UI_Locked.png";
         private const string CloseSprite = GarageTextures + "/Btn_Esc.png";
         private const string MoneySprite = MenuTextures + "/UI_Money.png";
@@ -87,6 +94,14 @@ namespace GameJam.EditorTools
 
         /// <summary>81x43 of pip art at the same scale.</summary>
         private static readonly Vector2 PipSize = new Vector2(50f, 26f);
+
+        /// <summary>
+        /// Buy's column, in the band above it: SELECT and the EQUIPPED chip share this one rect,
+        /// so whichever of them the row's state calls for, nothing on the row moves. Read off the
+        /// row art at 148px tall - 15px clear of the top edge, 15px of gap down to Buy.
+        /// </summary>
+        private static readonly Vector2 EquipAnchorMin = new Vector2(0.786f, 0.514f);
+        private static readonly Vector2 EquipAnchorMax = new Vector2(0.969f, 0.851f);
 
         /// <summary>The screen sits above the bottom bar, which is on screen at the same time.</summary>
         private static readonly Vector2 ScreenAnchorMin = new Vector2(0f, 0.135f);
@@ -169,9 +184,11 @@ namespace GameJam.EditorTools
                     PlaceTop(rect, RowSize);
                 }
 
-                RectTransform frame = EnsureImage("Frame", rect, RowFrameSprite,
+                // A raycast target, though nothing on the row root acts on a click any more: it is
+                // what a drag starting over a row has to land on before the list's ScrollRect can
+                // pick it up.
+                EnsureImage("Frame", rect, RowFrameSprite,
                     Vector2.zero, Vector2.one, Image.Type.Sliced, false, true);
-                Image frameImage = frame.GetComponent<Image>();
 
                 // The dark slot the icon sits in is baked into the row art's left border, so the
                 // icon is only the picture, centred in a slot that never stretches.
@@ -273,31 +290,44 @@ namespace GameJam.EditorTools
                     price.raycastTarget = false;
                 }
 
+                // Directly above Buy, in Buy's column. The equip control the shops have always
+                // wired but never had a picture for.
+                Transform foundSelect = rect.Find("Select");
+                bool selectCreated = foundSelect == null || foundSelect.GetComponent<Button>() == null;
+                Button select = UiBuilder.EnsureSpriteButton("Select", rect, SelectSprite,
+                    EquipAnchorMin, EquipAnchorMax);
+                if (selectCreated)
+                {
+                    Place((RectTransform)select.transform, EquipAnchorMin, EquipAnchorMax);
+                    select.transition = Selectable.Transition.ColorTint;
+
+                    if (select.targetGraphic is Image selectImage)
+                    {
+                        // Simple, not Sliced like Buy: the word is baked into the art and there
+                        // are no borders to cut, so the aspect is kept and the band it sits in is
+                        // a hair wider than the sprite rather than the sprite being stretched.
+                        selectImage.type = Image.Type.Simple;
+                        selectImage.preserveAspect = true;
+                    }
+                }
+
+                // The same rect as Select, and only one of the two is ever up. A chip and not a
+                // button: there is nothing to do to the thing already mounted, so it takes no
+                // raycast either - EnsureImage leaves that off.
+                Transform foundEquipped = rect.Find("Equipped");
+                bool equippedCreated = foundEquipped == null || foundEquipped.GetComponent<Image>() == null;
+                RectTransform equipped = EnsureImage("Equipped", rect, EquippedSprite,
+                    EquipAnchorMin, EquipAnchorMax, Image.Type.Simple, true);
+                if (equippedCreated)
+                {
+                    // Down in the prefab. Every row is spawned before the shop's first Refresh,
+                    // and a chip that shipped up would say every item is equipped until then.
+                    equipped.gameObject.SetActive(false);
+                }
+
                 // On the root: dimming a child would leave the row's own frame lit. interactable
                 // is left alone on purpose, so a dimmed row can still be bought from and tapped.
                 UiBuilder.Ensure<CanvasGroup>(root);
-
-                // The row is a button. No art of its own - the frame it tints is the row art - so
-                // the only thing the player sees is the press, which is the point: the row should
-                // read as a thing you tap without looking like a second Buy.
-                Button select = EnsureComponent<Button>(root, out bool selectCreated);
-                if (selectCreated)
-                {
-                    select.transition = Selectable.Transition.ColorTint;
-
-                    // Assigned rather than found: Selectable only picks up a Graphic on its own
-                    // object, and the row root deliberately has none.
-                    select.targetGraphic = frameImage;
-
-                    // The frame is what the tap has to land on, and on a row built before the row
-                    // became a button it is still decoration. Turned on here rather than where
-                    // the frame is made, so this migrates such a row exactly once and touches
-                    // nothing on a row that already had its button.
-                    if (frameImage != null)
-                    {
-                        frameImage.raycastTarget = true;
-                    }
-                }
 
                 ShopItemView item = vehicle
                     ? (ShopItemView)UiBuilder.Ensure<VehicleTypeViewItem>(root)
@@ -310,10 +340,58 @@ namespace GameJam.EditorTools
                 UiBuilder.SetIfEmpty(serialized, "levels", bar);
                 UiBuilder.SetIfEmpty(serialized, "buyButton", buy);
                 UiBuilder.SetIfEmpty(serialized, "buyLabel", price);
+
+                // A migration, not a SetIfEmpty, and the one place this builder overwrites a
+                // reference that is already set. Rows authored before this run point selectButton
+                // at a Button on the row root - back then the whole row was the equip target -
+                // and ShopItemView.Bind now hides whatever that reference names while an item is
+                // equipped. Left alone, the equipped row would hide itself. Only a reference to
+                // the root is moved; one pointed anywhere else by hand is still left as it is.
+                MoveRootSelectToChild(serialized, root, select);
+
                 UiBuilder.SetIfEmpty(serialized, "selectButton", select);
+                UiBuilder.SetIfEmpty(serialized, "equippedBadge", equipped.gameObject);
                 UiBuilder.SetIfEmpty(serialized, "group", root.GetComponent<CanvasGroup>());
                 serialized.ApplyModifiedPropertiesWithoutUndo();
+
+                // And the Button that reference named goes with it. It carried no art of its own
+                // - it tinted the frame - and existed only to make the row the equip target. With
+                // SELECT doing that, a press anywhere on the row would tint it and do nothing,
+                // and a locked row has to be inert. The frame keeps its raycast target, so a drag
+                // that starts over a row still reaches the list's ScrollRect.
+                Button rowButton = root.GetComponent<Button>();
+                if (rowButton != null)
+                {
+                    Object.DestroyImmediate(rowButton);
+                }
             });
+        }
+
+        /// <summary>
+        /// Repoints a row's <c>selectButton</c> from the row root to the SELECT child, and only
+        /// from there. The one exception to this builder's rule that a reference already set is
+        /// never touched: the old shape - the row root as the equip target - is now actively
+        /// wrong rather than merely different, because Bind hides the object selectButton names.
+        /// Checked against the root rather than assumed, so a reference somebody pointed at a
+        /// button of their own survives the run.
+        /// </summary>
+        private static void MoveRootSelectToChild(SerializedObject serialized, GameObject root, Button select)
+        {
+            if (select == null)
+            {
+                return;
+            }
+
+            SerializedProperty property = serialized.FindProperty("selectButton");
+            if (property == null)
+            {
+                return;
+            }
+
+            if (property.objectReferenceValue is Button current && current.gameObject == root)
+            {
+                property.objectReferenceValue = select;
+            }
         }
 
         // ------------------------------------------------------------------ screen
