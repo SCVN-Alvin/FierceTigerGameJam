@@ -1,5 +1,6 @@
 #if UNITY_EDITOR
 using System.IO;
+using GameJam.Gameplay.Cannon;
 using GameJam.Gameplay.Combat;
 using UnityEditor;
 using UnityEngine;
@@ -16,6 +17,12 @@ namespace GameJam.EditorTools
     {
         private const string ConfigFolder = "Assets/GameJam/Config/Bullets";
 
+        // One table, so the pairing of an ammunition with the artist's ball is a single line to
+        // read and a single line to change. The legacy CannonBall.prefab is deliberately absent:
+        // it still runs the old CannonProjectile script and belongs to the demo scenes.
+        private const string RockProjectilePath = "Assets/GameJam/Prefabs/Bullets/CannonBall_01.prefab";
+        private const string CannonProjectilePath = "Assets/GameJam/Prefabs/Bullets/CannonBall_02.prefab";
+
         [MenuItem("Tools/Smashdown/Create Default Bullet Definitions")]
         public static void CreateDefaults()
         {
@@ -27,6 +34,7 @@ namespace GameJam.EditorTools
                 "Rock",
                 "rock_type",
                 "Rock",
+                RockProjectilePath,
                 new[]
                 {
                     // Takes glass and a lone brick in one shot. Against a brick wall it is a
@@ -47,6 +55,7 @@ namespace GameJam.EditorTools
                 "Cannon",
                 "cannon_type",
                 "Cannon Ball",
+                CannonProjectilePath,
                 new[]
                 {
                     Level("Cannon I", 0.4f,
@@ -94,6 +103,7 @@ namespace GameJam.EditorTools
             string assetName,
             string id,
             string displayName,
+            string projectilePrefabPath,
             BulletDefinition.Level[] levels)
         {
             string path = $"{ConfigFolder}/{assetName}.asset";
@@ -107,6 +117,11 @@ namespace GameJam.EditorTools
             SerializedObject serialized = new SerializedObject(bullet);
             serialized.FindProperty("id").stringValue = id;
             serialized.FindProperty("displayName").stringValue = displayName;
+
+            // Set only when empty, unlike the numbers above: the ball is a wiring decision that
+            // someone may have already pointed elsewhere, while the damage tables are the
+            // starting point this menu item exists to restore.
+            UiBuilder.SetIfEmpty(serialized, "projectilePrefab", LoadProjectilePrefab(projectilePrefabPath));
 
             SerializedProperty levelsProperty = serialized.FindProperty("levels");
             levelsProperty.arraySize = levels.Length;
@@ -139,6 +154,54 @@ namespace GameJam.EditorTools
             }
 
             return bullet;
+        }
+
+        /// <summary>
+        /// The artist's ball for an ammunition, checked rather than corrected on the way through:
+        /// their tuned physics is theirs to keep, and a field that reads oddly is far more likely
+        /// to be a deliberate authoring choice than something a builder should quietly overwrite.
+        /// </summary>
+        private static GridKnockdownCannonProjectile LoadProjectilePrefab(string path)
+        {
+            if (string.IsNullOrEmpty(path))
+            {
+                return null;
+            }
+
+            GridKnockdownCannonProjectile prefab = AssetDatabase.LoadAssetAtPath<GridKnockdownCannonProjectile>(path);
+            if (prefab == null)
+            {
+                Debug.LogWarning(
+                    $"{nameof(BulletDefinitionBuilder)} found no {nameof(GridKnockdownCannonProjectile)} at "
+                    + $"{path}. That ammunition will fire the fire controller's own prefab instead.");
+                return null;
+            }
+
+            SerializedObject serialized = new SerializedObject(prefab);
+
+            // The fire controller tells each shot what fired it. A prefab that names an
+            // ammunition itself would pin every shot from that ball to it, whatever the player
+            // actually loaded - which is exactly the bug this whole task is meant to remove.
+            SerializedProperty bulletOverride = serialized.FindProperty("bulletOverride");
+            if (bulletOverride != null && bulletOverride.objectReferenceValue != null)
+            {
+                Debug.LogWarning(
+                    $"{path} has bulletOverride set to {bulletOverride.objectReferenceValue.name}. Clear it, "
+                    + "or every shot fired from this ball deals that ammunition's damage.",
+                    prefab);
+            }
+
+            // Empty is correct here for the same reason.
+            SerializedProperty loadout = serialized.FindProperty("loadout");
+            if (loadout != null && loadout.objectReferenceValue != null)
+            {
+                Debug.LogWarning(
+                    $"{path} has a loadout assigned. The fire controller supplies the ammunition per "
+                    + "shot, so this only ever applies when the prefab is dropped into a scene by hand.",
+                    prefab);
+            }
+
+            return prefab;
         }
 
         private static void CreateLoadout(params BulletDefinition[] bullets)
