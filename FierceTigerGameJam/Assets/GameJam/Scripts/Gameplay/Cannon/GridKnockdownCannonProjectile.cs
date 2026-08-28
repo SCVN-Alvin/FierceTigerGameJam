@@ -64,6 +64,15 @@ namespace GameJam.Gameplay.Cannon
         /// </summary>
         private readonly List<Collider> ignoredColliders = new List<Collider>();
 
+        /// <summary>
+        /// The mesh children that stand for a level, and the level number read off each one's
+        /// name. Cached in <see cref="Awake"/> because the look is re-applied on every shot: a
+        /// pooled ball is told its ammunition per shot, and re-reading child names there would
+        /// allocate a string per child on every tap.
+        /// </summary>
+        private GameObject[] levelLooks;
+        private int[] levelLookNumbers;
+
         private bool hasHit;
         private float sinceHit;
         private float flightRemaining;
@@ -73,6 +82,14 @@ namespace GameJam.Gameplay.Cannon
             projectileRigidbody = GetComponent<Rigidbody>();
             projectileCollider = GetComponent<Collider>();
             projectileRigidbody.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
+
+            CacheLevelLooks();
+
+            // Once here as well as per shot, so the states the artist happened to leave the
+            // children in stop mattering, and the demo path with no loadout - which never calls
+            // SetAmmunition - still shows exactly one look rather than all three at once.
+            ResolveBullet(out int level);
+            ApplyLevelLook(level);
         }
 
         /// <summary>Told which pool to go back to. A shot with no pool destroys itself.</summary>
@@ -103,6 +120,129 @@ namespace GameJam.Gameplay.Cannon
         {
             bulletOverride = bullet;
             bulletLevelOverride = Mathf.Max(1, level);
+            ApplyLevelLook(bulletLevelOverride);
+        }
+
+        /// <summary>
+        /// Enables the mesh child for the level this shot was fired at. Children are matched by
+        /// the "LV{n}" suffix the artist uses (Boom01_LV2); the highest n not above the level
+        /// wins, so a prefab with fewer looks than the bullet has levels shows its best one
+        /// rather than nothing. Children without the suffix (none today) are left alone.
+        /// </summary>
+        private void ApplyLevelLook(int level)
+        {
+            if (levelLooks == null || levelLooks.Length == 0)
+            {
+                return;
+            }
+
+            int wanted = Mathf.Max(1, level);
+            int bestAtOrBelow = -1;
+            int lowest = -1;
+            for (int i = 0; i < levelLooks.Length; i++)
+            {
+                int number = levelLookNumbers[i];
+                if (number <= wanted && (bestAtOrBelow < 0 || number > levelLookNumbers[bestAtOrBelow]))
+                {
+                    bestAtOrBelow = i;
+                }
+
+                if (lowest < 0 || number < levelLookNumbers[lowest])
+                {
+                    lowest = i;
+                }
+            }
+
+            // Nothing authored at or below the level means a prefab whose looks start higher than
+            // level 1; its lowest is still a ball, which beats an invisible shot.
+            int chosen = bestAtOrBelow >= 0 ? bestAtOrBelow : lowest;
+            for (int i = 0; i < levelLooks.Length; i++)
+            {
+                if (levelLooks[i] != null)
+                {
+                    levelLooks[i].SetActive(i == chosen);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Counts the level children, then records them, rather than building a list: the two
+        /// passes happen once per instance and leave fixed arrays behind, which is what lets the
+        /// per-shot swap above run without allocating.
+        /// </summary>
+        private void CacheLevelLooks()
+        {
+            Transform self = transform;
+            int childCount = self.childCount;
+
+            int found = 0;
+            for (int i = 0; i < childCount; i++)
+            {
+                if (TryParseLevelSuffix(self.GetChild(i).name, out _))
+                {
+                    found++;
+                }
+            }
+
+            levelLooks = new GameObject[found];
+            levelLookNumbers = new int[found];
+
+            int next = 0;
+            for (int i = 0; i < childCount && next < found; i++)
+            {
+                Transform child = self.GetChild(i);
+                if (!TryParseLevelSuffix(child.name, out int level))
+                {
+                    continue;
+                }
+
+                levelLooks[next] = child.gameObject;
+                levelLookNumbers[next] = level;
+                next++;
+            }
+        }
+
+        /// <summary>
+        /// Reads the trailing "LV{n}" the artist names the level meshes with (Boom01_LV2). Read
+        /// character by character rather than with int.Parse on a substring, since even the
+        /// once-per-instance scan runs while a run is loading. False for a child named anything
+        /// else, which is then left exactly as the prefab authored it.
+        /// </summary>
+        private static bool TryParseLevelSuffix(string childName, out int level)
+        {
+            level = 0;
+            if (string.IsNullOrEmpty(childName))
+            {
+                return false;
+            }
+
+            int digitsStart = childName.Length;
+            while (digitsStart > 0 && childName[digitsStart - 1] >= '0' && childName[digitsStart - 1] <= '9')
+            {
+                digitsStart--;
+            }
+
+            // Needs at least one digit, and the two characters before it to be the LV marker.
+            if (digitsStart == childName.Length || digitsStart < 2)
+            {
+                return false;
+            }
+
+            char marker = childName[digitsStart - 2];
+            char version = childName[digitsStart - 1];
+            if ((marker != 'L' && marker != 'l') || (version != 'V' && version != 'v'))
+            {
+                return false;
+            }
+
+            int value = 0;
+            for (int i = digitsStart; i < childName.Length; i++)
+            {
+                value = (value * 10) + (childName[i] - '0');
+            }
+
+            level = value;
+            return value > 0;
         }
 
         /// <summary>
