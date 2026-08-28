@@ -48,11 +48,13 @@ namespace GameJam.EditorTools
             EnsureFolder(LoadingFolder);
 
             // Before the prefab, because the view is wired to the config and there is nothing to
-            // wire until the asset exists.
-            GameConfigBuilder.EnsureLoadingConfig();
+            // wire until the asset exists. The asset is carried from here rather than looked up
+            // again further down: on a clean build it was created moments ago, and FindAssets
+            // answers from the search index, which has not necessarily been told about it yet.
+            LoadingConfig config = GameConfigBuilder.EnsureLoadingConfig();
 
-            GameObject screen = BuildScreenPrefab();
-            EnsureSceneInstance(screen);
+            GameObject screen = BuildScreenPrefab(config);
+            EnsureSceneInstance(screen, config);
 
             AssetDatabase.SaveAssets();
             Debug.Log(
@@ -66,7 +68,7 @@ namespace GameJam.EditorTools
         /// The whole screen: the splash behind everything, the "Loading..." word art, and the bar
         /// as a tube with a fill inside it.
         /// </summary>
-        private static GameObject BuildScreenPrefab()
+        private static GameObject BuildScreenPrefab(LoadingConfig config)
         {
             return EnsurePrefab(ScreenPrefabPath, ScreenName, (root, created) =>
             {
@@ -89,7 +91,7 @@ namespace GameJam.EditorTools
 
                 // The config is an asset, so it can be wired here. The flow is a scene object and
                 // is wired on the instance instead - a prefab cannot hold a reference into a scene.
-                UiBuilder.SetIfEmpty(serialized, "config", UiBuilder.LoadFirstAsset<LoadingConfig>());
+                UiBuilder.SetIfEmpty(serialized, "config", config);
                 UiBuilder.SetIfEmpty(serialized, "fill", fill);
                 serialized.ApplyModifiedPropertiesWithoutUndo();
 
@@ -176,7 +178,7 @@ namespace GameJam.EditorTools
         /// builder afterwards would otherwise sit on top of it, so re-running this puts it back at
         /// the end rather than only placing it there the first time.
         /// </summary>
-        private static void EnsureSceneInstance(GameObject prefab)
+        private static void EnsureSceneInstance(GameObject prefab, LoadingConfig config)
         {
             if (prefab == null)
             {
@@ -238,7 +240,10 @@ namespace GameJam.EditorTools
             {
                 SerializedObject serializedView = new SerializedObject(view);
                 UiBuilder.SetIfEmpty(serializedView, "flow", flow);
-                UiBuilder.SetIfEmpty(serializedView, "config", UiBuilder.LoadFirstAsset<LoadingConfig>());
+
+                // The prefab already carries this; restated on the instance so that an instance
+                // somebody made before the config existed is not left with an empty one.
+                UiBuilder.SetIfEmpty(serializedView, "config", config);
                 serializedView.ApplyModifiedPropertiesWithoutUndo();
             }
 
