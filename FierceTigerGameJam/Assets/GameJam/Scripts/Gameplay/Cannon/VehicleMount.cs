@@ -28,6 +28,13 @@ namespace GameJam.Gameplay.Cannon
         [Tooltip("Applied to the spawned model so art can be authored at any scale.")]
         [SerializeField] private Vector3 modelLocalScale = Vector3.one;
 
+        [Tooltip("Shown only while no vehicle model resolves - the old tank, so an unwired or "
+                 + "model-less loadout still shows a cannon rather than a floating barrel.")]
+        [SerializeField] private GameObject fallbackModel;
+
+        /// <summary>The spawned model's Animator, for whoever presents the shot. Null on the fallback.</summary>
+        public Animator CurrentAnimator { get; private set; }
+
         private GameObject current;
         private VehicleDefinition currentVehicle;
         private int currentLevel;
@@ -69,6 +76,7 @@ namespace GameJam.Gameplay.Cannon
         {
             if (loadout == null)
             {
+                ShowFallbackOnly();
                 return;
             }
 
@@ -76,6 +84,7 @@ namespace GameJam.Gameplay.Cannon
             int level = loadout.SelectedLevel;
             if (vehicle == null)
             {
+                ShowFallbackOnly();
                 return;
             }
 
@@ -98,6 +107,11 @@ namespace GameJam.Gameplay.Cannon
                         this);
                 }
 
+                // Deviation from the brief, which only switches the fallback on here: the model
+                // already standing is torn down with it. Leaving it up would put the fallback
+                // tank inside the previous vehicle's model, which reads as two cannons rather
+                // than as a vehicle that has no art yet.
+                ShowFallbackOnly();
                 return;
             }
 
@@ -112,7 +126,33 @@ namespace GameJam.Gameplay.Cannon
             currentVehicle = vehicle;
             currentLevel = level;
 
+            // The pack models animate their own shot, so whoever presents the firing needs this
+            // rather than the barrel's animator. Cached here because a shot must not pay for a
+            // hierarchy walk.
+            CurrentAnimator = current.GetComponentInChildren<Animator>(true);
+
+            SetFallbackActive(false);
+
             StripColliders(current);
+        }
+
+        /// <summary>
+        /// The state with nothing mounted: whatever was spawned goes, and the fallback stands in
+        /// its place. The two are always opposites, so a level with no vehicle wired still shows
+        /// a cannon and a level with one never shows the tank behind it.
+        /// </summary>
+        private void ShowFallbackOnly()
+        {
+            DestroyCurrent();
+            SetFallbackActive(true);
+        }
+
+        private void SetFallbackActive(bool active)
+        {
+            if (fallbackModel != null && fallbackModel.activeSelf != active)
+            {
+                fallbackModel.SetActive(active);
+            }
         }
 
         private void HandleSelectionChanged(VehicleDefinition vehicle)
@@ -158,6 +198,12 @@ namespace GameJam.Gameplay.Cannon
 
         private void DestroyCurrent()
         {
+            // Cleared even when there was nothing to destroy: an Animator that outlives its model
+            // is a null reference the presenter would only meet on the next shot.
+            CurrentAnimator = null;
+            currentVehicle = null;
+            currentLevel = 0;
+
             if (current == null)
             {
                 return;
