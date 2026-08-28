@@ -7,16 +7,16 @@ namespace GameJam.UI
 {
     /// <summary>
     /// One row of the garage: what the item looks like, what it is called and how far it has been
-    /// taken, the strip of level pips, and the one button that buys or upgrades it.
+    /// taken, the strip of level pips, and the two stacked controls on the right.
     ///
-    /// Two things can be tapped, but only one of them looks like a button. The Buy button spends
-    /// gold; the rest of the row equips what it describes. Making the row itself the equip target
-    /// rather than adding a second button is what keeps the row readable at 490x91 - there is no
-    /// room for a Select beside a price, and a row the player can already see is the biggest tap
-    /// target on the screen.
+    /// Buy spends gold. Above it, SELECT equips what the row describes, and on the row that is
+    /// already equipped the EQUIPPED chip stands in its place - the same rect, so the row is the
+    /// same shape in every state. There is no room beside a price for a second control, which is
+    /// why they are stacked rather than set side by side.
     ///
-    /// Which item is equipped is shown by standing at full strength while the others are knocked
-    /// back, so the tap that changes it also changes the only thing that was saying it.
+    /// Being equipped is said twice: by the chip, and by the row standing at full strength while
+    /// the others are knocked back. Two cues rather than one, because the alpha alone is a
+    /// comparison the player has to make across rows before it means anything.
     ///
     /// The shop decides every word and every state; this only knows where to put them. That is
     /// what lets the ammunition row and the vehicle row be the same picture: the two subclasses
@@ -89,10 +89,14 @@ namespace GameJam.UI
 
         [SerializeField] private TMP_Text buyLabel;
 
-        [Tooltip("On the row root, over the frame. Equips what the row describes; a tap that "
-                 + "lands on Buy is handled by Buy and never reaches this. The shop wires the "
-                 + "click, since only the shop knows which loadout the item belongs to.")]
+        [Tooltip("The SELECT button, in the band directly above Buy. Up only while the row's "
+                 + "item is owned and is not the one equipped. The shop wires the click, since "
+                 + "only the shop knows which loadout the item belongs to.")]
         [SerializeField] private Button selectButton;
+
+        [Tooltip("Shown on the equipped row where Select is on the others. A chip, not a button: "
+                 + "there is nothing to do to the thing already mounted.")]
+        [SerializeField] private GameObject equippedBadge;
 
         [Tooltip("On the row root. The equipped row is drawn at full strength and the rest are "
                  + "knocked back; interactable is never touched, a dimmed row can still be bought.")]
@@ -105,10 +109,11 @@ namespace GameJam.UI
         public Button BuyButton => buyButton;
 
         /// <summary>
-        /// The whole row as a tap target. Left interactable whatever the state, the same way the
-        /// <see cref="CanvasGroup"/> is never made uninteractable: the loadout refuses to equip
-        /// something locked or already equipped, so a refusal is decided in one place rather than
-        /// guessed at here, and a row greyed out by a disabled Button would read as unbuyable too.
+        /// The SELECT control. Hidden rather than disabled in the states where it does not apply:
+        /// a greyed-out SELECT sitting above a greyed-out Buy would read as a second thing the
+        /// player cannot afford, and taking it out of the picture is also what lets the EQUIPPED
+        /// chip stand in the same rect without anything reflowing. interactable is never touched,
+        /// so a refusal is still decided in one place - the loadout - rather than guessed at here.
         /// </summary>
         public Button SelectButton => selectButton;
 
@@ -158,6 +163,24 @@ namespace GameJam.UI
             if (buyButton != null)
             {
                 buyButton.interactable = state.BuyInteractable;
+            }
+
+            bool unlocked = state.Unlocked;
+
+            if (selectButton != null && selectButton.gameObject != gameObject)
+            {
+                // Never the row's own object. A row still wired the old way - the whole row as
+                // the equip target, which is what selectButton pointed at before SELECT was its
+                // own button - would hide itself here, and an empty list is a much worse bug
+                // than a missing control. The builder migrates such a row on its next run.
+                selectButton.gameObject.SetActive(unlocked && !state.Equipped);
+            }
+
+            if (equippedBadge != null)
+            {
+                // The two share one rect, so exactly one of them is up - or neither, while the
+                // row is locked, since there is nothing to equip and nothing equipped to say.
+                equippedBadge.SetActive(unlocked && state.Equipped);
             }
 
             if (group != null)
@@ -224,9 +247,25 @@ namespace GameJam.UI
 
             if (selectButton == null)
             {
-                // On the row itself too, and never a child: the one on Buy is a different
-                // decision, and a search by type would find whichever came first.
+                // By name, so the one on Buy is never picked up: a search by type alone would
+                // find whichever button came first in the hierarchy.
+                selectButton = FindChild<Button>("Select");
+            }
+
+            if (selectButton == null)
+            {
+                // The legacy shape, kept only for a row authored before SELECT was its own
+                // button: back then the row root was the button and the whole row equipped.
                 selectButton = GetComponent<Button>();
+            }
+
+            if (equippedBadge == null)
+            {
+                Image badge = FindChild<Image>("Equipped");
+                if (badge != null)
+                {
+                    equippedBadge = badge.gameObject;
+                }
             }
         }
 
