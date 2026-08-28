@@ -12,3 +12,10 @@ ScriptedImporter:
   wrapperCodePath: 
   wrapperClassName: 
   wrapperCodeNamespace: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 363612
+  packageName: "Hyper-Casual Cannon Pack \u2013 Animated Turrets (URP + Built-in)"
+  packageVersion: 1.0
+  assetPath: Assets/InputSystem_Actions.inputactions
+  uploadId: 868326
