@@ -25,3 +25,15 @@ MonoBehaviour:
     gold: 200
   - rewardId: clear_map_3
     gold: 450
+  - rewardId: pass_map_4
+    gold: 250
+  - rewardId: clear_map_4
+    gold: 500
+  - rewardId: pass_map_5
+    gold: 300
+  - rewardId: clear_map_5
+    gold: 550
+  - rewardId: pass_map_6
+    gold: 350
+  - rewardId: clear_map_6
+    gold: 600

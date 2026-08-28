@@ -44,6 +44,8 @@ namespace GameJam.EditorTools
         private const string MoneySprite = MenuTextures + "/UI_Money.png";
         private const string MissionSprite = MenuTextures + "/UI_Mission.png";
         private const string CloseSprite = GarageTextures + "/Btn_Esc.png";
+        private const string PrevSprite = MissionTextures + "/Btn_Mission_Prev.png";
+        private const string NextSprite = MissionTextures + "/Btn_Mission_Next.png";
 
         private const string MissionFolder = "Assets/GameJam/Prefabs/UI/Mission";
         private const string ItemPrefabPath = MissionFolder + "/MissionProgressItemView.prefab";
@@ -63,7 +65,7 @@ namespace GameJam.EditorTools
         private static readonly Vector2 FrameSize = new Vector2(600f, 884f);
 
         /// <summary>Hangs the frame off the top of the screen, clear of the gold chip and the X.</summary>
-        private static readonly Vector2 FrameOffset = new Vector2(0f, -56f);
+        private static readonly Vector2 FrameOffset = new Vector2(0f, -96f);
 
         /// <summary>232x209 of card art at the frame's 600/975 scale, so three fit across the inset.</summary>
         private static readonly Vector2 CardSize = new Vector2(143f, 129f);
@@ -202,6 +204,60 @@ namespace GameJam.EditorTools
                     frame.anchoredPosition = FrameOffset;
                 }
 
+                // The word MISSION used to be painted into the frame art; the tab is blank now so
+                // the board can say which mission it is showing. Same white bold as the art had.
+                TMP_Text missionTitle = EnsureLabel("MissionTitle", frame, "MISSION 1", 30,
+                    TextAlignmentOptions.Center, new Vector2(0.30f, 0.947f), new Vector2(0.70f, 0.994f),
+                    out bool missionTitleCreated);
+                if (missionTitleCreated)
+                {
+                    Place((RectTransform)missionTitle.transform, new Vector2(0.30f, 0.947f), new Vector2(0.70f, 0.994f));
+                    missionTitle.fontStyle = FontStyles.Bold;
+                    missionTitle.color = Color.white;
+                    missionTitle.raycastTarget = false;
+                }
+
+                // The paging chevrons sit in the tab's ends. Their rects are wider than the art -
+                // preserveAspect letterboxes the chevron inside - so a thumb has something to hit.
+                bool prevCreated = frame.Find("PrevMissionButton") == null;
+                Button previousMission = UiBuilder.EnsureSpriteButton("PrevMissionButton", frame, PrevSprite,
+                    new Vector2(0.30f, 0.971f), new Vector2(0.30f, 0.971f));
+                if (prevCreated)
+                {
+                    PlaceFixed((RectTransform)previousMission.transform, new Vector2(0.30f, 0.971f), new Vector2(46f, 44f));
+                    if (previousMission.targetGraphic is Image previousImage)
+                    {
+                        previousImage.preserveAspect = true;
+                    }
+                }
+
+                bool nextCreated = frame.Find("NextMissionButton") == null;
+                Button nextMission = UiBuilder.EnsureSpriteButton("NextMissionButton", frame, NextSprite,
+                    new Vector2(0.70f, 0.971f), new Vector2(0.70f, 0.971f));
+                if (nextCreated)
+                {
+                    PlaceFixed((RectTransform)nextMission.transform, new Vector2(0.70f, 0.971f), new Vector2(46f, 44f));
+                    if (nextMission.targetGraphic is Image nextImage)
+                    {
+                        nextImage.preserveAspect = true;
+                    }
+                }
+
+                // The answer to tapping a level that has no map yet. Lives over the board's
+                // middle and stays inactive until the panel needs it, so it costs the layout
+                // nothing the rest of the time.
+                TMP_Text notice = EnsureLabel("NoticeLabel", frame, "NO MAP YET!", 40,
+                    TextAlignmentOptions.Center, new Vector2(0.15f, 0.42f), new Vector2(0.85f, 0.52f),
+                    out bool noticeCreated);
+                if (noticeCreated)
+                {
+                    Place((RectTransform)notice.transform, new Vector2(0.15f, 0.42f), new Vector2(0.85f, 0.52f));
+                    notice.fontStyle = FontStyles.Bold;
+                    notice.color = Color.white;
+                    notice.raycastTarget = false;
+                    notice.gameObject.SetActive(false);
+                }
+
                 RectTransform inset = EnsureRect("Inset", frame,
                     new Vector2(0.047f, 0.040f), new Vector2(0.953f, 0.896f));
 
@@ -332,6 +388,18 @@ namespace GameJam.EditorTools
             UiBuilder.SetIfEmpty(serialized, "container", grid);
             UiBuilder.SetIfEmpty(serialized, "itemPrefab",
                 itemPrefab != null ? itemPrefab.GetComponent<MissionProgressItemView>() : null);
+            Transform frameChild = root.transform.Find("Frame");
+            if (frameChild != null)
+            {
+                Transform title = frameChild.Find("MissionTitle");
+                Transform previous = frameChild.Find("PrevMissionButton");
+                Transform next = frameChild.Find("NextMissionButton");
+                UiBuilder.SetIfEmpty(serialized, "missionTitle", title != null ? title.GetComponent<TMP_Text>() : null);
+                UiBuilder.SetIfEmpty(serialized, "previousMissionButton", previous != null ? previous.GetComponent<Button>() : null);
+                UiBuilder.SetIfEmpty(serialized, "nextMissionButton", next != null ? next.GetComponent<Button>() : null);
+                Transform notice = frameChild.Find("NoticeLabel");
+                UiBuilder.SetIfEmpty(serialized, "noticeLabel", notice != null ? notice.GetComponent<TMP_Text>() : null);
+            }
             serialized.ApplyModifiedPropertiesWithoutUndo();
         }
 

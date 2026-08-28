@@ -28,3 +28,18 @@ MonoBehaviour:
     passMapRewardId: pass_map_3
     clearMapRewardId: clear_map_3
     bulletPickLimit: 30
+  - mapId: map_004_level_01
+    requiredClearPercent: 0.5
+    passMapRewardId: pass_map_4
+    clearMapRewardId: clear_map_4
+    bulletPickLimit: 12
+  - mapId: map_005_level_02
+    requiredClearPercent: 0.5
+    passMapRewardId: pass_map_5
+    clearMapRewardId: clear_map_5
+    bulletPickLimit: 16
+  - mapId: map_005_two_storey_hollow_courtyard
+    requiredClearPercent: 0.5
+    passMapRewardId: pass_map_6
+    clearMapRewardId: clear_map_6
+    bulletPickLimit: 25

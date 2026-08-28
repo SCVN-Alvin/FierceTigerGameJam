@@ -16,6 +16,12 @@ namespace GameJam.UI
 
         /// <summary>Passed. Still playable, for a better percentage.</summary>
         Cleared,
+
+        /// <summary>
+        /// No map authored for this slot yet. Looks locked, but stays clickable so the panel can
+        /// answer the tap with a notice instead of silence.
+        /// </summary>
+        Missing,
     }
 
     /// <summary>

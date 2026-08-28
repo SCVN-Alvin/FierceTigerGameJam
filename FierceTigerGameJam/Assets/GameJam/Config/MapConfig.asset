@@ -13,12 +13,15 @@ MonoBehaviour:
   m_Name: MapConfig
   m_EditorClassIdentifier: Assembly-CSharp::GameJam.Gameplay.Wall.MapConfig
   maps:
-  - id: 1
-    displayName: Map_1
-    mapJson: {fileID: 4900000, guid: 06a6583a18c024036ac847b25bbbd2c4, type: 3}
+  - id: map_004_level_01
+    displayName: Map_4
+    mapJson: {fileID: 4900000, guid: 2b284764977d49c4838b89abadb49883, type: 3}
+  - id: map_005_level_02
+    displayName: Map_5
+    mapJson: {fileID: 4900000, guid: a7291f514ac74c38bcea95dea72d25c4, type: 3}
+  - id: map_005_two_storey_hollow_courtyard
+    displayName: Map_Courtyard
+    mapJson: {fileID: 4900000, guid: edb0a418312e45a2aebf63dc6e636809, type: 3}
   - id: 2
-    displayName: Map_2
+    displayName: Map_7
     mapJson: {fileID: 4900000, guid: a13cb7943dcef4bdea76152dc42f5be7, type: 3}
-  - id: 3
-    displayName: Map_3
-    mapJson: {fileID: 4900000, guid: acaf6f78bb111423bbd50f6203bd02fc, type: 3}
