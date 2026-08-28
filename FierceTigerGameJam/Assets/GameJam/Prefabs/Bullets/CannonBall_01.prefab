@@ -164,12 +164,13 @@ MonoBehaviour:
   hittableLayers:
     serializedVersion: 2
     m_Bits: 4294967295
-  destroyOnImpact: 1
+  postImpactLifetime: 0.4
   loadout: {fileID: 0}
   bulletOverride: {fileID: 0}
   bulletLevelOverride: 1
   directHitDamage: 3
   splashDamage: 1
+  damageMultiplier: 1
 --- !u!1 &4867195566239728032
 GameObject:
   m_ObjectHideFlags: 0
@@ -236,7 +237,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: e2153d0f4bdf7480a82e6c2597f5eaaf, type: 2}
+  - {fileID: 2100000, guid: fc75d2971ab147ad9c9005e08c7ff187, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -326,7 +327,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: e2153d0f4bdf7480a82e6c2597f5eaaf, type: 2}
+  - {fileID: 2100000, guid: fc75d2971ab147ad9c9005e08c7ff187, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -416,7 +417,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: e2153d0f4bdf7480a82e6c2597f5eaaf, type: 2}
+  - {fileID: 2100000, guid: fc75d2971ab147ad9c9005e08c7ff187, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0

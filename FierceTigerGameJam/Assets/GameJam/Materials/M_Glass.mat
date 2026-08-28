@@ -21,13 +21,21 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: M_Glass
-  m_Shader: {fileID: 4800000, guid: 933532a4fcc9baf4fa0491de14d08ed7, type: 3}
+  m_Shader: {fileID: -6465566751694194690, guid: fdde68b07ae1548f885e7fbbb16574e8, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords:
+  - TCP2_REFLECTIONS_FRESNEL
+  - TCP2_RIM_LIGHTING_LIGHTMASK
+  - TCP2_SHADOW_LIGHT_COLOR
+  - TCP2_SPECULAR
   - _ALPHAPREMULTIPLY_ON
+  m_InvalidKeywords:
+  - MOBILE_FAKE_AO
+  - RIM_LIGHTMASK
+  - TCP2_UV_NORMALS_FULL
+  - _SSAO_ON
   - _SURFACE_TYPE_TRANSPARENT
-  m_InvalidKeywords: []
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
@@ -50,6 +58,10 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _CubeMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _DetailAlbedoMap:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
@@ -62,11 +74,23 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _EdgeMask:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _EmissionMap:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MainTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _MatCapMask:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _MatCapTex:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
@@ -79,6 +103,22 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _ParallaxMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Ramp:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _ReflectionTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _ShadowBaseMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _ShadowTex:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
@@ -102,9 +142,12 @@ Material:
     m_Floats:
     - _AddPrecomputedVelocity: 0
     - _AlphaClip: 0
+    - _AlphaCutoff: 0.5
     - _AlphaToMask: 0
     - _Blend: 0
     - _BlendModePreserveSpecular: 1
+    - _BlurReflection: 0
+    - _Brightness: 1
     - _BumpScale: 1
     - _ClearCoatMask: 0
     - _ClearCoatSmoothness: 0
@@ -112,30 +155,138 @@ Material:
     - _Cutoff: 0.5
     - _DetailAlbedoMapScale: 1
     - _DetailNormalMapScale: 1
+    - _DirectIntensityOutline: 1
     - _DstBlend: 10
     - _DstBlendAlpha: 10
+    - _EdgeBlendMode: 1
+    - _EdgeIntensity: 0
+    - _EdgeLineIntensity: 0
+    - _EdgeLineOffset: 0.22
+    - _EdgeLineUseOwnColor: 0
+    - _EdgeLineWidth: 0.015
+    - _EdgeMaskStrength: 1
+    - _EdgeOpacity: 0
+    - _EdgeSoftness: 0.6
+    - _EdgeWidth: 0.09
+    - _EmissionChannel: 4
     - _EnvironmentReflections: 1
+    - _Fade: 0
+    - _FalloffFade: 0
+    - _FalloffOpacity: 0
+    - _FalloffOpacityIntensity: 1
+    - _FresnelMax: 1.5
+    - _FresnelMin: 0
+    - _FresnelStrength: 0
     - _GlossMapScale: 0
-    - _Glossiness: 0
+    - _Glossiness: 0.014
     - _GlossyReflections: 0
-    - _Metallic: 0
-    - _OcclusionStrength: 1
+    - _GradientFade: 1
+    - _IndirectIntensity: 1
+    - _IndirectIntensityOutline: 0
+    - _Intensity: 3.83
+    - _Invert: 0
+    - _InvertFresnelFade: 0
+    - _MatCapIntensity: 1
+    - _MatCapMaskChannel: 0
+    - _MatCapType: 0
+    - _Metallic: 0.018
+    - _MobileAOIntensity: 0.8
+    - _MobileAOMin: 0.35
+    - _MobileAOPower: 2
+    - _MobileAOUpBias: 0
+    - _MobileFakeAO: 1
+    - _MobileMode: 0
+    - _NormalsSource: 0
+    - _NormalsUVType: 0
+    - _OcclusionChannel: 0
+    - _OcclusionStrength: 0.577
+    - _Opacity: 1
+    - _OutlineLightingType: 0
+    - _OutlineLightingTypeURP: 0
+    - _OutlineMaxWidth: 1
+    - _OutlineMinWidth: 1
+    - _OutlinePixelSizeType: 0
+    - _OutlineTextureLOD: 5
+    - _OutlineTextureType: 0
+    - _OutlineWidth: 0.006
     - _Parallax: 0.005
+    - _PowerFalloffFade: 1
+    - _PowerFalloffOpacity: 1
+    - _PowerFresnel: 0.5
+    - _QueueControl: -1
     - _QueueOffset: 0
+    - _RampBands: 4
+    - _RampBandsSmoothing: 0.1
+    - _RampOffset: 0
+    - _RampScale: 1
+    - _RampSmoothing: 0.545
+    - _RampThreshold: 0.769
+    - _RampType: 0
     - _ReceiveShadows: 1
+    - _ReceiveShadowsOff: 1
+    - _ReflectionIntensity: 1
+    - _ReflectionMapType: 0
+    - _ReflectionSmoothness: 0.5
+    - _Refraction: 1.1
+    - _RenderingMode: 2
+    - _RimLightMax: 0.55
+    - _RimLightMin: 0.15
+    - _RimMax: 0.538
+    - _RimMin: 0.203
+    - _SSAO: 1
+    - _Saturation: 0
+    - _ShadowColorLightAtten: 1
+    - _ShadowTexStrength: 1
+    - _SingleIndirectColor: 0
     - _Smoothness: 0.92
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
+    - _SpecularMapType: 0
+    - _SpecularRoughness: 0.439
+    - _SpecularToonSize: 0.25
+    - _SpecularToonSmoothness: 0.05
+    - _SpecularType: 0
     - _SrcBlend: 1
     - _SrcBlendAlpha: 1
     - _Surface: 1
+    - _UseAlphaTest: 0
+    - _UseCubemap: 1
+    - _UseEmission: 0
+    - _UseFresnelReflections: 1
+    - _UseLightProbes: 0
+    - _UseMatCap: 0
+    - _UseMatCapMask: 0
+    - _UseMetallicMap: 0
+    - _UseMobileMode: 0
+    - _UseNormalMap: 0
+    - _UseOcclusion: 0
+    - _UseOutline: 0
+    - _UseReflections: 0
+    - _UseRim: 0
+    - _UseRimLightMask: 1
+    - _UseShadowTex: 0
+    - _UseShadowTexture: 0
+    - _UseSpecular: 1
     - _WorkflowMode: 1
     - _XRMotionVectorsPass: 1
     - _ZWrite: 0
     m_Colors:
-    - _BaseColor: {r: 0.72, g: 0.86, b: 0.92, a: 0.35}
+    - _BaseColor: {r: 0.72, g: 0.86, b: 0.92, a: 0.5372549}
     - _Color: {r: 0.72, g: 0.86, b: 0.92, a: 0.35}
+    - _ColorCubemap: {r: 1, g: 1, b: 1, a: 1}
+    - _ColorFresnel1: {r: 1, g: 1, b: 1, a: 0}
+    - _EdgeColor: {r: 1, g: 1, b: 1, a: 1}
+    - _EdgeLineColor: {r: 1, g: 1, b: 1, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
+    - _HColor: {r: 1, g: 1, b: 1, a: 1}
+    - _IceBoxExtents: {r: 0.5, g: 0.5, b: 0.5, a: 0}
+    - _MatCapColor: {r: 1, g: 1, b: 1, a: 1}
+    - _OutlineColor: {r: 0, g: 0, b: 0, a: 1}
+    - _ReflectionColor: {r: 1, g: 1, b: 1, a: 1}
+    - _RimColor: {r: 1, g: 1, b: 1, a: 1}
+    - _SColor: {r: 0.22000714, g: 0.39095592, b: 0.4528302, a: 1}
+    - _SmoothnessColor: {r: 1, g: 1, b: 1, a: 1}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
+    - _SpecularColor: {r: 0.75, g: 0.75, b: 0.75, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
