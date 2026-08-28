@@ -92,6 +92,15 @@ namespace GameJam.Gameplay.Cannon
         /// </summary>
         public event System.Action OutOfAmmunition;
 
+        /// <summary>
+        /// Raised once per shot actually fired, after it is paid for and after it has left the
+        /// muzzle, for one-shot UI like the tutorial's prompt. A shot refused for want of
+        /// ammunition raises <see cref="OutOfAmmunition"/> instead, and one refused by the aim or
+        /// by an empty projectile pool raises neither: nothing left the cannon, so there is
+        /// nothing for a listener to answer.
+        /// </summary>
+        public event System.Action Fired;
+
         public bool TryFireAtScreenPoint(Vector2 screenPosition)
         {
             // Checked before aiming so an empty cannon refuses immediately, and spent only at the
@@ -238,6 +247,10 @@ namespace GameJam.Gameplay.Cannon
             {
                 shotPresenter.PlayShot();
             }
+
+            // Last, so a listener that tears something down cannot run before the shot it is
+            // answering has actually been launched and presented.
+            Fired?.Invoke();
         }
 
         /// <summary>

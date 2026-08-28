@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "id": "tutorial",
+  "grid": { "width": 1, "height": 1, "cellSize": 0.25, "layerDepth": 0.25 },
+  "layers": [
+    {
+      "level": 0,
+      "blocks": [
+        { "id": "f0_c0_r0", "type": "brick_1x1", "position": { "x": 0, "y": 0 }, "rotation": 0 }
+      ]
+    }
+  ]
+}
