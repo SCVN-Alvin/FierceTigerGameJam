@@ -41,6 +41,14 @@ namespace GameJam.Gameplay.Flow
 
             /// <summary>The run is over and the result is on screen.</summary>
             Result,
+
+            /// <summary>
+            /// The splash screen, before anything else. Appended rather than put first, and it
+            /// must stay last: <see cref="UI.BottomBarView.Slot.state"/> is serialized by value,
+            /// so inserting a state here would silently re-map every slot already authored in
+            /// the bar prefab - HOME would become the shop and nobody would be told.
+            /// </summary>
+            Loading,
         }
 
         [SerializeField] private MapSelection mapSelection;
@@ -51,6 +59,11 @@ namespace GameJam.Gameplay.Flow
         [SerializeField] private EconomyService economy;
 
         [Header("Screens")]
+        [Tooltip("The splash screen every launch opens on. Left empty - a test scene - the game "
+                 + "simply starts on a Loading state with nothing to show and never leaves it, "
+                 + "which is why the builder wires this rather than leaving it to be dragged in.")]
+        [SerializeField] private GameObject loadingRoot;
+
         [SerializeField] private GameObject mainMenuRoot;
         [SerializeField] private GameObject mapSelectionRoot;
         [SerializeField] private GameObject ammoPickRoot;
@@ -228,6 +241,25 @@ namespace GameJam.Gameplay.Flow
         }
 
         private void Start()
+        {
+            EnterLoading();
+        }
+
+        /// <summary>
+        /// The splash. Not a menu state, so the normal Enter bookkeeping is all it needs: every
+        /// other root, the tab bar and the back button switch themselves off around it.
+        /// </summary>
+        [ContextMenu("Loading")]
+        public void EnterLoading()
+        {
+            Enter(GameState.Loading);
+        }
+
+        /// <summary>
+        /// Where the game goes once the splash is done. One seam on purpose: the tutorial check
+        /// (Brief 15) replaces this body rather than teaching the loading view about tutorials.
+        /// </summary>
+        public void FinishLoading()
         {
             ReturnToMainMenu();
         }
@@ -493,6 +525,7 @@ namespace GameJam.Gameplay.Flow
 
             CloseSettings();
 
+            SetRootActive(loadingRoot, state == GameState.Loading);
             SetRootActive(mainMenuRoot, state == GameState.MainMenu);
             SetRootActive(selectionRoot, state == GameState.MapSelection);
             SetRootActive(ammoPickRoot, state == GameState.AmmoPick);
