@@ -176,18 +176,24 @@ namespace GameJam.Gameplay.Cannon
         /// </summary>
         private void StripColliders(GameObject model)
         {
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
             Collider[] colliders = model.GetComponentsInChildren<Collider>(true);
             if (colliders.Length == 0)
             {
                 return;
             }
 
+            // Disabled in every build, not only in the editor. The whole guard used to be behind
+            // UNITY_EDITOR || DEVELOPMENT_BUILD, which was safe while the vehicle models were
+            // ours; every prefab in the cannon pack ships with a BoxCollider, so a release build
+            // would put a solid box in front of the muzzle and only a release build would show it.
+            // The warning stays development-only: it is a note to whoever authored the prefab,
+            // and the player's build has nobody to read it.
             for (int i = 0; i < colliders.Length; i++)
             {
                 colliders[i].enabled = false;
             }
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             Debug.LogWarning(
                 $"{nameof(VehicleMount)} on \"{name}\" disabled {colliders.Length} collider(s) on the "
                 + $"{model.name} model. A vehicle model is visuals only; anything solid in front of the "
