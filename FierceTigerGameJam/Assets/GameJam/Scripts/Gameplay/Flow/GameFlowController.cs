@@ -59,9 +59,9 @@ namespace GameJam.Gameplay.Flow
         [SerializeField] private EconomyService economy;
 
         [Header("Screens")]
-        [Tooltip("The splash screen every launch opens on. Left empty - a test scene - the game "
-                 + "simply starts on a Loading state with nothing to show and never leaves it, "
-                 + "which is why the builder wires this rather than leaving it to be dragged in.")]
+        [Tooltip("The splash screen every launch opens on. Left empty - a test scene, or a scene "
+                 + "Build Loading Screen has not been run over - the game opens on the main menu "
+                 + "instead and says so, rather than sitting on a state with nothing to show.")]
         [SerializeField] private GameObject loadingRoot;
 
         [SerializeField] private GameObject mainMenuRoot;
