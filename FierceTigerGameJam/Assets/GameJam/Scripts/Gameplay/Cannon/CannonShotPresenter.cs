@@ -24,8 +24,8 @@ namespace GameJam.Gameplay.Cannon
         public void PlayShot()
         {
             // The mounted model owns the shot when there is one: every pack cannon animates its
-            // own recoil, and the barrel underneath is hidden while it stands there, so playing
-            // the legacy state as well would animate something nobody can see.
+            // own recoil, and the legacy state drives the tank meshes the mount switched off, so
+            // playing it as well would only animate something nobody can see.
             Animator mountedAnimator = mount != null ? mount.CurrentAnimator : null;
             if (mountedAnimator != null && mountedAnimator.gameObject.activeInHierarchy)
             {
