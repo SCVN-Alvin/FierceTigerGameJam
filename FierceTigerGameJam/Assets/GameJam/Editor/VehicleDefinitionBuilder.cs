@@ -164,6 +164,19 @@ namespace GameJam.EditorTools
                 // model parented here aims without anything driving it.
                 SetIfEmpty(serializedMount, "mountPoint", cannon);
                 SetIfEmpty(serializedMount, "fallbackModel", fallback != null ? fallback.gameObject : null);
+
+                // The old barrel is what the aim rotates, and it is switched off, so nothing on
+                // screen moves with it. Handing it to the mount is what lets the vehicle's own
+                // barrel copy the aim without the aim controller ever hearing about vehicles.
+                Transform barrel = FindDescendant(root.transform, BarrelObjectName);
+                if (barrel == null)
+                {
+                    Debug.LogWarning(
+                        $"{nameof(VehicleDefinitionBuilder)} found no \"{BarrelObjectName}\" inside "
+                        + $"{SlingshotPrefabPath}, so the mounted model's barrel will not follow the aim.");
+                }
+
+                SetIfEmpty(serializedMount, "barrelReference", barrel);
                 changed |= serializedMount.ApplyModifiedPropertiesWithoutUndo();
 
                 CannonShotPresenter presenter = root.GetComponentInChildren<CannonShotPresenter>(true);
