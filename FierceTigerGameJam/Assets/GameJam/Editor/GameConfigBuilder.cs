@@ -1,4 +1,6 @@
 #if UNITY_EDITOR
+// No `using System;` here on purpose: this file leans on the unqualified UnityEngine.Object, and
+// importing System would make that name ambiguous. The few System types below are qualified.
 using System.Collections.Generic;
 using System.IO;
 using GameJam.Config;
@@ -35,15 +37,37 @@ namespace GameJam.EditorTools
         private const int BaseClearReward = 250;
         private const int RewardStepPerMap = 50;
 
-        /// <summary>
-        /// What a vehicle costs to unlock, and what each level past the first costs. The starter
-        /// is deliberately cheaper to level than the tank is to buy, so the first few maps have
-        /// something to spend on rather than one purchase the player saves at for an hour.
-        /// </summary>
-        private const int VehicleUnlockPrice = 800;
+        private sealed class VehiclePrices
+        {
+            public int unlockPrice;
+            public int[] upgradePrices;
+        }
 
-        private static readonly int[] StarterVehicleUpgradePrices = { 300, 700 };
-        private static readonly int[] VehicleUpgradePrices = { 1200, 2000 };
+        /// <summary>
+        /// What each vehicle costs to unlock and what each level past the first costs, keyed by
+        /// id. A table rather than a rule because the three cannons are a designed spread and not
+        /// a series: A is free to own and cheap to level, so the first few maps have something to
+        /// spend on, and C is what the last of them pay for.
+        /// </summary>
+        private static readonly Dictionary<string, VehiclePrices> VehiclePriceTable =
+            new Dictionary<string, VehiclePrices>(System.StringComparer.Ordinal)
+            {
+                { "cannon_a", new VehiclePrices { unlockPrice = 0, upgradePrices = new[] { 300, 700 } } },
+                { "cannon_b", new VehiclePrices { unlockPrice = 800, upgradePrices = new[] { 1200, 2000 } } },
+                { "cannon_c", new VehiclePrices { unlockPrice = 2000, upgradePrices = new[] { 2500, 4000 } } },
+            };
+
+        /// <summary>
+        /// For a vehicle added after the table above was written. Priced rather than free: an
+        /// unlisted row at zero would put it in the shop as a button that costs nothing, which
+        /// looks like a bug in the economy rather than a price nobody has set yet.
+        /// </summary>
+        private static readonly VehiclePrices UnlistedVehiclePrices =
+            new VehiclePrices { unlockPrice = 800, upgradePrices = new[] { 1200, 2000 } };
+
+        /// <summary>The same, for a starter: already owned, so the only honest unlock price is nothing.</summary>
+        private static readonly VehiclePrices UnlistedStarterPrices =
+            new VehiclePrices { unlockPrice = 0, upgradePrices = new[] { 300, 700 } };
 
         private const int DefaultBulletPickLimit = 10;
         private const float DefaultRequiredClearPercent = 0.8f;
@@ -229,13 +253,23 @@ namespace GameJam.EditorTools
         /// the starter out entirely, a free row here is harmless and says what it means: the
         /// starter is always owned, so the shop never offers the row anyway, and a reader of the
         /// asset can see there is no hidden price on it.
+        ///
+        /// Prices come from <see cref="VehiclePriceTable"/> rather than from a rule, and rows for
+        /// vehicles that no longer exist are dropped first.
         /// </summary>
         private static void FillVehiclePurchasePrices(
             PurchaseVehicleConfig purchase,
             List<VehicleDefinition> vehicles,
             VehicleDefinition starter)
         {
-            if (purchase == null || !IsEmptyArray(purchase, "entries"))
+            if (purchase == null)
+            {
+                return;
+            }
+
+            RemoveUnknownVehicleRows(purchase, vehicles);
+
+            if (!IsEmptyArray(purchase, "entries"))
             {
                 return;
             }
@@ -248,7 +282,8 @@ namespace GameJam.EditorTools
             {
                 SerializedProperty entry = entries.GetArrayElementAtIndex(i);
                 entry.FindPropertyRelative("vehicleId").stringValue = vehicles[i].Id;
-                entry.FindPropertyRelative("goldPrice").intValue = vehicles[i] == starter ? 0 : VehicleUnlockPrice;
+                entry.FindPropertyRelative("goldPrice").intValue =
+                    ResolveVehiclePrices(vehicles[i], starter).unlockPrice;
             }
 
             serialized.ApplyModifiedPropertiesWithoutUndo();
@@ -260,13 +295,23 @@ namespace GameJam.EditorTools
         /// authored with two levels never gets a third one priced that it could not deliver. The
         /// starter is on its own cheaper ladder: it is what the player can afford to improve
         /// before they can afford to replace it.
+        ///
+        /// Prices come from <see cref="VehiclePriceTable"/> rather than from a rule, and rows for
+        /// vehicles that no longer exist are dropped first.
         /// </summary>
         private static void FillVehicleUpgradePrices(
             UpgradeVehicleConfig upgrade,
             List<VehicleDefinition> vehicles,
             VehicleDefinition starter)
         {
-            if (upgrade == null || !IsEmptyArray(upgrade, "entries"))
+            if (upgrade == null)
+            {
+                return;
+            }
+
+            RemoveUnknownVehicleRows(upgrade, vehicles);
+
+            if (!IsEmptyArray(upgrade, "entries"))
             {
                 return;
             }
@@ -280,7 +325,7 @@ namespace GameJam.EditorTools
                 SerializedProperty entry = entries.GetArrayElementAtIndex(i);
                 entry.FindPropertyRelative("vehicleId").stringValue = vehicles[i].Id;
 
-                int[] prices = vehicles[i] == starter ? StarterVehicleUpgradePrices : VehicleUpgradePrices;
+                int[] prices = ResolveVehiclePrices(vehicles[i], starter).upgradePrices;
 
                 SerializedProperty levels = entry.FindPropertyRelative("levels");
                 int upgradeCount = Mathf.Clamp(vehicles[i].LevelCount - 1, 0, prices.Length);
@@ -501,6 +546,75 @@ namespace GameJam.EditorTools
         private static string PassRewardId(string mapId) => $"pass_map_{mapId}";
 
         private static string ClearRewardId(string mapId) => $"clear_map_{mapId}";
+
+        private static VehiclePrices ResolveVehiclePrices(VehicleDefinition vehicle, VehicleDefinition starter)
+        {
+            if (vehicle != null && VehiclePriceTable.TryGetValue(vehicle.Id, out VehiclePrices prices))
+            {
+                return prices;
+            }
+
+            return vehicle == starter ? UnlistedStarterPrices : UnlistedVehiclePrices;
+        }
+
+        /// <summary>
+        /// Drops price rows naming a vehicle that no longer exists. They are dead weight to the
+        /// game - nothing looks them up - but they are read as the catalogue by anyone opening
+        /// the asset, and a retired vehicle still priced there is how a deleted one gets put back.
+        ///
+        /// Also what makes the fills below run again after a catalogue change: a table left
+        /// holding only stale rows is emptied here, and an empty table is the one thing they will
+        /// write into.
+        /// </summary>
+        private static void RemoveUnknownVehicleRows(Object config, List<VehicleDefinition> vehicles)
+        {
+            SerializedObject serialized = new SerializedObject(config);
+            SerializedProperty entries = serialized.FindProperty("entries");
+            if (entries == null || !entries.isArray)
+            {
+                return;
+            }
+
+            bool removedAny = false;
+            for (int i = entries.arraySize - 1; i >= 0; i--)
+            {
+                SerializedProperty vehicleId = entries.GetArrayElementAtIndex(i).FindPropertyRelative("vehicleId");
+                if (vehicleId != null && IsKnownVehicle(vehicleId.stringValue, vehicles))
+                {
+                    continue;
+                }
+
+                entries.DeleteArrayElementAtIndex(i);
+                removedAny = true;
+            }
+
+            if (!removedAny)
+            {
+                return;
+            }
+
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(config);
+            Debug.Log($"{nameof(GameConfigBuilder)} removed price rows for vehicles that no longer exist from {config.name}.");
+        }
+
+        private static bool IsKnownVehicle(string vehicleId, List<VehicleDefinition> vehicles)
+        {
+            if (string.IsNullOrEmpty(vehicleId))
+            {
+                return false;
+            }
+
+            for (int i = 0; i < vehicles.Count; i++)
+            {
+                if (vehicles[i] != null && string.Equals(vehicles[i].Id, vehicleId, System.StringComparison.Ordinal))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
 
         /// <summary>
         /// True when the asset has no entries yet. Values are only written into an empty table, so
