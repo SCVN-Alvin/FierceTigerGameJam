@@ -10,22 +10,22 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 96e018d2333f94d479286df884654b5e, type: 3}
-  m_Name: vehicle_truck
+  m_Name: cannon_a
   m_EditorClassIdentifier: Assembly-CSharp::GameJam.Gameplay.Combat.VehicleDefinition
-  id: vehicle_truck
-  displayName: Truck
+  id: cannon_a
+  displayName: Cannon A
   description: The one you start with. Cheap to improve, and improving it is never
     wasted.
   levels:
-  - displayName: Truck I
+  - displayName: Cannon A I
     damageMultiplier: 1
-    modelPrefab: {fileID: 0}
+    modelPrefab: {fileID: 7373504855224416167, guid: 1ea0c6b949d1fc2449703a8220969a03, type: 3}
     icon: {fileID: 0}
-  - displayName: Truck II
+  - displayName: Cannon A II
     damageMultiplier: 1.2
-    modelPrefab: {fileID: 0}
+    modelPrefab: {fileID: 1520581470146249749, guid: 2a300598e2ac2094eba477c45439edae, type: 3}
     icon: {fileID: 0}
-  - displayName: Truck III
+  - displayName: Cannon A III
     damageMultiplier: 1.4
-    modelPrefab: {fileID: 0}
+    modelPrefab: {fileID: 3098741634877589933, guid: c5fa0897715a6de43817b5a50493a28b, type: 3}
     icon: {fileID: 0}

@@ -27,6 +27,7 @@ MonoBehaviour:
       blockDamage: 0
       wallDamage: 0
     splashShare: 0.3
+    icon: {fileID: 0}
   - displayName: Rock II
     damage:
     - materialId: glass
@@ -39,3 +40,5 @@ MonoBehaviour:
       blockDamage: 0
       wallDamage: 0
     splashShare: 0.35
+    icon: {fileID: 0}
+  projectilePrefab: {fileID: 455035435007290810, guid: fb73a67bebcac4cb883fbeef97df3500, type: 3}

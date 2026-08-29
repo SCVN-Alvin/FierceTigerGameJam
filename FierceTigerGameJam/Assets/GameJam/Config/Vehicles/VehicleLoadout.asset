@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: VehicleLoadout
   m_EditorClassIdentifier: Assembly-CSharp::GameJam.Gameplay.Combat.VehicleLoadout
   vehicles:
-  - {fileID: 11400000, guid: a17603b65ae694c51b9f49bcdcbedc9b, type: 2}
-  - {fileID: 11400000, guid: 7004a415202af46af98af327e769c9c2, type: 2}
-  defaultVehicle: {fileID: 11400000, guid: a17603b65ae694c51b9f49bcdcbedc9b, type: 2}
+  - {fileID: 11400000, guid: 570c8163ec28840cea459743aa1a0b53, type: 2}
+  - {fileID: 11400000, guid: cb95be2ad83414a549574eda2afed55f, type: 2}
+  - {fileID: 11400000, guid: 27edec2ea88d54da5a6860887359c9d8, type: 2}
+  defaultVehicle: {fileID: 11400000, guid: 570c8163ec28840cea459743aa1a0b53, type: 2}

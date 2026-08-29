@@ -13,15 +13,21 @@ MonoBehaviour:
   m_Name: UpgradeVehicleConfig
   m_EditorClassIdentifier: Assembly-CSharp::GameJam.Config.UpgradeVehicleConfig
   entries:
-  - vehicleId: vehicle_tank
-    levels:
-    - targetLevel: 2
-      goldPrice: 1200
-    - targetLevel: 3
-      goldPrice: 2000
-  - vehicleId: vehicle_truck
+  - vehicleId: cannon_a
     levels:
     - targetLevel: 2
       goldPrice: 300
     - targetLevel: 3
       goldPrice: 700
+  - vehicleId: cannon_b
+    levels:
+    - targetLevel: 2
+      goldPrice: 1200
+    - targetLevel: 3
+      goldPrice: 2000
+  - vehicleId: cannon_c
+    levels:
+    - targetLevel: 2
+      goldPrice: 2500
+    - targetLevel: 3
+      goldPrice: 4000

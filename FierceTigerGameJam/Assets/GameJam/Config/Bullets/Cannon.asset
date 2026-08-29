@@ -27,6 +27,7 @@ MonoBehaviour:
       blockDamage: 4
       wallDamage: 2
     splashShare: 0.4
+    icon: {fileID: 0}
   - displayName: Cannon II
     damage:
     - materialId: glass
@@ -39,3 +40,5 @@ MonoBehaviour:
       blockDamage: 7
       wallDamage: 5
     splashShare: 0.45
+    icon: {fileID: 0}
+  projectilePrefab: {fileID: 455035435007290810, guid: fca73c2f5172c4e88bbb9c9863d2539c, type: 3}

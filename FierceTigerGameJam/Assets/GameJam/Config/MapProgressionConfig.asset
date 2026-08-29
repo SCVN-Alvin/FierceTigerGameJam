@@ -28,3 +28,8 @@ MonoBehaviour:
     passMapRewardId: pass_map_3
     clearMapRewardId: clear_map_3
     bulletPickLimit: 30
+  - mapId: tutorial
+    requiredClearPercent: 0.8
+    passMapRewardId: 
+    clearMapRewardId: 
+    bulletPickLimit: 3

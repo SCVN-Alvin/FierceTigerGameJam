@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 96e018d2333f94d479286df884654b5e, type: 3}
+  m_Name: cannon_c
+  m_EditorClassIdentifier: Assembly-CSharp::GameJam.Gameplay.Combat.VehicleDefinition
+  id: cannon_c
+  displayName: Cannon C
+  description: The last thing you buy, and the last thing the wall sees.
+  levels:
+  - displayName: Cannon C I
+    damageMultiplier: 1.5
+    modelPrefab: {fileID: 3417500241488856357, guid: 9914f0c69ac707e4c93c9092a25d05e2, type: 3}
+    icon: {fileID: 0}
+  - displayName: Cannon C II
+    damageMultiplier: 2
+    modelPrefab: {fileID: 4837391762139258429, guid: a2bebbabece97d947a7b9645a11b3266, type: 3}
+    icon: {fileID: 0}
+  - displayName: Cannon C III
+    damageMultiplier: 2.6
+    modelPrefab: {fileID: 6989382899717065268, guid: 1411308c2f0e1a14b9e5a94eabc681fa, type: 3}
+    icon: {fileID: 0}

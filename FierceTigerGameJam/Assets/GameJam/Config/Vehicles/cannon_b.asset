@@ -10,21 +10,21 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 96e018d2333f94d479286df884654b5e, type: 3}
-  m_Name: vehicle_tank
+  m_Name: cannon_b
   m_EditorClassIdentifier: Assembly-CSharp::GameJam.Gameplay.Combat.VehicleDefinition
-  id: vehicle_tank
-  displayName: Tank
-  description: Starts harder than a truck ever finishes, and goes twice as far.
+  id: cannon_b
+  displayName: Cannon B
+  description: Starts harder than A ever finishes, and keeps going.
   levels:
-  - displayName: Tank I
+  - displayName: Cannon B I
     damageMultiplier: 1.3
-    modelPrefab: {fileID: 0}
+    modelPrefab: {fileID: 8472507186579474081, guid: 8e087ea402f3c8b4588e584648dce50e, type: 3}
     icon: {fileID: 0}
-  - displayName: Tank II
+  - displayName: Cannon B II
     damageMultiplier: 1.6
-    modelPrefab: {fileID: 0}
+    modelPrefab: {fileID: 5014281224842738301, guid: 5c47dcc254c5bf64cbfdb95ca0b3bc04, type: 3}
     icon: {fileID: 0}
-  - displayName: Tank III
+  - displayName: Cannon B III
     damageMultiplier: 2
-    modelPrefab: {fileID: 0}
+    modelPrefab: {fileID: 3160560724057316555, guid: 13b1cd6fb588bfd4d95202ede9116a5a, type: 3}
     icon: {fileID: 0}

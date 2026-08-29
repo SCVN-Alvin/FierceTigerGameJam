@@ -13,7 +13,9 @@ MonoBehaviour:
   m_Name: PurchaseVehicleConfig
   m_EditorClassIdentifier: Assembly-CSharp::GameJam.Config.PurchaseVehicleConfig
   entries:
-  - vehicleId: vehicle_tank
-    goldPrice: 800
-  - vehicleId: vehicle_truck
+  - vehicleId: cannon_a
     goldPrice: 0
+  - vehicleId: cannon_b
+    goldPrice: 800
+  - vehicleId: cannon_c
+    goldPrice: 2000
