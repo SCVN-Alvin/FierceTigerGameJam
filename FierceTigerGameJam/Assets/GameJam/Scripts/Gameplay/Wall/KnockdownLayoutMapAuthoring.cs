@@ -227,8 +227,129 @@ namespace GameJam.Gameplay.Wall
             }
         }
 
+        /// <summary>
+        /// Loads a structure that Tools/Smashdown/Bake Map Prefabs built ahead of time. The
+        /// prefab is the generated root as the JSON build left it - blocks placed, walls welded,
+        /// manifests serialized - so what remains is exactly the run-time half of a normal build:
+        /// physics on every block, walls listening to their bodies, and the structure centre.
+        /// </summary>
+        private void BuildFromPrefab(GameObject mapPrefab)
+        {
+            Transform parent = ResolveStructureRoot();
+            if (parent == null)
+            {
+                Debug.LogError($"{nameof(KnockdownLayoutMapAuthoring)} could not resolve a blocks root.", this);
+                return;
+            }
+
+            Transform generatedRoot = EnsureGeneratedChild(parent, GeneratedBlocksRootName);
+            ClearGeneratedBlocks(generatedRoot);
+            ReleaseBuiltMeshes();
+
+            // The progress tracker counts the generated root's DIRECT children, so the baked
+            // blocks are moved out of their wrapper and onto the root itself - the same shape a
+            // JSON build leaves behind. The wrapper's registry moves with them onto the root.
+            if (!generatedRoot.TryGetComponent(out StructureRegistry _))
+            {
+                generatedRoot.gameObject.AddComponent<StructureRegistry>();
+            }
+
+            GameObject instance = Instantiate(mapPrefab, generatedRoot);
+            instance.transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
+            instance.transform.localScale = Vector3.one;
+
+            while (instance.transform.childCount > 0)
+            {
+                instance.transform.GetChild(0).SetParent(generatedRoot, false);
+            }
+
+            if (Application.isPlaying)
+            {
+                Destroy(instance);
+            }
+            else
+            {
+                DestroyImmediate(instance);
+            }
+
+            builtWalls.Clear();
+            generatedRoot.GetComponentsInChildren(true, builtWalls);
+            for (int i = 0; i < builtWalls.Count; i++)
+            {
+                builtWalls[i].AttachPhysicsSetup(physicsSetup);
+
+                MeshFilter wallMesh = builtWalls[i].GetComponent<MeshFilter>();
+                if (wallMesh != null && wallMesh.sharedMesh == null)
+                {
+                    Debug.LogError(
+                        $"Baked wall \"{builtWalls[i].name}\" has no mesh - the bake is stale or "
+                        + "broken. Re-run Tools/Smashdown/Bake Map Prefabs.",
+                        builtWalls[i]);
+                }
+            }
+
+            // The same count a JSON build reports: every authored block, with a wall worth the
+            // blocks it replaced rather than one.
+            int placedCount = 0;
+            KnockdownBlockAuthoring[] authored = generatedRoot.GetComponentsInChildren<KnockdownBlockAuthoring>(true);
+            for (int i = 0; i < authored.Length; i++)
+            {
+                BreakableWall wall = authored[i].GetComponent<BreakableWall>();
+                placedCount += wall != null ? wall.CellCount : 1;
+            }
+
+            PlacedBlockCount = placedCount;
+            GameJam.Diagnostics.RuntimeProfileLogger.Count("blocks_placed", placedCount);
+
+            if (physicsSetup != null)
+            {
+                physicsSetup.PrepareBlocks(generatedRoot);
+            }
+
+            SubscribeWalls();
+
+            if (createStructureCenter)
+            {
+                SetupStructureCenter(parent, ResolvePrefabCenterLocalPosition(parent, generatedRoot.gameObject));
+            }
+
+            Debug.Log(
+                $"Loaded baked map \"{mapPrefab.name}\" with {placedCount} block(s) under {generatedRoot.name}.",
+                this);
+        }
+
+        /// <summary>
+        /// The spinner pivot for a baked structure, read off its renderers since the block list
+        /// that a JSON build measures never existed here.
+        /// </summary>
+        private static Vector3 ResolvePrefabCenterLocalPosition(Transform parent, GameObject instance)
+        {
+            Renderer[] renderers = instance.GetComponentsInChildren<Renderer>(true);
+            if (renderers.Length == 0)
+            {
+                return Vector3.zero;
+            }
+
+            Bounds bounds = renderers[0].bounds;
+            for (int i = 1; i < renderers.Length; i++)
+            {
+                bounds.Encapsulate(renderers[i].bounds);
+            }
+
+            return parent.InverseTransformPoint(bounds.center);
+        }
+
         private void BuildMapInternal()
         {
+            // A map baked into a prefab skips parsing and per-block spawning entirely: the
+            // structure arrives in one instantiation with its walls' manifests already inside.
+            MapInfo selectedMap = mapSelection != null ? mapSelection.Selected : null;
+            if (selectedMap != null && selectedMap.MapPrefab != null)
+            {
+                BuildFromPrefab(selectedMap.MapPrefab);
+                return;
+            }
+
             if (!TryParseMap(out KnockdownMapDefinition map))
             {
                 return;

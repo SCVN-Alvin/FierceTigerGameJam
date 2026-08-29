@@ -16,9 +16,17 @@ namespace GameJam.Gameplay.Wall
         [Tooltip("Shown on the cleared screen. Left empty, the screen shows the banner and reward alone.")]
         [SerializeField] private Sprite clearedImage;
 
+        [Tooltip("Optional pre-built structure, baked from the JSON by Tools/Smashdown/Bake Map "
+                 + "Prefabs. When set, the map loads by instantiating this instead of parsing "
+                 + "and spawning block by block. Delete it (or re-bake) after editing the JSON.")]
+        [SerializeField] private GameObject mapPrefab;
+
         public string Id => id;
         public string DisplayName => string.IsNullOrEmpty(displayName) ? id : displayName;
         public TextAsset MapJson => mapJson;
+
+        /// <summary>The baked structure, or null to build from the JSON at load.</summary>
+        public GameObject MapPrefab => mapPrefab;
 
         /// <summary>
         /// The picture of this map on the cleared screen. Optional on purpose: no map has art yet,

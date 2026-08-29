@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using GameJam.Gameplay;
 using UnityEngine;
@@ -21,6 +22,7 @@ namespace GameJam.Gameplay.Wall
         /// pose is stored relative to the wall itself, so the blocks appear wherever the wall has
         /// got to rather than snapping back to where it was built.
         /// </summary>
+        [Serializable]
         public struct Cell
         {
             public GameObject Prefab;
@@ -47,7 +49,9 @@ namespace GameJam.Gameplay.Wall
                  + "makes a wall come apart when it lands after being toppled.")]
         [SerializeField] private float damagePerImpactSpeed = 1.5f;
 
-        private readonly List<Cell> cells = new List<Cell>();
+        // Serialized so a wall baked into a map prefab keeps its manifest: without it, a baked
+        // wall would break up into nothing. Populated by Initialize on the build path.
+        [SerializeField, HideInInspector] private List<Cell> cells = new List<Cell>();
         private WallBlockPhysicsSetup physicsSetup;
         private KnockdownBlock body;
         private float remainingHitPoints;
@@ -72,6 +76,16 @@ namespace GameJam.Gameplay.Wall
             materialId = wallMaterialId;
             maxHitPoints = Mathf.Max(0.01f, hitPoints);
             remainingHitPoints = maxHitPoints;
+        }
+
+        /// <summary>
+        /// Hands a wall from a baked map prefab the physics setup it could not serialize. The
+        /// manifest, material and hit points are already in the prefab; this is the one runtime
+        /// reference that has to arrive from the scene.
+        /// </summary>
+        public void AttachPhysicsSetup(WallBlockPhysicsSetup setup)
+        {
+            physicsSetup = setup;
         }
 
         private void Awake()

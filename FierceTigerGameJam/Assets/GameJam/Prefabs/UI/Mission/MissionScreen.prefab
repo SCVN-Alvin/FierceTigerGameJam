@@ -58,20 +58,20 @@ MonoBehaviour:
   missions:
   - locked: 0
     slotMapIds:
+    - map_001_hollow_brick_hut
+    - map_002_brick_courtyard_tower
+    - map_003_three_storey_brick_house
+    - map_004_glass_belt_warehouse
+    - map_005_two_storey_glass_house
+    - map_006_large_glass_school
+    - map_007_concrete_frame_school
+    - 2
+    - map_009_hollow_concrete_tower
+  - locked: 1
+    slotMapIds:
     - map_004_level_01
     - map_005_level_02
     - map_005_two_storey_hollow_courtyard
-    - 
-    - 
-    - 
-    - 2
-    - 
-    - 
-  - locked: 1
-    slotMapIds:
-    - 
-    - 
-    - 
     - 
     - 
     - 
