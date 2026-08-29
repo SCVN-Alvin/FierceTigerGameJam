@@ -82,9 +82,9 @@ namespace GameJam.UI
             BulletLoadout catalogue = ResolveLoadout();
             if (catalogue != null)
             {
-                // The garage does not choose ammunition - the pre-run pick screen does - but it
-                // is where the choice is shown, as the one row at full strength and the item on
-                // the preview table. So it follows a choice made somewhere else.
+                // The garage is where the choice is shown, as the one row carrying the EQUIPPED
+                // chip and the item on the preview table, so it has to follow a choice made
+                // anywhere else - the pre-run pick screen picks ammunition too.
                 catalogue.SelectionChanged += HandleSelectionChanged;
             }
 
@@ -277,10 +277,10 @@ namespace GameJam.UI
 
             if (row.Item != null)
             {
-                // Equipped is a reading, not a control: the garage never calls Select, so exactly
-                // one row per tab is at full strength and which one it is was decided on the
-                // pre-run pick screen. Selected always resolves to something, falling back to the
-                // starter, so no tab is ever left with every row dimmed.
+                // Equipped is a reading, not a control: this only says which row is the loaded
+                // one. Selected always resolves to something, falling back to the starter, so
+                // exactly one row per tab carries the EQUIPPED chip and the rest carry SELECT.
+                // The chip is the whole of the cue now - the other rows are no longer dimmed.
                 string buyCaption = ResolveBuyCaption(row.Bullet, unlocked, level, maxLevel, out bool buyInteractable);
                 row.Item.Bind(
                     row.Bullet,

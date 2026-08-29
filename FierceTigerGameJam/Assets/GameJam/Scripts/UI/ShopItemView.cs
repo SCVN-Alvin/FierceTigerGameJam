@@ -14,9 +14,10 @@ namespace GameJam.UI
     /// same shape in every state. There is no room beside a price for a second control, which is
     /// why they are stacked rather than set side by side.
     ///
-    /// Being equipped is said twice: by the chip, and by the row standing at full strength while
-    /// the others are knocked back. Two cues rather than one, because the alpha alone is a
-    /// comparison the player has to make across rows before it means anything.
+    /// Being equipped is said once, by the chip. The row used to also be drawn at full strength
+    /// while the others were knocked back, and that second cue is gone: an alpha is a comparison
+    /// the player has to make across rows before it means anything, and a dimmed row that is
+    /// still fully buyable reads as disabled. The chip and the SELECT button say it outright.
     ///
     /// The shop decides every word and every state; this only knows where to put them. That is
     /// what lets the ammunition row and the vehicle row be the same picture: the two subclasses
@@ -44,7 +45,10 @@ namespace GameJam.UI
             /// <summary>How many pips the strip has: the highest level that can be bought.</summary>
             public readonly int MaxLevel;
 
-            /// <summary>The equipped row is drawn at full strength and every other one is dimmed.</summary>
+            /// <summary>
+            /// Which of the two stacked controls the row shows: the EQUIPPED chip on the one
+            /// item that is mounted, SELECT on the rest. Nothing else in the row changes with it.
+            /// </summary>
             public readonly bool Equipped;
 
             /// <summary>What the one button says: a price, "MAX", or "N/A".</summary>
@@ -97,13 +101,6 @@ namespace GameJam.UI
         [Tooltip("Shown on the equipped row where Select is on the others. A chip, not a button: "
                  + "there is nothing to do to the thing already mounted.")]
         [SerializeField] private GameObject equippedBadge;
-
-        [Tooltip("On the row root. The equipped row is drawn at full strength and the rest are "
-                 + "knocked back; interactable is never touched, a dimmed row can still be bought.")]
-        [SerializeField] private CanvasGroup group;
-
-        [SerializeField, Range(0f, 1f)] private float equippedAlpha = 1f;
-        [SerializeField, Range(0f, 1f)] private float otherAlpha = 0.5f;
 
         /// <summary>The shop wires the click, since what it does depends on what is owned.</summary>
         public Button BuyButton => buyButton;
@@ -182,13 +179,6 @@ namespace GameJam.UI
                 // row is locked, since there is nothing to equip and nothing equipped to say.
                 equippedBadge.SetActive(unlocked && state.Equipped);
             }
-
-            if (group != null)
-            {
-                // Alpha only. Dimming a row must not stop it being bought from: the player
-                // upgrading the vehicle they are saving toward is the normal case.
-                group.alpha = state.Equipped ? equippedAlpha : otherAlpha;
-            }
         }
 
         /// <summary>
@@ -239,24 +229,16 @@ namespace GameJam.UI
                 levels = GetComponentInChildren<UpgradeLevelBarView>(true);
             }
 
-            if (group == null)
-            {
-                // On the row itself: dimming a child would leave the row's own frame lit.
-                group = GetComponent<CanvasGroup>();
-            }
-
             if (selectButton == null)
             {
-                // By name, so the one on Buy is never picked up: a search by type alone would
-                // find whichever button came first in the hierarchy.
+                // The child named Select and nothing else. By name, so the one on Buy is never
+                // picked up - a search by type alone would find whichever button came first in
+                // the hierarchy - and with no fallback to a Button on the root, because a row is
+                // never itself a button any more. A row whose Select child is missing is left
+                // with no equip control, which is a visible gap; falling back to the root would
+                // instead make the whole row an equip target again and, since Bind hides whatever
+                // selectButton names, make the equipped row hide itself.
                 selectButton = FindChild<Button>("Select");
-            }
-
-            if (selectButton == null)
-            {
-                // The legacy shape, kept only for a row authored before SELECT was its own
-                // button: back then the row root was the button and the whole row equipped.
-                selectButton = GetComponent<Button>();
             }
 
             if (equippedBadge == null)
