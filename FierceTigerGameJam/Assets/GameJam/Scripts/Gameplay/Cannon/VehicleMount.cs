@@ -121,7 +121,11 @@ namespace GameJam.Gameplay.Cannon
             current = Instantiate(prefab, parent);
             current.transform.localPosition = Vector3.zero;
             current.transform.localRotation = Quaternion.identity;
-            current.transform.localScale = modelLocalScale;
+            // Two scales, deliberately: the fitted one belongs to the model and comes from the
+            // config the fitting tool writes, while modelLocalScale is the mount's own hand
+            // tweak - a preview rig that wants everything half size sets it once and every
+            // vehicle stays in proportion.
+            current.transform.localScale = modelLocalScale * vehicle.ResolveModelScale(level);
 
             currentVehicle = vehicle;
             currentLevel = level;
