@@ -325,10 +325,6 @@ namespace GameJam.EditorTools
                     equipped.gameObject.SetActive(false);
                 }
 
-                // On the root: dimming a child would leave the row's own frame lit. interactable
-                // is left alone on purpose, so a dimmed row can still be bought from and tapped.
-                UiBuilder.Ensure<CanvasGroup>(root);
-
                 ShopItemView item = vehicle
                     ? (ShopItemView)UiBuilder.Ensure<VehicleTypeViewItem>(root)
                     : UiBuilder.Ensure<BulletTypeViewItem>(root);
@@ -351,7 +347,6 @@ namespace GameJam.EditorTools
 
                 UiBuilder.SetIfEmpty(serialized, "selectButton", select);
                 UiBuilder.SetIfEmpty(serialized, "equippedBadge", equipped.gameObject);
-                UiBuilder.SetIfEmpty(serialized, "group", root.GetComponent<CanvasGroup>());
                 serialized.ApplyModifiedPropertiesWithoutUndo();
 
                 // And the Button that reference named goes with it. It carried no art of its own
@@ -363,6 +358,19 @@ namespace GameJam.EditorTools
                 if (rowButton != null)
                 {
                     Object.DestroyImmediate(rowButton);
+                }
+
+                // The dim goes the same way. Being equipped was said twice - by the chip and by
+                // every other row being knocked back - and the alpha was the weaker half: it is
+                // a comparison across rows, and a row at half strength that can still be bought
+                // from reads as disabled. Removed rather than left at alpha 1, so there is no
+                // component sitting on the row inviting the cue back, and so a project built
+                // before this run is cleaned by re-running the tool. Nothing else in the project
+                // reads a CanvasGroup on these rows; the list does not fade them.
+                CanvasGroup rowGroup = root.GetComponent<CanvasGroup>();
+                if (rowGroup != null)
+                {
+                    Object.DestroyImmediate(rowGroup, true);
                 }
             });
         }

@@ -302,9 +302,10 @@ namespace GameJam.UI
 
             if (row.Item != null)
             {
-                // Equipped is a reading here, not a control. The garage has no Select: a vehicle
-                // is equipped by being bought, and Selected always resolves to something, so
-                // exactly one row is at full strength and the rest are knocked back.
+                // Equipped is a reading here, not a control: this only says which row is the
+                // mounted one, and Selected always resolves to something, so exactly one row per
+                // list carries the EQUIPPED chip and the rest carry SELECT. The chip is the whole
+                // of the cue now - the rows are no longer dimmed against the equipped one.
                 string buyCaption = ResolveBuyCaption(row.Vehicle, unlocked, level, maxLevel, out bool buyInteractable);
                 row.Item.Bind(
                     row.Vehicle,
