@@ -33,6 +33,11 @@ namespace GameJam.Gameplay.Combat
                      + "level's model is used, so one model per vehicle is enough to ship.")]
             public GameObject modelPrefab;
 
+            [Tooltip("Uniform scale applied to modelPrefab when mounted. 0 = not fitted yet, treated as 1. "
+                     + "Written by Tools > Smashdown > Fit Vehicle Models; hand-tune after fitting if a model "
+                     + "still reads wrong.")]
+            [Min(0f)] public float modelScale;
+
             [Tooltip("Optional. Shown in the shop row / preview. Falls back like modelPrefab.")]
             public Sprite icon;
         }
@@ -93,6 +98,38 @@ namespace GameJam.Gameplay.Combat
             }
 
             return null;
+        }
+
+        /// <summary>
+        /// How much the mounted model is scaled by at a level. The pack art is authored several
+        /// times the size of the cannon it stands on, so a level without a fitted number would
+        /// put a building-sized cannon on the playfield; 0 means "nobody has fitted this yet"
+        /// and reports 1, the model at its authored size, which is at least honest.
+        ///
+        /// Deviation from the brief, which reads the clamped level's own <c>modelScale</c> and
+        /// stops there: the scale is taken from the same level <see cref="ResolveModelPrefab"/>
+        /// took the model from. A level with an empty model slot shows the nearest lower level's
+        /// model, and that model's fitted scale is the only one that means anything for it -
+        /// reading the empty level's own 0 would draw a shipped-with-one-model vehicle at full
+        /// pack size from level 2 up.
+        /// </summary>
+        public float ResolveModelScale(int level)
+        {
+            if (levels.Length == 0)
+            {
+                return 1f;
+            }
+
+            int index = Mathf.Clamp(level - 1, 0, levels.Length - 1);
+            for (int i = index; i >= 0; i--)
+            {
+                if (levels[i] != null && levels[i].modelPrefab != null)
+                {
+                    return levels[i].modelScale > 0f ? levels[i].modelScale : 1f;
+                }
+            }
+
+            return 1f;
         }
 
         /// <summary>Same fallback rule for icons.</summary>

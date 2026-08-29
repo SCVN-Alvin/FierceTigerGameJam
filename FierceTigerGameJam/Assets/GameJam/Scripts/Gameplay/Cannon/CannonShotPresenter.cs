@@ -15,11 +15,12 @@ namespace GameJam.Gameplay.Cannon
                  + "plays the pack's shot; without one the legacy cannon animation still fires.")]
         [SerializeField] private VehicleMount mount;
 
-        [Tooltip("State name inside the pack's Cannon.controller. Their spelling, not ours.")]
-        [SerializeField] private string mountedShotState = "Armature|Shoting";
+        [Tooltip("Trigger inside VehicleCannon.controller that takes the mounted model from its "
+                 + "idle rest pose through one pass of the pack's firing clip.")]
+        [SerializeField] private string mountedShotTrigger = "Shot";
 
-        private string hashedShotState;
-        private int mountedShotStateHash;
+        private string hashedShotTrigger;
+        private int mountedShotTriggerHash;
 
         public void PlayShot()
         {
@@ -29,7 +30,10 @@ namespace GameJam.Gameplay.Cannon
             Animator mountedAnimator = mount != null ? mount.CurrentAnimator : null;
             if (mountedAnimator != null && mountedAnimator.gameObject.activeInHierarchy)
             {
-                mountedAnimator.Play(MountedShotStateHash, 0, 0f);
+                // A trigger rather than a Play: our controller idles by default and returns to
+                // idle after one pass, so the shot is a request the state machine answers once
+                // instead of a state somebody has to remember to leave.
+                mountedAnimator.SetTrigger(MountedShotTriggerHash);
             }
             else if (_cannonAnimator != null && _cannonAnimator.gameObject.activeInHierarchy)
             {
@@ -50,6 +54,14 @@ namespace GameJam.Gameplay.Cannon
 
         public void ResetPresentation()
         {
+            // A trigger set on the frame a run ended survives into the next one and fires the
+            // cannon at a player who has not touched anything yet, so it is cleared here.
+            Animator mountedAnimator = mount != null ? mount.CurrentAnimator : null;
+            if (mountedAnimator != null && mountedAnimator.gameObject.activeInHierarchy)
+            {
+                mountedAnimator.ResetTrigger(MountedShotTriggerHash);
+            }
+
             Stop(_smokeBurstParticle);
             if (_smokeParticleSystems == null)
             {
@@ -63,22 +75,22 @@ namespace GameJam.Gameplay.Cannon
         }
 
         /// <summary>
-        /// Hashed once per distinct state name rather than once per shot: the name is a
+        /// Hashed once per distinct trigger name rather than once per shot: the name is a
         /// serialized field somebody can retype in the inspector between shots, so it cannot be a
         /// static readonly, and hashing a string on every trigger pull is work the shot does not
         /// need.
         /// </summary>
-        private int MountedShotStateHash
+        private int MountedShotTriggerHash
         {
             get
             {
-                if (!string.Equals(hashedShotState, mountedShotState, StringComparison.Ordinal))
+                if (!string.Equals(hashedShotTrigger, mountedShotTrigger, StringComparison.Ordinal))
                 {
-                    hashedShotState = mountedShotState;
-                    mountedShotStateHash = Animator.StringToHash(mountedShotState);
+                    hashedShotTrigger = mountedShotTrigger;
+                    mountedShotTriggerHash = Animator.StringToHash(mountedShotTrigger);
                 }
 
-                return mountedShotStateHash;
+                return mountedShotTriggerHash;
             }
         }
 

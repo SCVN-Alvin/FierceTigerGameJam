@@ -3,6 +3,7 @@ using System.IO;
 using GameJam.Gameplay.Cannon;
 using GameJam.Gameplay.Combat;
 using UnityEditor;
+using UnityEditor.Animations;
 using UnityEngine;
 
 namespace GameJam.EditorTools
@@ -32,6 +33,26 @@ namespace GameJam.EditorTools
         private const string PackFolder =
             "Assets/Hyper-Casual Cannon Pack \u2013 Animated Turrets (URP + Built-in)/Cannon_Pack_URP/Prefaps_URP";
 
+        /// <summary>The pack's FBXs, alongside their own looping controller. Same escaped dash.</summary>
+        private const string PackModelFolder =
+            "Assets/Hyper-Casual Cannon Pack \u2013 Animated Turrets (URP + Built-in)/Models";
+
+        private const string VehicleAnimationFolder = "Assets/GameJam/Animations/Vehicles";
+
+        private const string MountedControllerPath = VehicleAnimationFolder + "/VehicleCannon.controller";
+
+        /// <summary>
+        /// The A family's FBX. Every model in the pack carries the same armature under the same
+        /// names, so one clip drives all nine - and taking it from one place means a re-import of
+        /// the B or C models cannot quietly change what the others play.
+        /// </summary>
+        private const string ShotClipSourcePath = PackModelFolder + "/Cannon_A.fbx";
+
+        /// <summary>The pack's spelling of its only take. Theirs, not ours.</summary>
+        private const string ShotClipName = "Armature|Shoting";
+
+        private const string ShotTriggerName = "Shot";
+
         private const string SlingshotPrefabPath =
             "Assets/GameJam/Imported/LunaSmashdown/Prefabs/SmashFest/Slingshot.prefab";
 
@@ -40,6 +61,22 @@ namespace GameJam.EditorTools
 
         /// <summary>The model the cannon wore before the pack, kept as the mount's fallback.</summary>
         private const string FallbackModelName = "CannonTank_Default_Red";
+
+        /// <summary>
+        /// The old barrel. Switched off since the pack arrived, but it is still what the aim
+        /// rotates and still the size the game was laid out around, so it is both the yardstick
+        /// the models are fitted to and the transform the mounted barrel follows.
+        /// </summary>
+        private const string BarrelObjectName = "CannonA";
+
+        /// <summary>
+        /// A fitted model may be a twentieth of the pack's size or twice it; anything outside
+        /// that is a measurement gone wrong (an empty prefab, a stray renderer a kilometre away)
+        /// and a clamp keeps it from writing a scale that makes the vehicle invisible.
+        /// </summary>
+        private const float MinFittedScale = 0.05f;
+
+        private const float MaxFittedScale = 2f;
 
         /// <summary>
         /// Vehicles the catalogue no longer contains. Listed rather than simply deleted so the
@@ -86,6 +123,8 @@ namespace GameJam.EditorTools
                     Level("Cannon C III", 2.60f, "Cannon_C_D_URP"),
                 });
 
+            EnsureMountedController();
+
             CreateLoadout(cannonA, cannonB, cannonC);
 
             // Only once the loadout points elsewhere: deleting an asset something still
@@ -110,6 +149,11 @@ namespace GameJam.EditorTools
         public static void WireVehicleMount()
         {
             VehicleLoadout loadout = AssetDatabase.LoadAssetAtPath<VehicleLoadout>($"{ConfigFolder}/VehicleLoadout.asset");
+
+            // Before the prefab contents are opened, not inside them: this writes and saves an
+            // asset, and doing that while an editable copy of a prefab is loaded is asking the
+            // asset database to refresh underneath it.
+            RuntimeAnimatorController mountedController = EnsureMountedController();
 
             GameObject root = PrefabUtility.LoadPrefabContents(SlingshotPrefabPath);
             if (root == null)
@@ -148,6 +192,24 @@ namespace GameJam.EditorTools
                 // model parented here aims without anything driving it.
                 SetIfEmpty(serializedMount, "mountPoint", cannon);
                 SetIfEmpty(serializedMount, "fallbackModel", fallback != null ? fallback.gameObject : null);
+
+                // The old barrel is what the aim rotates, and it is switched off, so nothing on
+                // screen moves with it. Handing it to the mount is what lets the vehicle's own
+                // barrel copy the aim without the aim controller ever hearing about vehicles.
+                Transform barrel = FindDescendant(root.transform, BarrelObjectName);
+                if (barrel == null)
+                {
+                    Debug.LogWarning(
+                        $"{nameof(VehicleDefinitionBuilder)} found no \"{BarrelObjectName}\" inside "
+                        + $"{SlingshotPrefabPath}, so the mounted model's barrel will not follow the aim.");
+                }
+
+                SetIfEmpty(serializedMount, "barrelReference", barrel);
+
+                // Ensured on this pass as well as in the defaults one, so wiring the mount on its
+                // own into a project that predates the controller still leaves the cannon idle
+                // rather than firing forever.
+                SetIfEmpty(serializedMount, "mountedController", mountedController);
                 changed |= serializedMount.ApplyModifiedPropertiesWithoutUndo();
 
                 CannonShotPresenter presenter = root.GetComponentInChildren<CannonShotPresenter>(true);
@@ -179,6 +241,354 @@ namespace GameJam.EditorTools
             {
                 PrefabUtility.UnloadPrefabContents(root);
             }
+        }
+
+        /// <summary>
+        /// The controller the mounted models run instead of the pack's own.
+        ///
+        /// The pack ships one state holding one clip whose import settings loop it, and no
+        /// parameters, so a mounted cannon fires its recoil animation for as long as it is on
+        /// screen. Ours starts in an empty Idle - the pack has no idle take, so the rest pose is
+        /// the idle - and passes through the shot exactly once whenever the trigger is set, which
+        /// makes the clip's baked loop flag irrelevant.
+        ///
+        /// Built only when it is missing. Once it exists it is a project asset somebody may have
+        /// opened and tuned (a transition duration, an added idle clip), and a scaffolding tool
+        /// that rebuilt it on every run would throw that away.
+        /// </summary>
+        private static RuntimeAnimatorController EnsureMountedController()
+        {
+            AnimatorController existing = AssetDatabase.LoadAssetAtPath<AnimatorController>(MountedControllerPath);
+            if (existing != null)
+            {
+                return existing;
+            }
+
+            AnimationClip shotClip = LoadShotClip();
+            if (shotClip == null)
+            {
+                // Still built, deliberately: a controller with an empty Shot state leaves the
+                // cannon still rather than looping, which is most of what this section is for.
+                Debug.LogWarning(
+                    $"{nameof(VehicleDefinitionBuilder)} found no \"{ShotClipName}\" clip inside "
+                    + $"{ShotClipSourcePath}, so the mounted cannon will idle but not animate its shot.");
+            }
+
+            EnsureFolder(VehicleAnimationFolder);
+
+            AnimatorController controller = AnimatorController.CreateAnimatorControllerAtPath(MountedControllerPath);
+            controller.AddParameter(ShotTriggerName, AnimatorControllerParameterType.Trigger);
+
+            AnimatorStateMachine machine = controller.layers[0].stateMachine;
+
+            AnimatorState idle = machine.AddState("Idle");
+            machine.defaultState = idle;
+
+            AnimatorState shot = machine.AddState("Shot");
+            shot.motion = shotClip;
+
+            AnimatorStateTransition toShot = idle.AddTransition(shot);
+            toShot.hasExitTime = false;
+            toShot.exitTime = 0f;
+            toShot.hasFixedDuration = true;
+            toShot.duration = 0f;
+            toShot.AddCondition(AnimatorConditionMode.If, 0f, ShotTriggerName);
+
+            // No condition on the way back, only a full pass: the shot is over when the clip is,
+            // and hanging the return off a second parameter would need somebody to remember to
+            // set it.
+            AnimatorStateTransition toIdle = shot.AddTransition(idle);
+            toIdle.hasExitTime = true;
+            toIdle.exitTime = 1f;
+            toIdle.hasFixedDuration = true;
+            toIdle.duration = 0f;
+
+            EditorUtility.SetDirty(controller);
+            AssetDatabase.SaveAssets();
+
+            Debug.Log($"{nameof(VehicleDefinitionBuilder)} created {MountedControllerPath}.");
+            return controller;
+        }
+
+        /// <summary>
+        /// The firing take, pulled out of the FBX it is imported into. Sub-assets have to be
+        /// enumerated rather than loaded by path, and the preview clip Unity generates alongside
+        /// them is skipped by matching the pack's own take name exactly.
+        /// </summary>
+        private static AnimationClip LoadShotClip()
+        {
+            Object[] assets = AssetDatabase.LoadAllAssetsAtPath(ShotClipSourcePath);
+            for (int i = 0; i < assets.Length; i++)
+            {
+                AnimationClip clip = assets[i] as AnimationClip;
+                if (clip != null && clip.name == ShotClipName)
+                {
+                    return clip;
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Measures every vehicle model against the old barrel and writes the scale that makes
+        /// them the same height into the definitions.
+        ///
+        /// The one tool here that overwrites rather than fills: a fitted scale is a measurement,
+        /// not a decision, and re-running after the art changes has to produce the new number
+        /// rather than politely keep the stale one. Hand tuning survives only until the next run,
+        /// which is why the field's tooltip sends a tuner to it rather than to the inspector.
+        ///
+        /// Everything is measured inside loaded prefab contents, so no open scene is touched and
+        /// the barrel is switched on and back off without the prefab ever being saved.
+        /// </summary>
+        [MenuItem("Tools/Smashdown/Fit Vehicle Models")]
+        public static void FitVehicleModels()
+        {
+            if (!TryMeasureBarrelHeight(out float targetHeight))
+            {
+                return;
+            }
+
+            string[] guids = AssetDatabase.FindAssets($"t:{nameof(VehicleDefinition)}", new[] { ConfigFolder });
+            if (guids.Length == 0)
+            {
+                Debug.LogWarning(
+                    $"{nameof(VehicleDefinitionBuilder)} found no vehicle definitions in {ConfigFolder}, so "
+                    + "there was nothing to fit. Run Create Default Vehicle Definitions first.");
+                return;
+            }
+
+            int fitted = 0;
+            for (int i = 0; i < guids.Length; i++)
+            {
+                string path = AssetDatabase.GUIDToAssetPath(guids[i]);
+                VehicleDefinition vehicle = AssetDatabase.LoadAssetAtPath<VehicleDefinition>(path);
+                if (vehicle == null)
+                {
+                    continue;
+                }
+
+                fitted += FitLevels(vehicle, targetHeight);
+            }
+
+            AssetDatabase.SaveAssets();
+            Debug.Log(
+                $"{nameof(VehicleDefinitionBuilder)} fitted {fitted} vehicle model(s) to the "
+                + $"{BarrelObjectName} height of {targetHeight:0.000} (measured in the mount's own space).");
+        }
+
+        /// <summary>
+        /// Writes one vehicle's scales, and returns how many levels it actually measured.
+        /// Levels with no model of their own are skipped: they show the level below them, whose
+        /// scale is already fitted, and writing a number onto an empty slot would only be a
+        /// number nobody reads.
+        /// </summary>
+        private static int FitLevels(VehicleDefinition vehicle, float targetHeight)
+        {
+            SerializedObject serialized = new SerializedObject(vehicle);
+            SerializedProperty levels = serialized.FindProperty("levels");
+            int fitted = 0;
+
+            for (int i = 0; i < levels.arraySize; i++)
+            {
+                SerializedProperty level = levels.GetArrayElementAtIndex(i);
+                SerializedProperty modelProperty = level.FindPropertyRelative("modelPrefab");
+                SerializedProperty scaleProperty = level.FindPropertyRelative("modelScale");
+                if (modelProperty == null || scaleProperty == null)
+                {
+                    continue;
+                }
+
+                GameObject model = modelProperty.objectReferenceValue as GameObject;
+                if (model == null)
+                {
+                    continue;
+                }
+
+                if (!TryMeasurePrefabHeight(AssetDatabase.GetAssetPath(model), out float modelHeight))
+                {
+                    continue;
+                }
+
+                float previous = scaleProperty.floatValue;
+                float scale = Mathf.Clamp(targetHeight / modelHeight, MinFittedScale, MaxFittedScale);
+                scaleProperty.floatValue = scale;
+                fitted++;
+
+                // The raw heights go in the log next to the ratio on purpose: a scale that looks
+                // wrong is almost always a model measured wrong, and the only way to tell the two
+                // apart from a console line is to see what was measured.
+                Debug.Log(
+                    $"{nameof(VehicleDefinitionBuilder)} fitted {vehicle.name} level {i + 1} ({model.name}): "
+                    + $"modelScale {previous:0.000} -> {scale:0.000} (model {modelHeight:0.000} high, "
+                    + $"target {targetHeight:0.000}).",
+                    vehicle);
+            }
+
+            if (serialized.ApplyModifiedPropertiesWithoutUndo())
+            {
+                EditorUtility.SetDirty(vehicle);
+            }
+
+            return fitted;
+        }
+
+        /// <summary>
+        /// The yardstick: how tall the old barrel is, expressed in the mount point's own local
+        /// space.
+        ///
+        /// Deviation from the brief, which records the barrel's world height directly. The
+        /// Slingshot root is scaled to 0.5, so the barrel's world height is half its height in
+        /// the space the model is actually mounted in - and the mount overwrites the model's own
+        /// root scale with the fitted number, so a world measurement would fit every vehicle at
+        /// half the size it should be.
+        /// </summary>
+        private static bool TryMeasureBarrelHeight(out float height)
+        {
+            height = 0f;
+
+            GameObject root = PrefabUtility.LoadPrefabContents(SlingshotPrefabPath);
+            if (root == null)
+            {
+                Debug.LogWarning(
+                    $"{nameof(VehicleDefinitionBuilder)} found no prefab at {SlingshotPrefabPath}, so there "
+                    + "was nothing to measure the vehicle models against.");
+                return false;
+            }
+
+            try
+            {
+                Transform barrel = FindDescendant(root.transform, BarrelObjectName);
+                if (barrel == null)
+                {
+                    Debug.LogWarning(
+                        $"{nameof(VehicleDefinitionBuilder)} found no \"{BarrelObjectName}\" inside "
+                        + $"{SlingshotPrefabPath}, so no vehicle model could be fitted.");
+                    return false;
+                }
+
+                // Switched on only long enough to be measured: an inactive renderer's bounds are
+                // whatever they last were, which for a model that has never been drawn is zero.
+                // The contents are unloaded without ever being saved, so the prefab keeps the
+                // barrel switched off.
+                bool wasActive = barrel.gameObject.activeSelf;
+                barrel.gameObject.SetActive(true);
+                bool measured = TryMeasureHeight(barrel.gameObject, out float worldHeight);
+                barrel.gameObject.SetActive(wasActive);
+
+                if (!measured)
+                {
+                    Debug.LogWarning(
+                        $"{nameof(VehicleDefinitionBuilder)} found no renderer under \"{BarrelObjectName}\", "
+                        + "so the vehicle models have nothing to be fitted to.");
+                    return false;
+                }
+
+                Transform mountPoint = FindDescendant(root.transform, CannonObjectName);
+                float mountScale = mountPoint != null ? Mathf.Abs(mountPoint.lossyScale.y) : 1f;
+                if (mountScale < Mathf.Epsilon)
+                {
+                    Debug.LogWarning(
+                        $"{nameof(VehicleDefinitionBuilder)} read a zero scale on \"{CannonObjectName}\", so "
+                        + "the barrel height could not be expressed in the mount's space.");
+                    return false;
+                }
+
+                height = worldHeight / mountScale;
+                return height > Mathf.Epsilon;
+            }
+            finally
+            {
+                PrefabUtility.UnloadPrefabContents(root);
+            }
+        }
+
+        /// <summary>
+        /// A model prefab's height at scale 1 - the size the mount will draw it at before the
+        /// fitted scale is applied, since the mount overwrites whatever root scale the prefab
+        /// carries.
+        /// </summary>
+        private static bool TryMeasurePrefabHeight(string prefabPath, out float height)
+        {
+            height = 0f;
+
+            // Guarded rather than trusted: LoadPrefabContents throws on anything that is not a
+            // prefab file, and a level pointing straight at an FBX would otherwise abort the
+            // whole run partway through instead of skipping one model.
+            if (string.IsNullOrEmpty(prefabPath) || !prefabPath.EndsWith(".prefab"))
+            {
+                Debug.LogWarning(
+                    $"{nameof(VehicleDefinitionBuilder)} cannot measure \"{prefabPath}\": vehicle models "
+                    + "have to be prefabs. That level keeps the scale it already had.");
+                return false;
+            }
+
+            GameObject contents = PrefabUtility.LoadPrefabContents(prefabPath);
+            if (contents == null)
+            {
+                Debug.LogWarning(
+                    $"{nameof(VehicleDefinitionBuilder)} could not open {prefabPath}, so that level keeps "
+                    + "the scale it already had.");
+                return false;
+            }
+
+            try
+            {
+                contents.transform.localScale = Vector3.one;
+                if (!TryMeasureHeight(contents, out height) || height <= Mathf.Epsilon)
+                {
+                    Debug.LogWarning(
+                        $"{nameof(VehicleDefinitionBuilder)} measured no height on {prefabPath}, so that "
+                        + "level keeps the scale it already had.");
+                    return false;
+                }
+
+                return true;
+            }
+            finally
+            {
+                PrefabUtility.UnloadPrefabContents(contents);
+            }
+        }
+
+        /// <summary>
+        /// Union of every mesh renderer's world bounds under an object. Particle and trail
+        /// renderers are left out: their bounds are whatever they last emitted, which is a
+        /// property of a simulation rather than of the model's size.
+        /// </summary>
+        private static bool TryMeasureHeight(GameObject root, out float height)
+        {
+            height = 0f;
+            Renderer[] renderers = root.GetComponentsInChildren<Renderer>(true);
+            bool any = false;
+            Bounds bounds = new Bounds();
+
+            for (int i = 0; i < renderers.Length; i++)
+            {
+                Renderer renderer = renderers[i];
+                if (renderer is ParticleSystemRenderer || renderer is TrailRenderer || renderer is LineRenderer)
+                {
+                    continue;
+                }
+
+                if (!any)
+                {
+                    bounds = renderer.bounds;
+                    any = true;
+                    continue;
+                }
+
+                bounds.Encapsulate(renderer.bounds);
+            }
+
+            if (!any)
+            {
+                return false;
+            }
+
+            height = bounds.size.y;
+            return true;
         }
 
         private static VehicleDefinition.Level Level(string displayName, float damageMultiplier, string modelPrefabName)
