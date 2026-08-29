@@ -26,6 +26,7 @@ namespace GameJam.EditorTools
         private const string LoadingTextures = "Assets/GameJam/Textures/UI/Loading";
 
         private const string SplashSprite = LoadingTextures + "/SplashScreen.png";
+        private const string LogoSprite = LoadingTextures + "/GameIcon.png";
         private const string LabelSprite = LoadingTextures + "/img_loading.png";
         private const string BarBaseSprite = LoadingTextures + "/UI_LoadingBar_Base.png";
         private const string BarFillSprite = LoadingTextures + "/UI_LoadingBar_Fill.png";
@@ -34,6 +35,12 @@ namespace GameJam.EditorTools
 
         public const string ScreenPrefabPath = LoadingFolder + "/LoadingScreen.prefab";
         public const string ScreenName = "LoadingScreen";
+
+        /// <summary>
+        /// Named because two steps need to agree on it: the one that makes the background and the
+        /// one that has to put the logo directly after it.
+        /// </summary>
+        private const string BackgroundName = "Background";
 
         /// <summary>
         /// The splash art's own shape, 1216x2160. The background is fitted to it rather than
@@ -79,6 +86,7 @@ namespace GameJam.EditorTools
                 }
 
                 BuildBackground(rect);
+                BuildLogo(rect);
 
                 EnsureImage("LoadingLabel", rect, LabelSprite,
                     new Vector2(0.40f, 0.171f), new Vector2(0.60f, 0.201f),
@@ -114,7 +122,7 @@ namespace GameJam.EditorTools
         {
             // The one image on this screen that takes input: while the splash is up every tap
             // belongs to it, which is what makes "no way to skip" true rather than merely unwired.
-            RectTransform background = EnsureImage("Background", parent, SplashSprite,
+            RectTransform background = EnsureImage(BackgroundName, parent, SplashSprite,
                 Vector2.zero, Vector2.one, Image.Type.Simple, false, true);
 
             if (background.GetComponent<AspectRatioFitter>() != null)
@@ -125,6 +133,42 @@ namespace GameJam.EditorTools
             AspectRatioFitter fitter = UiBuilder.Ensure<AspectRatioFitter>(background.gameObject);
             fitter.aspectMode = AspectRatioFitter.AspectMode.EnvelopeParent;
             fitter.aspectRatio = SplashAspect;
+        }
+
+        /// <summary>
+        /// The "Smash City" logo across the top. It is its own image rather than part of the
+        /// splash because the splash art the game ships is the version *without* the logo; the
+        /// reference mock-up is the version with it, and this is what closes that gap.
+        /// </summary>
+        private static void BuildLogo(RectTransform parent)
+        {
+            // Straight off RefAI/Splash Screen_ref.png, which is 1216x2160 drawn 1:1: the logo
+            // occupies x 205-1010 and, measured down from the top of the mock-up, y 175-790. The
+            // vertical fractions below are 1 - 790/2160 and 1 - 175/2160, because anchors count up
+            // from the bottom while the mock-up was read down from the top.
+            RectTransform logo = EnsureImage("GameIcon", parent, LogoSprite,
+                new Vector2(0.169f, 0.634f), new Vector2(0.830f, 0.919f),
+                Image.Type.Simple, true);
+
+            Transform background = parent.Find(BackgroundName);
+            if (background == null)
+            {
+                return;
+            }
+
+            // Enforced every run, not only on the run that created it: a screen built before the
+            // logo existed has it appended after the label and the bar, and while nothing up there
+            // overlaps them today, "the logo sits on the background" is the thing meant to be true.
+            int backgroundIndex = background.GetSiblingIndex();
+
+            // SetSiblingIndex re-inserts into the list with this child already taken out of it, so
+            // a logo that somehow sits above the background wants the background's own index
+            // rather than one past it - everything after the logo has shifted down by one.
+            int wanted = logo.GetSiblingIndex() < backgroundIndex ? backgroundIndex : backgroundIndex + 1;
+            if (logo.GetSiblingIndex() != wanted)
+            {
+                logo.SetSiblingIndex(wanted);
+            }
         }
 
         /// <summary>
