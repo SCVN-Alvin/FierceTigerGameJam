@@ -150,6 +150,11 @@ namespace GameJam.EditorTools
         {
             VehicleLoadout loadout = AssetDatabase.LoadAssetAtPath<VehicleLoadout>($"{ConfigFolder}/VehicleLoadout.asset");
 
+            // Before the prefab contents are opened, not inside them: this writes and saves an
+            // asset, and doing that while an editable copy of a prefab is loaded is asking the
+            // asset database to refresh underneath it.
+            RuntimeAnimatorController mountedController = EnsureMountedController();
+
             GameObject root = PrefabUtility.LoadPrefabContents(SlingshotPrefabPath);
             if (root == null)
             {
@@ -201,10 +206,10 @@ namespace GameJam.EditorTools
 
                 SetIfEmpty(serializedMount, "barrelReference", barrel);
 
-                // Ensured here as well as in the defaults pass, so wiring the mount on its own
-                // into a project that predates the controller still leaves the cannon idle
+                // Ensured on this pass as well as in the defaults one, so wiring the mount on its
+                // own into a project that predates the controller still leaves the cannon idle
                 // rather than firing forever.
-                SetIfEmpty(serializedMount, "mountedController", EnsureMountedController());
+                SetIfEmpty(serializedMount, "mountedController", mountedController);
                 changed |= serializedMount.ApplyModifiedPropertiesWithoutUndo();
 
                 CannonShotPresenter presenter = root.GetComponentInChildren<CannonShotPresenter>(true);
@@ -507,8 +512,15 @@ namespace GameJam.EditorTools
         private static bool TryMeasurePrefabHeight(string prefabPath, out float height)
         {
             height = 0f;
-            if (string.IsNullOrEmpty(prefabPath))
+
+            // Guarded rather than trusted: LoadPrefabContents throws on anything that is not a
+            // prefab file, and a level pointing straight at an FBX would otherwise abort the
+            // whole run partway through instead of skipping one model.
+            if (string.IsNullOrEmpty(prefabPath) || !prefabPath.EndsWith(".prefab"))
             {
+                Debug.LogWarning(
+                    $"{nameof(VehicleDefinitionBuilder)} cannot measure \"{prefabPath}\": vehicle models "
+                    + "have to be prefabs. That level keeps the scale it already had.");
                 return false;
             }
 
