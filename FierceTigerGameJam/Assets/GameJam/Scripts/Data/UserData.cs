@@ -17,12 +17,14 @@ namespace GameJam.Data
         private const string VehiclesKey = "user.vehicles";
         private const string InventoryKey = "user.inventory";
         private const string MapProgressKey = "user.maps";
+        private const string TutorialKey = "user.tutorial";
 
         private static ISaveStore store = new PlayerPrefsSaveStore();
         private static UserBulletData bullets;
         private static UserVehicleData vehicles;
         private static UserInventoryData inventory;
         private static UserMapProgressData maps;
+        private static UserTutorialData tutorial;
 
         /// <summary>Raised after any change, so UI can redraw without polling.</summary>
         public static event Action Changed;
@@ -45,6 +47,8 @@ namespace GameJam.Data
         public static UserInventoryData Inventory => inventory ??= Load<UserInventoryData>(InventoryKey);
 
         public static UserMapProgressData Maps => maps ??= Load<UserMapProgressData>(MapProgressKey);
+
+        public static UserTutorialData Tutorial => tutorial ??= Load<UserTutorialData>(TutorialKey);
 
         /// <summary>
         /// Writes everything and commits it. Called after a change rather than on a timer: these
@@ -73,6 +77,11 @@ namespace GameJam.Data
                 store.Save(MapProgressKey, JsonUtility.ToJson(maps));
             }
 
+            if (tutorial != null)
+            {
+                store.Save(TutorialKey, JsonUtility.ToJson(tutorial));
+            }
+
             store.Flush();
             Changed?.Invoke();
         }
@@ -84,6 +93,7 @@ namespace GameJam.Data
             vehicles = null;
             inventory = null;
             maps = null;
+            tutorial = null;
             Changed?.Invoke();
         }
 
@@ -94,6 +104,7 @@ namespace GameJam.Data
             store.Delete(VehiclesKey);
             store.Delete(InventoryKey);
             store.Delete(MapProgressKey);
+            store.Delete(TutorialKey);
             store.Flush();
             Reload();
         }
@@ -133,6 +144,7 @@ namespace GameJam.Data
             vehicles = null;
             inventory = null;
             maps = null;
+            tutorial = null;
         }
     }
 }

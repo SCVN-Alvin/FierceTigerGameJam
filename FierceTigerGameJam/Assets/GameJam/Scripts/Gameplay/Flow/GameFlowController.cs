@@ -147,6 +147,11 @@ namespace GameJam.Gameplay.Flow
                  + "more than the tenth.")]
         [SerializeField] private GridKnockdownCannonFireController fireController;
 
+        [Header("Tutorial")]
+        [Tooltip("Optional. Left empty - a test scene, or one Build Tutorial has not been run "
+                 + "over - the splash hands straight over to the main menu as it always did.")]
+        [SerializeField] private TutorialController tutorial;
+
         public event Action<GameState> StateChanged;
 
         /// <summary>Raised with the finished run, for a result screen to draw.</summary>
@@ -271,11 +276,20 @@ namespace GameJam.Gameplay.Flow
         }
 
         /// <summary>
-        /// Where the game goes once the splash is done. One seam on purpose: the tutorial check
-        /// (Brief 15) replaces this body rather than teaching the loading view about tutorials.
+        /// Where the game goes once the splash is done: into the tutorial on a save that has not
+        /// finished it, and to the main menu otherwise.
+        ///
+        /// The tutorial is asked rather than told, and the menu is the answer to a refusal as well
+        /// as to a completed tutorial: a launch that shows neither is a black screen with no way
+        /// out, which is the same reason Start falls back when no splash is wired.
         /// </summary>
         public void FinishLoading()
         {
+            if (tutorial != null && tutorial.ShouldRun && tutorial.TryStartTutorial())
+            {
+                return;
+            }
+
             ReturnToMainMenu();
         }
 
@@ -330,6 +344,14 @@ namespace GameJam.Gameplay.Flow
         /// </summary>
         private void HandleMapSelected(MapInfo map)
         {
+            // The tutorial selects its own map as one step of a scripted entry that goes on to
+            // confirm the pick itself. Answering that selection here would flash the ammunition
+            // pick, which is the one screen the tutorial exists to skip.
+            if (tutorial != null && tutorial.IsStarting)
+            {
+                return;
+            }
+
             if (map != null)
             {
                 EnterAmmoPick();
