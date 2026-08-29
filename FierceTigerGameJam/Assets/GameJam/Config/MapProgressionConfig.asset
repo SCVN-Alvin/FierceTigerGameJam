@@ -17,14 +17,14 @@ MonoBehaviour:
     requiredClearPercent: 0.5
     passMapRewardId: pass_map_1
     clearMapRewardId: clear_map_1
-    bulletPickLimit: 10
+    bulletPickLimit: 100
   - mapId: 2
     requiredClearPercent: 0.5
     passMapRewardId: pass_map_2
     clearMapRewardId: clear_map_2
-    bulletPickLimit: 20
+    bulletPickLimit: 200
   - mapId: 3
     requiredClearPercent: 0.5
     passMapRewardId: pass_map_3
     clearMapRewardId: clear_map_3
-    bulletPickLimit: 30
+    bulletPickLimit: 300
