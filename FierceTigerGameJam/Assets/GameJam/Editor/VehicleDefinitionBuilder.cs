@@ -3,6 +3,7 @@ using System.IO;
 using GameJam.Gameplay.Cannon;
 using GameJam.Gameplay.Combat;
 using UnityEditor;
+using UnityEditor.Animations;
 using UnityEngine;
 
 namespace GameJam.EditorTools
@@ -31,6 +32,26 @@ namespace GameJam.EditorTools
         /// </summary>
         private const string PackFolder =
             "Assets/Hyper-Casual Cannon Pack \u2013 Animated Turrets (URP + Built-in)/Cannon_Pack_URP/Prefaps_URP";
+
+        /// <summary>The pack's FBXs, alongside their own looping controller. Same escaped dash.</summary>
+        private const string PackModelFolder =
+            "Assets/Hyper-Casual Cannon Pack \u2013 Animated Turrets (URP + Built-in)/Models";
+
+        private const string VehicleAnimationFolder = "Assets/GameJam/Animations/Vehicles";
+
+        private const string MountedControllerPath = VehicleAnimationFolder + "/VehicleCannon.controller";
+
+        /// <summary>
+        /// The A family's FBX. Every model in the pack carries the same armature under the same
+        /// names, so one clip drives all nine - and taking it from one place means a re-import of
+        /// the B or C models cannot quietly change what the others play.
+        /// </summary>
+        private const string ShotClipSourcePath = PackModelFolder + "/Cannon_A.fbx";
+
+        /// <summary>The pack's spelling of its only take. Theirs, not ours.</summary>
+        private const string ShotClipName = "Armature|Shoting";
+
+        private const string ShotTriggerName = "Shot";
 
         private const string SlingshotPrefabPath =
             "Assets/GameJam/Imported/LunaSmashdown/Prefabs/SmashFest/Slingshot.prefab";
@@ -101,6 +122,8 @@ namespace GameJam.EditorTools
                     Level("Cannon C II", 2.00f, "Cannon_C_B_URP"),
                     Level("Cannon C III", 2.60f, "Cannon_C_D_URP"),
                 });
+
+            EnsureMountedController();
 
             CreateLoadout(cannonA, cannonB, cannonC);
 
@@ -177,6 +200,11 @@ namespace GameJam.EditorTools
                 }
 
                 SetIfEmpty(serializedMount, "barrelReference", barrel);
+
+                // Ensured here as well as in the defaults pass, so wiring the mount on its own
+                // into a project that predates the controller still leaves the cannon idle
+                // rather than firing forever.
+                SetIfEmpty(serializedMount, "mountedController", EnsureMountedController());
                 changed |= serializedMount.ApplyModifiedPropertiesWithoutUndo();
 
                 CannonShotPresenter presenter = root.GetComponentInChildren<CannonShotPresenter>(true);
@@ -208,6 +236,93 @@ namespace GameJam.EditorTools
             {
                 PrefabUtility.UnloadPrefabContents(root);
             }
+        }
+
+        /// <summary>
+        /// The controller the mounted models run instead of the pack's own.
+        ///
+        /// The pack ships one state holding one clip whose import settings loop it, and no
+        /// parameters, so a mounted cannon fires its recoil animation for as long as it is on
+        /// screen. Ours starts in an empty Idle - the pack has no idle take, so the rest pose is
+        /// the idle - and passes through the shot exactly once whenever the trigger is set, which
+        /// makes the clip's baked loop flag irrelevant.
+        ///
+        /// Built only when it is missing. Once it exists it is a project asset somebody may have
+        /// opened and tuned (a transition duration, an added idle clip), and a scaffolding tool
+        /// that rebuilt it on every run would throw that away.
+        /// </summary>
+        private static RuntimeAnimatorController EnsureMountedController()
+        {
+            AnimatorController existing = AssetDatabase.LoadAssetAtPath<AnimatorController>(MountedControllerPath);
+            if (existing != null)
+            {
+                return existing;
+            }
+
+            AnimationClip shotClip = LoadShotClip();
+            if (shotClip == null)
+            {
+                // Still built, deliberately: a controller with an empty Shot state leaves the
+                // cannon still rather than looping, which is most of what this section is for.
+                Debug.LogWarning(
+                    $"{nameof(VehicleDefinitionBuilder)} found no \"{ShotClipName}\" clip inside "
+                    + $"{ShotClipSourcePath}, so the mounted cannon will idle but not animate its shot.");
+            }
+
+            EnsureFolder(VehicleAnimationFolder);
+
+            AnimatorController controller = AnimatorController.CreateAnimatorControllerAtPath(MountedControllerPath);
+            controller.AddParameter(ShotTriggerName, AnimatorControllerParameterType.Trigger);
+
+            AnimatorStateMachine machine = controller.layers[0].stateMachine;
+
+            AnimatorState idle = machine.AddState("Idle");
+            machine.defaultState = idle;
+
+            AnimatorState shot = machine.AddState("Shot");
+            shot.motion = shotClip;
+
+            AnimatorStateTransition toShot = idle.AddTransition(shot);
+            toShot.hasExitTime = false;
+            toShot.exitTime = 0f;
+            toShot.hasFixedDuration = true;
+            toShot.duration = 0f;
+            toShot.AddCondition(AnimatorConditionMode.If, 0f, ShotTriggerName);
+
+            // No condition on the way back, only a full pass: the shot is over when the clip is,
+            // and hanging the return off a second parameter would need somebody to remember to
+            // set it.
+            AnimatorStateTransition toIdle = shot.AddTransition(idle);
+            toIdle.hasExitTime = true;
+            toIdle.exitTime = 1f;
+            toIdle.hasFixedDuration = true;
+            toIdle.duration = 0f;
+
+            EditorUtility.SetDirty(controller);
+            AssetDatabase.SaveAssets();
+
+            Debug.Log($"{nameof(VehicleDefinitionBuilder)} created {MountedControllerPath}.");
+            return controller;
+        }
+
+        /// <summary>
+        /// The firing take, pulled out of the FBX it is imported into. Sub-assets have to be
+        /// enumerated rather than loaded by path, and the preview clip Unity generates alongside
+        /// them is skipped by matching the pack's own take name exactly.
+        /// </summary>
+        private static AnimationClip LoadShotClip()
+        {
+            Object[] assets = AssetDatabase.LoadAllAssetsAtPath(ShotClipSourcePath);
+            for (int i = 0; i < assets.Length; i++)
+            {
+                AnimationClip clip = assets[i] as AnimationClip;
+                if (clip != null && clip.name == ShotClipName)
+                {
+                    return clip;
+                }
+            }
+
+            return null;
         }
 
         /// <summary>

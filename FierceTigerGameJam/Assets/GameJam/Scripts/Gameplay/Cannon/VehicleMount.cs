@@ -43,6 +43,11 @@ namespace GameJam.Gameplay.Cannon
                  + "it, and the base and the wheels are outside the armature and stay still.")]
         [SerializeField] private string barrelNodeName = "Cannon.A";
 
+        [Tooltip("Replaces the pack's own controller on every spawned model. Theirs holds one "
+                 + "looping state, so an unmounted-over model fires its shot animation forever; "
+                 + "ours idles and plays the shot on a trigger.")]
+        [SerializeField] private RuntimeAnimatorController mountedController;
+
         /// <summary>The spawned model's Animator, for whoever presents the shot. Null on the fallback.</summary>
         public Animator CurrentAnimator { get; private set; }
 
@@ -175,6 +180,13 @@ namespace GameJam.Gameplay.Cannon
             // rather than the barrel's animator. Cached here because a shot must not pay for a
             // hierarchy walk.
             CurrentAnimator = current.GetComponentInChildren<Animator>(true);
+
+            // Every spawn, not once: the controller belongs to the freshly instantiated model,
+            // and an upgrade brings a new model carrying the pack's looping one again.
+            if (CurrentAnimator != null && mountedController != null)
+            {
+                CurrentAnimator.runtimeAnimatorController = mountedController;
+            }
 
             CacheBarrelNode(current);
 
