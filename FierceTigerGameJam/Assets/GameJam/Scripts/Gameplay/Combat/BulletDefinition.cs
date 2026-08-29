@@ -1,4 +1,5 @@
 using System;
+using GameJam.Gameplay.Cannon;
 using UnityEngine;
 
 namespace GameJam.Gameplay.Combat
@@ -56,9 +57,18 @@ namespace GameJam.Gameplay.Combat
         [Tooltip("Index 0 is level 1. A bullet with no levels does no damage to anything.")]
         [SerializeField] private Level[] levels = Array.Empty<Level>();
 
+        // Per type rather than per level, because that is how the artist authored it: one prefab
+        // holds every level's look as LV1/LV2/LV3 children, so a level is a child to switch on,
+        // not a separate prefab to load.
+        [Tooltip("The projectile this ammunition fires. Its LV1/LV2/LV3 children are the level looks; "
+                 + "the projectile enables the one for the level it was fired at. Left empty, the fire "
+                 + "controller's own prefab is used, so an unconfigured bullet still shoots.")]
+        [SerializeField] private GridKnockdownCannonProjectile projectilePrefab;
+
         public string Id => id;
         public string DisplayName => string.IsNullOrEmpty(displayName) ? id : displayName;
         public int LevelCount => levels.Length;
+        public GridKnockdownCannonProjectile ProjectilePrefab => projectilePrefab;
 
         public Level GetLevel(int level)
         {
