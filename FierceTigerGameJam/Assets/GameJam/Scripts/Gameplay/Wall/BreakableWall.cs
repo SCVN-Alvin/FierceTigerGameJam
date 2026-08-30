@@ -41,6 +41,11 @@ namespace GameJam.Gameplay.Wall
                  + "down than a short one and much harder than a lone block.")]
         [SerializeField] private float maxHitPoints = 1f;
 
+        [Tooltip("An armoured wall takes the ammunition's wallDamage, which is authored lower "
+                 + "than blockDamage so a shot chips the shell. Unarmoured, it takes blockDamage "
+                 + "and plays as if its cells were loose, while staying one cheap body.")]
+        [SerializeField] private bool armored = true;
+
         [Tooltip("Impacts slower than this do nothing, which keeps a wall from grinding itself "
                  + "down against its neighbours while the structure settles.")]
         [SerializeField] private float minimumImpactSpeed = 3f;
@@ -63,12 +68,23 @@ namespace GameJam.Gameplay.Wall
         public float RemainingHitPoints => remainingHitPoints;
         public bool IsBroken => hasBrokenUp;
 
+        /// <summary>
+        /// Whether shots resolve against this wall as a shell (wallDamage) or as bare material
+        /// (blockDamage). Serialized, so a wall baked into a map prefab keeps the answer.
+        /// </summary>
+        public bool IsArmored => armored;
+
         /// <summary>0 while untouched, 1 when the next hit brings it down.</summary>
         public float DamageFraction => maxHitPoints <= 0f
             ? 1f
             : Mathf.Clamp01(1f - (remainingHitPoints / maxHitPoints));
 
-        public void Initialize(IEnumerable<Cell> wallCells, WallBlockPhysicsSetup setup, string wallMaterialId, float hitPoints)
+        public void Initialize(
+            IEnumerable<Cell> wallCells,
+            WallBlockPhysicsSetup setup,
+            string wallMaterialId,
+            float hitPoints,
+            bool isArmored = true)
         {
             cells.Clear();
             cells.AddRange(wallCells);
@@ -76,6 +92,7 @@ namespace GameJam.Gameplay.Wall
             materialId = wallMaterialId;
             maxHitPoints = Mathf.Max(0.01f, hitPoints);
             remainingHitPoints = maxHitPoints;
+            armored = isArmored;
         }
 
         /// <summary>

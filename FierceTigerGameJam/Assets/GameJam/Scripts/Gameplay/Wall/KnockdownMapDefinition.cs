@@ -150,6 +150,12 @@ namespace GameJam.Gameplay.Wall
 
         /// <summary>The wall this block was assigned to, or null when it was not assigned one.</summary>
         public string WallId => string.IsNullOrEmpty(wall?.wall_id) ? null : wall.wall_id;
+
+        /// <summary>
+        /// Whether the wall this block belongs to behaves as an armoured shell. Absent in the
+        /// JSON means armoured, so every map written before the flag existed keeps its behaviour.
+        /// </summary>
+        public bool WallArmored => wall == null || !wall.bare;
     }
 
     /// <summary>
@@ -162,6 +168,24 @@ namespace GameJam.Gameplay.Wall
     public sealed class KnockdownMapWallRef
     {
         public string wall_id;
+
+        /// <summary>
+        /// Opt OUT of the armoured shell. An armoured wall - the default - takes the
+        /// ammunition's wallDamage, which is authored lower than blockDamage so a shot chips the
+        /// shell while the same shot would destroy a lone block. A bare wall takes blockDamage,
+        /// so it plays as if its cells were loose while staying one cheap rigidbody and one draw
+        /// call.
+        ///
+        /// This is what lets a mission ramp difficulty by adding shells - brick first, concrete
+        /// later - without paying for hundreds of loose bodies on the opening frame.
+        ///
+        /// Stated as an opt-out on purpose. JsonUtility gives a field the JSON does not mention
+        /// the type default, and for bool that is false, so a map written before this flag
+        /// existed reads as armoured no matter how JsonUtility treats field initialisers. An
+        /// "armored = true" field would have been readable but would silently disarm every
+        /// existing wall if that assumption were ever wrong.
+        /// </summary>
+        public bool bare;
     }
 
     /// <summary>Cell coordinate inside a layer: x is the column, y is the row upward.</summary>

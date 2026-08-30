@@ -125,6 +125,12 @@ namespace GameJam.Gameplay.Wall
             /// </summary>
             public bool IsRectangle;
 
+            /// <summary>
+            /// False when the map marked this wall unarmoured, which makes shots hit it for
+            /// blockDamage instead of wallDamage. Grouping, physics and rendering are unchanged.
+            /// </summary>
+            public bool Armored = true;
+
             public Vector3Int GridPosition;
             public Vector3Int LogicalSize;
         }
@@ -867,6 +873,9 @@ namespace GameJam.Gameplay.Wall
             string type = members[0].Source.type;
             bool singleType = true;
             bool singleCells = members[0].IsSingleCell;
+            // A wall is a shell only if every block in it says so: one unarmoured cell in the
+            // group means the group was authored as bare material, so the whole body is bare.
+            bool armored = members[0].Source == null || members[0].Source.WallArmored;
 
             for (int i = 1; i < members.Count; i++)
             {
@@ -876,6 +885,7 @@ namespace GameJam.Gameplay.Wall
 
                 singleType &= string.Equals(members[i].Source.type, type, StringComparison.Ordinal);
                 singleCells &= members[i].IsSingleCell;
+                armored &= members[i].Source == null || members[i].Source.WallArmored;
             }
 
             Vector3Int size = max - min + Vector3Int.one;
@@ -883,6 +893,7 @@ namespace GameJam.Gameplay.Wall
             build.LogicalSize = size;
             build.Type = singleType ? type : null;
             build.IsRectangle = singleType && singleCells && size.z == 1 && members.Count == size.x * size.y;
+            build.Armored = armored;
             return build;
         }
 
@@ -1009,7 +1020,7 @@ namespace GameJam.Gameplay.Wall
             // to bring down than a short one and much harder than a lone block.
             ResolveWallDurability(build.Blocks, out string wallMaterialId, out float wallHitPoints);
             BreakableWall breakableWall = wall.AddComponent<BreakableWall>();
-            breakableWall.Initialize(manifest, physicsSetup, wallMaterialId, wallHitPoints);
+            breakableWall.Initialize(manifest, physicsSetup, wallMaterialId, wallHitPoints, build.Armored);
             builtWalls.Add(breakableWall);
             return true;
         }

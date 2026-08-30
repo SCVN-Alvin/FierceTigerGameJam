@@ -300,7 +300,9 @@ namespace GameJam.Gameplay.Cannon
         {
             ResolveTarget(target, out BreakableWall wall, out BreakableBlock block, out string materialId);
 
-            float damage = ResolveDamage(materialId, wall != null, direct, falloff);
+            // Unarmoured walls resolve as bare material: same body, same mesh, but the shot
+            // takes blockDamage off it, which is how a level says "this material has no shell".
+            float damage = ResolveDamage(materialId, wall != null && wall.IsArmored, direct, falloff);
             if (damage <= 0f)
             {
                 return;
