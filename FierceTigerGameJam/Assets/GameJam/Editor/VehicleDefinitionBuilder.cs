@@ -84,6 +84,13 @@ namespace GameJam.EditorTools
         private const string SmokeObjectName = "Cannon_Smoke";
 
         /// <summary>
+        /// The live twin of CannonA that the muzzle flash hangs in. Unlike CannonRoot it follows
+        /// the aim, so the flash swings with the barrel; the model stays in the static frame so
+        /// the base and wheels stay planted.
+        /// </summary>
+        private const string MuzzleFlashRootName = "MuzzleFlashRoot";
+
+        /// <summary>
         /// A fitted model may be a twentieth of the pack's size or twice it; anything outside
         /// that is a measurement gone wrong (an empty prefab, a stray renderer a kilometre away)
         /// and a clamp keeps it from writing a scale that makes the vehicle invisible.
@@ -211,7 +218,8 @@ namespace GameJam.EditorTools
                 }
 
                 changed |= EnsureCannonRoot(cannon, barrel, out Transform cannonRoot);
-                changed |= MoveSmokeToMuzzle(root.transform, cannonRoot, barrel);
+                changed |= EnsureMuzzleFlashRoot(cannon, barrel, out Transform muzzleFlashRoot);
+                changed |= MoveSmokeToMuzzle(root.transform, muzzleFlashRoot, barrel);
 
                 SerializedObject serializedMount = new SerializedObject(mount);
                 SetIfEmpty(serializedMount, "loadout", loadout);
@@ -829,16 +837,64 @@ namespace GameJam.EditorTools
         }
 
         /// <summary>
-        /// Moves the muzzle flash out to the live frame and onto the muzzle. It was authored
-        /// against the old tank's barrel tip, roughly three quarters of a unit behind where shots
-        /// actually leave, and the obvious anchor - MuzzlePoint - is inside the switched-off
-        /// CannonA, where a particle would never render. CannonRoot shares CannonA's pose, so the
-        /// muzzle's own local offset placed under CannonRoot lands on the same point in the world.
+        /// Ensures the live frame the muzzle flash hangs in: CannonA's position, and its rotation
+        /// mirrored every frame so the flash aims with the barrel. A sibling of CannonA rather
+        /// than a child of the static CannonRoot, because sharing a parent is what lets the
+        /// mirror copy the rotation as it stands instead of rebasing it between two frames.
         /// </summary>
         /// <returns>True when the prefab changed and needs saving.</returns>
-        private static bool MoveSmokeToMuzzle(Transform root, Transform cannonRoot, Transform barrel)
+        private static bool EnsureMuzzleFlashRoot(Transform cannon, Transform barrel, out Transform muzzleFlashRoot)
         {
-            if (cannonRoot == null)
+            muzzleFlashRoot = FindDescendant(cannon, MuzzleFlashRootName);
+            bool changed = false;
+            if (muzzleFlashRoot == null)
+            {
+                muzzleFlashRoot = new GameObject(MuzzleFlashRootName).transform;
+                muzzleFlashRoot.SetParent(cannon, false);
+                changed = true;
+            }
+
+            CannonAimMirror mirror = muzzleFlashRoot.GetComponent<CannonAimMirror>();
+            if (mirror == null)
+            {
+                mirror = muzzleFlashRoot.gameObject.AddComponent<CannonAimMirror>();
+                changed = true;
+            }
+
+            SerializedObject serializedMirror = new SerializedObject(mirror);
+            SetIfEmpty(serializedMirror, "source", barrel);
+            changed |= serializedMirror.ApplyModifiedPropertiesWithoutUndo();
+
+            if (barrel == null)
+            {
+                return changed;
+            }
+
+            // Position only - the rotation is the mirror's job at runtime, and writing a rest
+            // rotation here as well would be a value that is overwritten on the first frame and
+            // so only ever misleads whoever reads the prefab.
+            if (muzzleFlashRoot.localPosition != barrel.localPosition || muzzleFlashRoot.localScale != Vector3.one)
+            {
+                muzzleFlashRoot.localPosition = barrel.localPosition;
+                muzzleFlashRoot.localScale = Vector3.one;
+                changed = true;
+            }
+
+            return changed;
+        }
+
+        /// <summary>
+        /// Moves the muzzle flash out to the aiming frame and onto the muzzle. It was authored
+        /// against the old tank's barrel tip, roughly three quarters of a unit behind where shots
+        /// actually leave, and the obvious anchor - MuzzlePoint - is inside the switched-off
+        /// CannonA, where a particle would never render. MuzzleFlashRoot stands where CannonA
+        /// stands, so the muzzle's own local offset reused here lands on the same point in the
+        /// world - and because that frame mirrors the aim, the flash swings with the barrel.
+        /// </summary>
+        /// <returns>True when the prefab changed and needs saving.</returns>
+        private static bool MoveSmokeToMuzzle(Transform root, Transform muzzleFlashRoot, Transform barrel)
+        {
+            if (muzzleFlashRoot == null)
             {
                 return false;
             }
@@ -862,18 +918,18 @@ namespace GameJam.EditorTools
             }
 
             bool changed = false;
-            if (smoke.parent != cannonRoot)
+            if (smoke.parent != muzzleFlashRoot)
             {
                 // worldPositionStays: false - the pose is set outright below, and letting Unity
                 // preserve the world pose here would only bake the old tank-tip offset into new
                 // local numbers.
-                smoke.SetParent(cannonRoot, false);
+                smoke.SetParent(muzzleFlashRoot, false);
                 changed = true;
             }
 
-            // Identity, not the muzzle's rotation: the flash should fire along the barrel, which
-            // is what CannonRoot's own orientation already is. The old value was the tank
-            // turret's tilt, which no longer means anything now the tank is not what aims.
+            // Identity, not the muzzle's rotation: the flash should fire along the barrel, and
+            // the frame it now sits in is aimed along the barrel already. The old value was the
+            // tank turret's tilt, which no longer means anything now the tank is not what aims.
             if (smoke.localPosition != muzzle.localPosition || smoke.localRotation != Quaternion.identity)
             {
                 smoke.localPosition = muzzle.localPosition;
