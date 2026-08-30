@@ -70,6 +70,20 @@ namespace GameJam.EditorTools
         private const string BarrelObjectName = "CannonA";
 
         /// <summary>
+        /// The frame the vehicle model and the muzzle smoke hang in: a live child of Cannon that
+        /// copies CannonA's rest pose. CannonA itself is switched off, so nothing may be parented
+        /// under it and expect to render; this is the active stand-in that sits in the same place.
+        /// It does not follow the aim - the barrel bone does that - so the base stays planted.
+        /// </summary>
+        private const string CannonRootObjectName = "CannonRoot";
+
+        /// <summary>Where the shot leaves from, and so where the smoke belongs.</summary>
+        private const string MuzzleObjectName = "MuzzlePoint";
+
+        /// <summary>The nested muzzle-flash effect, authored against the old tank's barrel tip.</summary>
+        private const string SmokeObjectName = "Cannon_Smoke";
+
+        /// <summary>
         /// A fitted model may be a twentieth of the pack's size or twice it; anything outside
         /// that is a measurement gone wrong (an empty prefab, a stray renderer a kilometre away)
         /// and a clamp keeps it from writing a scale that makes the vehicle invisible.
@@ -185,14 +199,6 @@ namespace GameJam.EditorTools
 
                 Transform fallback = FindDescendant(root.transform, FallbackModelName);
 
-                SerializedObject serializedMount = new SerializedObject(mount);
-                SetIfEmpty(serializedMount, "loadout", loadout);
-
-                // The cannon itself, not a child of it: this is the object the aim rotates, so a
-                // model parented here aims without anything driving it.
-                SetIfEmpty(serializedMount, "mountPoint", cannon);
-                SetIfEmpty(serializedMount, "fallbackModel", fallback != null ? fallback.gameObject : null);
-
                 // The old barrel is what the aim rotates, and it is switched off, so nothing on
                 // screen moves with it. Handing it to the mount is what lets the vehicle's own
                 // barrel copy the aim without the aim controller ever hearing about vehicles.
@@ -204,6 +210,19 @@ namespace GameJam.EditorTools
                         + $"{SlingshotPrefabPath}, so the mounted model's barrel will not follow the aim.");
                 }
 
+                changed |= EnsureCannonRoot(cannon, barrel, out Transform cannonRoot);
+                changed |= MoveSmokeToMuzzle(root.transform, cannonRoot, barrel);
+
+                SerializedObject serializedMount = new SerializedObject(mount);
+                SetIfEmpty(serializedMount, "loadout", loadout);
+
+                // The model hangs in CannonRoot, not in Cannon: mounting at Cannon put the model
+                // at the cannon's own origin and orientation, which is neither where the barrel is
+                // nor which way it points. CannonRoot copies CannonA's rest pose, so a model drops
+                // in already aligned with the barrel it stands in for, and the barrel-bone follow
+                // adds only the aim delta on top - no double rotation.
+                changed |= RepointMountPoint(serializedMount, cannon, cannonRoot);
+                SetIfEmpty(serializedMount, "fallbackModel", fallback != null ? fallback.gameObject : null);
                 SetIfEmpty(serializedMount, "barrelReference", barrel);
 
                 // Ensured on this pass as well as in the defaults one, so wiring the mount on its
@@ -769,6 +788,138 @@ namespace GameJam.EditorTools
         }
 
         /// <summary>Depth-first by name, inactive included: the fallback model may be switched off.</summary>
+        /// <summary>
+        /// Ensures the live frame the model mounts in, sitting exactly where the switched-off
+        /// CannonA sits. Its pose is re-copied on every run rather than only on creation: CannonA
+        /// is the yardstick the whole cannon is laid out around, so if an artist moves it the
+        /// mount must move with it, and a frame that silently kept a stale pose would put every
+        /// vehicle in the wrong place with nothing on screen to say why.
+        /// </summary>
+        /// <returns>True when the prefab changed and needs saving.</returns>
+        private static bool EnsureCannonRoot(Transform cannon, Transform barrel, out Transform cannonRoot)
+        {
+            cannonRoot = FindDescendant(cannon, CannonRootObjectName);
+            bool changed = false;
+            if (cannonRoot == null)
+            {
+                cannonRoot = new GameObject(CannonRootObjectName).transform;
+                cannonRoot.SetParent(cannon, false);
+                changed = true;
+            }
+
+            if (barrel == null)
+            {
+                // Without the yardstick the frame still exists, so the mount has somewhere to put
+                // a model; it just cannot be placed, and identity under Cannon is the old
+                // behaviour rather than a new kind of wrong.
+                return changed;
+            }
+
+            if (cannonRoot.localPosition != barrel.localPosition
+                || cannonRoot.localRotation != barrel.localRotation
+                || cannonRoot.localScale != Vector3.one)
+            {
+                cannonRoot.localPosition = barrel.localPosition;
+                cannonRoot.localRotation = barrel.localRotation;
+                cannonRoot.localScale = Vector3.one;
+                changed = true;
+            }
+
+            return changed;
+        }
+
+        /// <summary>
+        /// Moves the muzzle flash out to the live frame and onto the muzzle. It was authored
+        /// against the old tank's barrel tip, roughly three quarters of a unit behind where shots
+        /// actually leave, and the obvious anchor - MuzzlePoint - is inside the switched-off
+        /// CannonA, where a particle would never render. CannonRoot shares CannonA's pose, so the
+        /// muzzle's own local offset placed under CannonRoot lands on the same point in the world.
+        /// </summary>
+        /// <returns>True when the prefab changed and needs saving.</returns>
+        private static bool MoveSmokeToMuzzle(Transform root, Transform cannonRoot, Transform barrel)
+        {
+            if (cannonRoot == null)
+            {
+                return false;
+            }
+
+            Transform smoke = FindDescendant(root, SmokeObjectName);
+            if (smoke == null)
+            {
+                Debug.LogWarning(
+                    $"{nameof(VehicleDefinitionBuilder)} found no \"{SmokeObjectName}\" inside "
+                    + $"{SlingshotPrefabPath}, so the muzzle flash was left where it was.");
+                return false;
+            }
+
+            Transform muzzle = barrel != null ? FindDescendant(barrel, MuzzleObjectName) : null;
+            if (muzzle == null)
+            {
+                Debug.LogWarning(
+                    $"{nameof(VehicleDefinitionBuilder)} found no \"{MuzzleObjectName}\" under "
+                    + $"\"{BarrelObjectName}\", so the muzzle flash could not be placed.");
+                return false;
+            }
+
+            bool changed = false;
+            if (smoke.parent != cannonRoot)
+            {
+                // worldPositionStays: false - the pose is set outright below, and letting Unity
+                // preserve the world pose here would only bake the old tank-tip offset into new
+                // local numbers.
+                smoke.SetParent(cannonRoot, false);
+                changed = true;
+            }
+
+            // Identity, not the muzzle's rotation: the flash should fire along the barrel, which
+            // is what CannonRoot's own orientation already is. The old value was the tank
+            // turret's tilt, which no longer means anything now the tank is not what aims.
+            if (smoke.localPosition != muzzle.localPosition || smoke.localRotation != Quaternion.identity)
+            {
+                smoke.localPosition = muzzle.localPosition;
+                smoke.localRotation = Quaternion.identity;
+                changed = true;
+            }
+
+            return changed;
+        }
+
+        /// <summary>
+        /// Points the mount at CannonRoot. Deliberately not a SetIfEmpty: every project built
+        /// before this change already has mountPoint set to Cannon itself, so filling only an
+        /// empty slot would leave exactly the projects that need the fix without it. Only that
+        /// one known-stale value is replaced - a reference someone aimed somewhere else by hand
+        /// is left alone.
+        /// </summary>
+        /// <returns>True when the reference moved.</returns>
+        private static bool RepointMountPoint(SerializedObject serializedMount, Transform cannon, Transform cannonRoot)
+        {
+            if (cannonRoot == null)
+            {
+                return false;
+            }
+
+            SerializedProperty property = serializedMount.FindProperty("mountPoint");
+            if (property == null)
+            {
+                return false;
+            }
+
+            Object current = property.objectReferenceValue;
+            if (current == cannonRoot)
+            {
+                return false;
+            }
+
+            if (current != null && current != (Object)cannon)
+            {
+                return false;
+            }
+
+            property.objectReferenceValue = cannonRoot;
+            return true;
+        }
+
         private static Transform FindDescendant(Transform root, string childName)
         {
             if (root.name == childName)
