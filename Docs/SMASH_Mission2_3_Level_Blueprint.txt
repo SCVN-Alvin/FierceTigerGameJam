@@ -1,0 +1,352 @@
+================================================================================
+SMASH - CAMPAIGN LEVEL DESIGN BLUEPRINT
+Mission 1 renovation + Mission 2 (beach) & Mission 3 (space), with image prompts
+Companion to SMASH_JSON_Cloning_Handbook.txt (build rules) and the map spec
+Project: Demolition Contracts (FierceTigerGameJam)     Revision 3 - 2026-08-30
+================================================================================
+
+WHO THIS IS FOR
+    The designer and the image generator producing concepts for Mission 2 and
+    Mission 3, and the AI that will clone those concepts into map JSON. Every
+    level below carries: the archetype, the grid, the material band, the
+    "collapse story" (what makes destroying it feel good), and a ready-to-use
+    IMAGE PROMPT. Concepts must be drawn at CELL RESOLUTION - one drawn brick
+    = one 0.25 m cell of the stated grid - or the JSON cannot honour them.
+
+
+================================================================================
+1. WHY MISSION 1 READS FLAT - THE DIAGNOSIS THIS FIXES
+================================================================================
+
+    All nine current buildings are the same organism: a hollow rectangular
+    box with window holes. Every map plays the same way - stand in front,
+    sand the facade down, bricks drop at the foot of the wall. No shot is
+    smarter than another, nothing chains, the structure never betrays itself.
+    Demolition is only fun when the building has a STRUCTURE TO BETRAY: a
+    load path the player can read, cut, and watch fail.
+
+    Every level below is therefore built around one of five construction
+    styles, and no level is a plain box.
+
+
+================================================================================
+2. THE FIVE CONSTRUCTION STYLES
+================================================================================
+
+    S1  PILLAR PUZZLE - a heavy mass carried by 2-4 slim pillars. The player
+        reads "shoot the legs", cuts them, gravity does the rest. The engine
+        already releases everything above a destroyed support.
+        Shapes: water tower, elevated tank, grandstand, viaduct.
+
+    S2  DEPTH DOMINO - 3-4 tall free-standing slabs placed one behind
+        another, 1-2 layers apart. A knocked wall topples as one plate and
+        slams the next hard enough to activate it: one good shot fells the
+        whole row. Uses a chain mechanic the engine has that NO current map
+        exercises.
+
+    S3  COMPOUND / DIORAMA - two or three small separate structures on one
+        map (main hall + chimney + shed). Every bullet becomes a target
+        CHOICE, and a falling chimney can maul the building beside it.
+
+    S4  CANTILEVER & ARCH - bridges, gates, overhangs propped by one column:
+        shapes that look unstable and itch to be shot. Physics pays it off.
+
+    S5  SHOT ECONOMY - not a shape but a tuning rule that makes S1-S4
+        matter: set bulletPickLimit to ~60-70% of the shots needed to sand
+        the building down, so passing REQUIRES structural shots.
+
+    MATERIAL BANDS decide where the fun comes from (per mission of nine:
+    levels 1-3 brick only, 4-6 brick+glass, 7-9 brick+glass+concrete):
+        brick band    -> fun = shape and domino (no material contrast, so
+                         silhouettes and chains carry everything)
+        glass band    -> fun = glass rain: continuous panes riding on the
+                         load-bearing band below them, released all at once
+        concrete band -> fun = anatomy: visible skeleton, player learns to
+                         punch the brick infill and then fell the frame
+
+
+================================================================================
+3. MISSION 2 - BEACH / SEASIDE FAMILY
+================================================================================
+
+Theme: a seaside strip - huts, piers, lifeguard towers, a lighthouse. The
+materials do not change art, so the THEME IS CARRIED BY SHAPE and by how the
+image generator paints the same three blocks: brick reads as sand-brick and
+timber, glass as sea-view glazing, concrete as stone piers and breakwater.
+Everything stands on ground or stilts; stilts are the mission's signature
+(and free S1 gameplay).
+
+LEVEL 1 - BEACH HUT ROW                     [brick | S3 | grid 14x6, 5 layers]
+    Three tiny huts side by side, different roof shapes (flat, stepped,
+    peaked), each raised one row on short stilt blocks. ~110 entries.
+    Collapse story: three separate toy targets; knocking a hut off its
+    stilts slides it into its neighbour. Lesson: choose targets.
+    IMAGE PROMPT: "isometric voxel beach huts, three small cube-block cabins
+    with different roofs standing on short stilts in a row, sandy brick
+    tones, white background"
+
+LEVEL 2 - LIFEGUARD TOWER                   [brick | S1 | grid 8x11, 6 layers]
+    Small cabin with a peaked roof on four tall slim legs, a 1-cell-wide
+    stair ramp leaning against it. ~130 entries.
+    Collapse story: the mission's first pure leg-cut - two legs down and the
+    cabin belly-flops; the ramp is a bonus domino that falls separately.
+    IMAGE PROMPT: "isometric voxel lifeguard tower, small hut with peaked
+    roof on four tall thin legs, long ramp leaning to the ground, sandy
+    brick cubes, white background"
+
+LEVEL 3 - THE PIER                          [brick | S2 | grid 10x7, 11 layers]
+    A boardwalk running AWAY from the player: 4 pile bents (frames of two
+    posts + crossbeam) one behind another carrying a 1-row deck, a tiny
+    kiosk at the far end. ~160 entries.
+    Collapse story: the depth-domino level - fell the front bent and the
+    deck pancakes bent by bent all the way to the kiosk.
+    IMAGE PROMPT: "isometric voxel wooden pier running into the distance,
+    post-and-beam frames carrying a plank deck, small kiosk at the far end,
+    brick-brown cubes, white background"
+
+LEVEL 4 - BEACH BAR                   [brick+glass | S4 | grid 12x7, 7 layers]
+    Open-front bar: heavy flat roof carried by the back wall and two front
+    posts, glass wind-screens filling the sides, loose bottle blocks on the
+    counter. ~170 entries.
+    Collapse story: shoot a front post and the whole roof slaps down onto
+    the counter; the glass screens pop as it comes.
+    IMAGE PROMPT: "isometric voxel beach bar, open front with flat roof on
+    two posts, glass panels on the sides, counter with small blocks on it,
+    sandy bricks and blue glass cubes, white background"
+
+LEVEL 5 - SEAVIEW RESTAURANT          [brick+glass | S4 | grid 12x9, 7 layers]
+    Two-storey block: solid brick ground floor, ONE FULL GLASS STOREY
+    (panorama dining room), brick roof deck with loose parasol stubs. ~200.
+    Collapse story: the glass-waist weak seam by the sea - break the dining
+    row and the roof deck drops through it.
+    IMAGE PROMPT: "isometric voxel seaside restaurant, brick ground floor,
+    entire middle storey of blue glass, rooftop terrace with small blocks,
+    cube construction, white background"
+
+LEVEL 6 - WATERSLIDE TOWER            [brick+glass | S3 | grid 14x11, 7 layers]
+    A stair tower with a glass-tube slide (stepped diagonal run of glass
+    cells) descending to a splash pool rim; separate ticket kiosk. ~220.
+    Collapse story: the slide is a cantilevered glass ribbon - cut its two
+    support posts and the whole tube rains down the tower's flank.
+    IMAGE PROMPT: "isometric voxel water slide tower, brick stair tower with
+    a stepped diagonal blue glass tube sliding down to a small pool, ticket
+    kiosk beside it, cube blocks, white background"
+
+LEVEL 7 - LIGHTHOUSE            [all three | S1 | grid 9x14, 6 layers]
+    Concrete rock base, tapering brick shaft (footprint steps in twice),
+    glass lantern room, loose concrete gallery caps. Keeper's cottage
+    attached at the foot. ~230 entries.
+    Collapse story: the tallest topple in the mission - weaken one side of
+    the shaft and the lantern rides the whole tower down onto the cottage.
+    IMAGE PROMPT: "isometric voxel lighthouse, grey stone base, tapering
+    brick tower, glass lantern room on top, small cottage at the foot, cube
+    blocks, white background"
+
+LEVEL 8 - SEA FORT                [all three | S4 | grid 12x10, 8 layers]
+    Squat concrete casemate on a stone plinth, brick barracks inside the
+    open court, glass observation slit band, loose battlement caps. ~270.
+    Collapse story: anatomy - concrete shell resists, so the player learns
+    to shoot through the slit band and gut the brick interior first.
+    IMAGE PROMPT: "isometric voxel coastal fort, low grey concrete bastion
+    with a horizontal glass slit, brick buildings inside the courtyard,
+    cube blocks, white background"
+
+LEVEL 9 - BOARDWALK RESORT (BOSS) [all three | S3+S1 | grid 16x12, 10 layers]
+    The strip in one map: lifeguard tower (S1 legs) + beach bar (S4 roof) +
+    a short pier stub (S2 bents) sharing the beach. ~340 entries.
+    Collapse story: graduation - three structures, three styles, and the
+    pier deck can be dropped onto the bar's roof.
+    IMAGE PROMPT: "isometric voxel beach resort scene, lifeguard tower on
+    legs, open beach bar, short wooden pier, sandy bricks blue glass grey
+    stone cubes, white background"
+
+
+================================================================================
+4. MISSION 3 - SPACEPORT / ORBITAL FAMILY
+================================================================================
+
+Theme: a planetary spaceport - landed ships, domes, gantries, station
+modules on cradles. HARD RULE: the engine has gravity and no map may float,
+so every "space" structure is GROUNDED - landed, docked, or on pedestal
+cradles. That constraint is the mission's gameplay: almost everything
+stands on legs, and legs are for cutting. Palette carries the theme:
+concrete grey = hull and armour, glass blue = domes and viewports, brick =
+painted cargo modules and scaffolds.
+
+LEVEL 1 - CARGO HANGAR                      [brick | S4 | grid 14x8, 7 layers]
+    Barrel-profile hangar (stepped arch roof), one huge door opening filling
+    most of the front, stacked loose crate blocks inside. ~140 entries.
+    Collapse story: the arch IS the building - chip a haunch and the roof
+    ring collapses into the crate stack.
+    IMAGE PROMPT: "isometric voxel spaceport hangar, stepped arch roof over
+    a huge door opening, stacked cargo crates inside, painted brick cubes,
+    white background"
+
+LEVEL 2 - LAUNCH GANTRY                     [brick | S2 | grid 10x13, 6 layers]
+    A tall open scaffold tower (ladder-like frame, many gaps) beside a
+    simple stacked rocket silhouette; two umbilical arms bridge the gap.
+    ~160 entries.
+    Collapse story: fell the gantry INTO the rocket - the mission opens
+    with its own little disaster movie. Arms are cantilever bonuses.
+    IMAGE PROMPT: "isometric voxel launch tower, tall open scaffold frame
+    next to a simple stacked rocket, two arms connecting them, brick cubes,
+    white background"
+
+LEVEL 3 - ROCKET ON LEGS                    [brick | S1 | grid 9x13, 7 layers]
+    A fat stacked rocket (3-step taper, fins as buttresses) standing on
+    three 2-row legs over a launch ring. ~170 entries.
+    Collapse story: pure leg-cut with the tallest payoff so far; the taper
+    means the fall sheds loose nose blocks all the way down.
+    IMAGE PROMPT: "isometric voxel cartoon rocket standing on three legs
+    over a launch ring, stepped tapering body with fins, brick cubes, white
+    background"
+
+LEVEL 4 - OBSERVATORY                 [brick+glass | S4 | grid 11x10, 8 layers]
+    Drum tower with a stepped glass dome cap and a glass slit down the
+    dome's front; attached low lab annex. ~200 entries.
+    Collapse story: the dome is a glass avalanche waiting for its drum rim
+    to be broken - one clean shot under the cap empties the whole bowl.
+    IMAGE PROMPT: "isometric voxel observatory, round tower with a stepped
+    blue glass dome and a vertical slit, small annex building, cube blocks,
+    white background"
+
+LEVEL 5 - BIODOME PAIR                [brick+glass | S3 | grid 15x8, 8 layers]
+    Two stepped glass domes of different sizes on brick ring foundations,
+    linked by a glass tube corridor. ~220 entries.
+    Collapse story: two shatter targets and a fragile bridge; felling the
+    big dome's ring drags the corridor out of the small one.
+    IMAGE PROMPT: "isometric voxel greenhouse domes, two stepped blue glass
+    domes on brick ring bases connected by a glass tube corridor, cube
+    blocks, white background"
+
+LEVEL 6 - CONTROL TOWER               [brick+glass | S1 | grid 9x13, 7 layers]
+    Airport-style mushroom tower: slim brick stem, flared deck, wrap-around
+    glass cab on top, loose antenna blocks. ~200 entries.
+    Collapse story: the definitive stem-cut - the glass cab rides the deck
+    down and detonates on the pad.
+    IMAGE PROMPT: "isometric voxel control tower, thin brick stem with a
+    wider deck on top wrapped in blue glass, antennas above, cube blocks,
+    white background"
+
+LEVEL 7 - LANDED SHUTTLE        [all three | S1 | grid 14x9, 8 layers]
+    A grey concrete fuselage (stepped nose, stub wings as cantilevers) on
+    four slim landing legs, glass cockpit band, brick cargo pods slung
+    under the wings. ~260 entries.
+    Collapse story: cut the legs and the ship belly-flops, wings snap at
+    the root, cockpit glass sprays - the mission's poster moment.
+    IMAGE PROMPT: "isometric voxel landed spaceship, grey blocky fuselage
+    with stub wings on four thin landing legs, blue glass cockpit stripe,
+    brick cargo pods under the wings, cube blocks, white background"
+
+LEVEL 8 - STATION SEGMENT YARD  [all three | S4 | grid 15x10, 8 layers]
+    A station core cylinder resting on two concrete cradle stands, radial
+    brick modules docked to it, two thin arms carrying flat glass solar
+    panels (cantilevered). ~300 entries.
+    Collapse story: anatomy + cantilever - pop the solar wings for cheap
+    glass rain, then break a cradle and the whole core rolls apart.
+    IMAGE PROMPT: "isometric voxel space station module in a ground
+    assembly yard, grey cylinder core on two cradle stands, brick side
+    modules, thin arms holding flat blue solar panels, cube blocks, white
+    background"
+
+LEVEL 9 - THE SPACEPORT (BOSS)  [all three | everything | grid 16x13, 10 layers]
+    The whole port: landed shuttle (S1 legs) + control tower (S1 stem) +
+    gantry with rocket (S2 domino), sharing one pad. ~380 entries.
+    Collapse story: the final exam - three leg-cuts and a domino on one
+    map, and the gantry can be dropped across the shuttle's tail.
+    IMAGE PROMPT: "isometric voxel spaceport, landed blocky spaceship on
+    legs, mushroom control tower with glass cab, scaffold gantry beside a
+    small rocket, grey blue and brick cubes, white background"
+
+NOTE - previous families: the industrial and urban high-rise families from
+Revision 2 remain valid designs and can return as Missions 4-5; this
+revision replaces the themes, not the rules they were built on.
+
+
+================================================================================
+5. MISSION 1 - RENOVATION PLAN (the nine existing maps)
+================================================================================
+
+Mission 1 is NOT rebuilt. Its eight buildings already exist, are wall-split,
+validated and baked; throwing them away wastes work and the mission's job is
+to teach. The renovation gives each level exactly ONE collapse story and one
+lesson, mostly through small JSON edits - only level 8 is replaced outright.
+Mission identity: the village/residential family, "learning the verbs".
+
+  LV  map                          verdict     renovation
+  --  ---------------------------  ----------  --------------------------------
+  1   hollow_brick_hut             KEEP        Tutorial box is fine as the one
+                                               allowed box. Lesson: walls fall.
+  2   brick_courtyard_tower        RETROFIT    Top row -> loose crenellation
+                                               caps (D4). Lesson: debris rains.
+  3   three_storey_brick_house     RETROFIT    Add one interior floor slab per
+                                               storey (D1). Lesson: pancake.
+  4   glass_belt_warehouse         KEEP        Already the glass-rain intro
+                                               (D3); its belt is the lesson.
+  5   two_storey_glass_house       RETROFIT    Consolidate the scattered
+                                               windows into ONE continuous
+                                               glass band at mid-height (D5).
+                                               Lesson: aim at the weak seam.
+  6   large_glass_school           RETROFIT    Widen windows to 2x2 panes,
+                                               loose parapet caps on the roof
+                                               edge. Lesson: choose targets.
+  7   concrete_frame_school        KEEP        Already the anatomy intro (A7):
+                                               frame + infill reads clearly.
+  8   test_03 (AI legacy file)     REPLACE     The one rebuild in the mission.
+                                               New: VILLAGE GATEHOUSE - two
+                                               brick towers, arched gate, glass
+                                               lantern room over the arch,
+                                               concrete plinths under the
+                                               towers. All three materials,
+                                               S4+S1. Grid 12x10, 7 layers,
+                                               ~260 entries.
+                                               IMAGE PROMPT: "isometric voxel
+                                               gatehouse, two brick towers with
+                                               a tall arched gate between them,
+                                               small glass room above the arch,
+                                               grey concrete bases, cube
+                                               blocks, white background"
+  9   hollow_concrete_tower        RETROFIT    Loose chimney pots + antenna
+                                               blocks on the roof (D4); keep
+                                               the concrete corners as the
+                                               first real leg-cut tease.
+
+SHOT ECONOMY PASS (S5) - applies to the whole mission, zero JSON changes:
+    bulletPickLimit is currently generous enough to sand every building
+    down, which is the single biggest source of "phá hơi chán". Retune to
+    ~60-70% of the sanding cost, e.g.: LV1 10, LV2 12, LV3 14, LV4 14,
+    LV5 16, LV6 16, LV7 18, LV8 20, LV9 20 - then adjust from playtests.
+    Passing should require at least one structural shot per map from LV3 on.
+
+Executability note: every RETROFIT above is a small JSON edit on an existing
+file (the ids, slots and configs do not change; re-bake after). The only
+image the generator owes for Mission 1 is the LV8 gatehouse.
+
+
+================================================================================
+6. RULES FOR THE IMAGE GENERATOR
+================================================================================
+
+    I1  CELL RESOLUTION, ALWAYS. One drawn cube = one 0.25 m cell of the
+        stated grid. If the drawing shows bricks smaller than the grid, the
+        JSON cannot honour it (proven failure - see the render-vs-JSON
+        feedback note in Docs).
+    I2  CAMERA: isometric-ish, from front-right, elevated ~20-25 degrees -
+        the same view as the voxel validation renders, so concept and
+        render can be compared side by side.
+    I3  PALETTE: brick = warm red-brown, glass = pale sky blue, concrete =
+        neutral grey. Nothing else is buildable.
+    I4  BACKGROUND: plain white or flat colour. No environment, no people,
+        no vehicles - the JSON has no cells for them.
+    I5  COUNT WHAT YOU DRAW: the drawn footprint and height must fit the
+        stated grid; the stated entry budget is the ceiling.
+    I6  ONE IMAGE PER LEVEL, plus (for S2/S1 levels) an optional second
+        image showing the intended collapse direction as arrows.
+
+HANDOFF LOOP (per level): image -> approve -> clone to JSON per the
+Cloning Handbook -> validate -> voxel render -> compare render to image ->
+ship JSON + render + manifest. The render, not the image, is the truth.
+
+================================================================================
+END
+================================================================================

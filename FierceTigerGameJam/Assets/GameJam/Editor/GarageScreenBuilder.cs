@@ -87,7 +87,7 @@ namespace GameJam.EditorTools
         private static readonly Vector2 FrameSize = new Vector2(600f, 884f);
 
         /// <summary>Hangs the frame off the top of the screen, clear of the gold chip and the X.</summary>
-        private static readonly Vector2 FrameOffset = new Vector2(0f, -56f);
+        private static readonly Vector2 FrameOffset = new Vector2(0f, -96f);
 
         /// <summary>796x148 of row art at the frame's 600/975 scale, so the 9-slice stays near 1:1.</summary>
         private static readonly Vector2 RowSize = new Vector2(490f, 91f);

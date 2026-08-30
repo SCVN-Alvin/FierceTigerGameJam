@@ -13,21 +13,66 @@ MonoBehaviour:
   m_Name: MapProgressionConfig
   m_EditorClassIdentifier: Assembly-CSharp::GameJam.Config.MapProgressionConfig
   entries:
-  - mapId: 1
+  - mapId: map_001_hollow_brick_hut
     requiredClearPercent: 0.5
     passMapRewardId: pass_map_1
     clearMapRewardId: clear_map_1
     bulletPickLimit: 10
-  - mapId: 2
+  - mapId: map_002_brick_courtyard_tower
     requiredClearPercent: 0.5
     passMapRewardId: pass_map_2
     clearMapRewardId: clear_map_2
-    bulletPickLimit: 20
-  - mapId: 3
+    bulletPickLimit: 12
+  - mapId: map_003_three_storey_brick_house
     requiredClearPercent: 0.5
     passMapRewardId: pass_map_3
     clearMapRewardId: clear_map_3
-    bulletPickLimit: 30
+    bulletPickLimit: 14
+  - mapId: map_004_glass_belt_warehouse
+    requiredClearPercent: 0.5
+    passMapRewardId: pass_map_4
+    clearMapRewardId: clear_map_4
+    bulletPickLimit: 14
+  - mapId: map_005_two_storey_glass_house
+    requiredClearPercent: 0.5
+    passMapRewardId: pass_map_5
+    clearMapRewardId: clear_map_5
+    bulletPickLimit: 16
+  - mapId: map_006_large_glass_school
+    requiredClearPercent: 0.5
+    passMapRewardId: pass_map_6
+    clearMapRewardId: clear_map_6
+    bulletPickLimit: 16
+  - mapId: map_007_concrete_frame_school
+    requiredClearPercent: 0.5
+    passMapRewardId: pass_map_7
+    clearMapRewardId: clear_map_7
+    bulletPickLimit: 18
+  - mapId: 2
+    requiredClearPercent: 0.5
+    passMapRewardId: pass_map_8
+    clearMapRewardId: clear_map_8
+    bulletPickLimit: 20
+  - mapId: map_009_hollow_concrete_tower
+    requiredClearPercent: 0.5
+    passMapRewardId: pass_map_9
+    clearMapRewardId: clear_map_9
+    bulletPickLimit: 20
+  - mapId: map_004_level_01
+    requiredClearPercent: 0.5
+    passMapRewardId: pass_map_4
+    clearMapRewardId: clear_map_4
+    bulletPickLimit: 12
+  - mapId: map_005_level_02
+    requiredClearPercent: 0.5
+    passMapRewardId: pass_map_5
+    clearMapRewardId: clear_map_5
+    bulletPickLimit: 16
+  - mapId: map_005_two_storey_hollow_courtyard
+    requiredClearPercent: 0.5
+    passMapRewardId: pass_map_6
+    clearMapRewardId: clear_map_6
+    bulletPickLimit: 25
   - mapId: tutorial
     requiredClearPercent: 0.8
     passMapRewardId: 

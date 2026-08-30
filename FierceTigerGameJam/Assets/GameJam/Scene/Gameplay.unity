@@ -131,6 +131,7 @@ GameObject:
   - component: {fileID: 32302312}
   - component: {fileID: 32302311}
   - component: {fileID: 32302310}
+  - component: {fileID: 32302314}
   m_Layer: 5
   m_Name: Canvas
   m_TagString: Untagged
@@ -172,7 +173,7 @@ MonoBehaviour:
   m_ScaleFactor: 1
   m_ReferenceResolution: {x: 720, y: 1280}
   m_ScreenMatchMode: 0
-  m_MatchWidthOrHeight: 0
+  m_MatchWidthOrHeight: 1
   m_PhysicalUnit: 3
   m_FallbackScreenDPI: 96
   m_DefaultSpriteDPI: 96
@@ -234,6 +235,19 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 0}
+--- !u!114 &32302314
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 32302309}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7daa3b35d76894184bdc21d989d22456, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GameJam.UI.AdaptiveCanvasScaler
+  referenceResolution: {x: 720, y: 1280}
 --- !u!1 &57543158
 GameObject:
   m_ObjectHideFlags: 0
@@ -442,7 +456,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &163155016
 RectTransform:
   m_ObjectHideFlags: 0
@@ -2074,7 +2088,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 1257768746038195394, guid: ef65a20a6db914616b5cc21725b05b5a, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 0
+      value: 40
       objectReference: {fileID: 0}
     - target: {fileID: 2688669656958018069, guid: ef65a20a6db914616b5cc21725b05b5a, type: 3}
       propertyPath: m_Pivot.x
@@ -2158,11 +2172,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3932511033887904550, guid: ef65a20a6db914616b5cc21725b05b5a, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 0
+      value: 40
       objectReference: {fileID: 0}
     - target: {fileID: 5556576974134975396, guid: ef65a20a6db914616b5cc21725b05b5a, type: 3}
       propertyPath: m_Name
       value: GarageScreen
+      objectReference: {fileID: 0}
+    - target: {fileID: 5556576974134975396, guid: ef65a20a6db914616b5cc21725b05b5a, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -3787,7 +3805,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6448125168550815710, guid: c10d64c04f8ff4c90bb2bf7b03038a0f, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -4002,11 +4020,19 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 811297349927319741, guid: 9ea6096a7bfc24972851087f9ef53577, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: -0.037605286
+      value: -0.037597656
+      objectReference: {fileID: 0}
+    - target: {fileID: 811297349927319741, guid: 9ea6096a7bfc24972851087f9ef53577, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -2.100006
       objectReference: {fileID: 0}
     - target: {fileID: 2283136734390867449, guid: 9ea6096a7bfc24972851087f9ef53577, type: 3}
       propertyPath: m_Name
       value: RunHud
+      objectReference: {fileID: 0}
+    - target: {fileID: 2283136734390867449, guid: 9ea6096a7bfc24972851087f9ef53577, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6641191019418708714, guid: 9ea6096a7bfc24972851087f9ef53577, type: 3}
       propertyPath: progressTracker
@@ -4191,7 +4217,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7206140757029717186, guid: 2339aa7d2c8f74d55b8fc0d6e50ae561, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

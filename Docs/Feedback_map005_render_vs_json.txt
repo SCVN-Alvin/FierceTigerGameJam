@@ -1,0 +1,52 @@
+FEEDBACK: map_005_level_02 - THE CONCEPT PNG AND THE JSON ARE TWO DIFFERENT BUILDINGS
+(for the AI that generates Smash map JSON; companion to SMASH_MapJSON_Spec_and_Review.txt)
+
+Unity is NOT mis-building the file. We voxel-rendered map_005_level_02.json directly
+from the JSON, outside Unity, and it matches the in-game result exactly: an 8x6 slab,
+4 layers (1.0 m) deep, 98 blocks, with a niche. The gap is between your concept
+render and the JSON you wrote, not between the JSON and the engine.
+
+WHAT THE PNG PROMISES vs WHAT THE JSON SAYS
+
+                         concept render        map_005_level_02.json
+  plan (footprint)       ~roughly square,      8 x 4 cells (2.0 x 1.0 m)
+                         ~30 x 25 cells
+  height                 ~14 cells             6 cells
+  depth                  a full 4-walled       4 layers = a thick wall,
+                         hollow fort           not a building
+  brick size on screen   ~1/10 of a cell       exactly 1 cell (0.25 m cube)
+  implied block count    thousands             98
+
+TWO SEPARATE CAUSES, TWO SEPARATE FIXES
+
+1. DEPTH AND HOLLOWNESS ARE MISSING - fixable, do this.
+   A building reads as a building only when its plan is roughly as deep as it is
+   wide, and the inside is empty. Within the existing budget (hard ceiling 400
+   blocks, mid-band target 120-220, boss up to 400) a real hollow fort fits:
+
+     12 x 12 plan, 6 rows tall, walls one cell thick, hollow core:
+     perimeter = 2*12 + 2*10 = 44 cells/row  ->  ~264 blocks before openings.
+     Add a 2x3 doorway gap, a few 1x1 window gaps, a crenellated top row
+     (alternate filled/empty), and it lands near 240 blocks - inside budget.
+
+   Group each wall face with wall_id (front_wall, rear_wall, left_wall,
+   right_wall, split at openings: front_left_of_door, front_lintel, ...) so the
+   loose-body count stays low. Keep every cell supported within its own layer,
+   as the spec requires.
+
+2. BRICK FIDELITY IS CAPPED - not fixable, stop promising it.
+   In this game one block IS one 0.25 m cube with a chunky brick texture. Your
+   render draws bricks about ten times smaller than that. No JSON can express
+   that detail: the engine neither scales blocks (cellSize is spacing, not
+   scale - spec section 0.1) nor subdivides them. The reachable look is a
+   chunky, LEGO-like fort. Please render concepts at 1 brick = 1 cell of the
+   actual grid you intend to emit, so the concept and the JSON stay honest with
+   each other. A useful self-check before delivering: voxel-plot your own JSON
+   and compare it to your concept; if they differ, the JSON is the one that
+   ships.
+
+REQUEST
+   Regenerate level 2 as a hollow 4-walled structure: plan >= 10x10, 5-7 rows
+   tall, walls 1 cell thick, doorway + windows + crenellations as real gaps,
+   named wall groups per face, cellSize 0.25, total <= 300 blocks, and a
+   concept image drawn at true cell resolution.

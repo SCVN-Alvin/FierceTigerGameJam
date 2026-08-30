@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using GameJam.Gameplay;
 using UnityEngine;
@@ -21,6 +22,7 @@ namespace GameJam.Gameplay.Wall
         /// pose is stored relative to the wall itself, so the blocks appear wherever the wall has
         /// got to rather than snapping back to where it was built.
         /// </summary>
+        [Serializable]
         public struct Cell
         {
             public GameObject Prefab;
@@ -39,6 +41,11 @@ namespace GameJam.Gameplay.Wall
                  + "down than a short one and much harder than a lone block.")]
         [SerializeField] private float maxHitPoints = 1f;
 
+        [Tooltip("An armoured wall takes the ammunition's wallDamage, which is authored lower "
+                 + "than blockDamage so a shot chips the shell. Unarmoured, it takes blockDamage "
+                 + "and plays as if its cells were loose, while staying one cheap body.")]
+        [SerializeField] private bool armored = true;
+
         [Tooltip("Impacts slower than this do nothing, which keeps a wall from grinding itself "
                  + "down against its neighbours while the structure settles.")]
         [SerializeField] private float minimumImpactSpeed = 3f;
@@ -47,7 +54,9 @@ namespace GameJam.Gameplay.Wall
                  + "makes a wall come apart when it lands after being toppled.")]
         [SerializeField] private float damagePerImpactSpeed = 1.5f;
 
-        private readonly List<Cell> cells = new List<Cell>();
+        // Serialized so a wall baked into a map prefab keeps its manifest: without it, a baked
+        // wall would break up into nothing. Populated by Initialize on the build path.
+        [SerializeField, HideInInspector] private List<Cell> cells = new List<Cell>();
         private WallBlockPhysicsSetup physicsSetup;
         private KnockdownBlock body;
         private float remainingHitPoints;
@@ -59,12 +68,23 @@ namespace GameJam.Gameplay.Wall
         public float RemainingHitPoints => remainingHitPoints;
         public bool IsBroken => hasBrokenUp;
 
+        /// <summary>
+        /// Whether shots resolve against this wall as a shell (wallDamage) or as bare material
+        /// (blockDamage). Serialized, so a wall baked into a map prefab keeps the answer.
+        /// </summary>
+        public bool IsArmored => armored;
+
         /// <summary>0 while untouched, 1 when the next hit brings it down.</summary>
         public float DamageFraction => maxHitPoints <= 0f
             ? 1f
             : Mathf.Clamp01(1f - (remainingHitPoints / maxHitPoints));
 
-        public void Initialize(IEnumerable<Cell> wallCells, WallBlockPhysicsSetup setup, string wallMaterialId, float hitPoints)
+        public void Initialize(
+            IEnumerable<Cell> wallCells,
+            WallBlockPhysicsSetup setup,
+            string wallMaterialId,
+            float hitPoints,
+            bool isArmored = true)
         {
             cells.Clear();
             cells.AddRange(wallCells);
@@ -72,6 +92,17 @@ namespace GameJam.Gameplay.Wall
             materialId = wallMaterialId;
             maxHitPoints = Mathf.Max(0.01f, hitPoints);
             remainingHitPoints = maxHitPoints;
+            armored = isArmored;
+        }
+
+        /// <summary>
+        /// Hands a wall from a baked map prefab the physics setup it could not serialize. The
+        /// manifest, material and hit points are already in the prefab; this is the one runtime
+        /// reference that has to arrive from the scene.
+        /// </summary>
+        public void AttachPhysicsSetup(WallBlockPhysicsSetup setup)
+        {
+            physicsSetup = setup;
         }
 
         private void Awake()

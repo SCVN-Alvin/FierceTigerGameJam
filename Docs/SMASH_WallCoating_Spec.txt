@@ -1,0 +1,259 @@
+================================================================================
+SMASH - WALL COATING ("LỚP PHỦ") SPEC
+Difficulty ramp across Mission 1-3, and how to author it in map JSON
+Companion to SMASH_MapJSON_Spec_and_Review.txt and SMASH_JSON_Cloning_Handbook.txt
+Project: Demolition Contracts (FierceTigerGameJam)     Revision 2 - 2026-08-30  (section 5 implemented)
+================================================================================
+
+WHO THIS IS FOR
+    The AI or person producing map JSON, and whoever tunes the engine. Section 1
+    is the ground truth about what "coating" actually is - read it before acting
+    on sections 2-3, because the feature does not work the way the name suggests.
+
+DECISION ON RECORD
+    OPTION A is the priority. OPTION B is the fallback, to be used only if A
+    cannot be delivered. Both are written out in full in section 3 and 4 so the
+    choice can be made without going back to the conversation.
+
+
+================================================================================
+1. WHAT "COATING" IS - GROUND TRUTH
+================================================================================
+
+1.1  IT IS NOT A MATERIAL, A MESH, OR AN EXTRA SURFACE LAYER
+    There is a Wall Panel mesh (FBX/Brick_Wall.fbx, FBX/Concrete_Wall.fbx) that
+    the engine stretches across an intact wall instead of welding cubes. It is
+    PURELY COSMETIC. KnockdownLayoutMapAuthoring.ResolveWallDurability() computes
+    hit points from the blocks, and it runs whichever mesh path was taken. The
+    panel adds no hit points, no thickness, no extra shot.
+    Do not design difficulty around the panel. It is a rendering detail.
+
+1.2  THE REAL MECHANIC IS THE WALL ITSELF
+    A group of cells sharing a wall_id becomes ONE rigidbody whose hit points are
+    the sum of its blocks. Two consequences, and the second is the one that
+    matters here:
+
+      a) Pooled hit points. A 20-cell brick wall is 60 HP in one body; the same
+         20 cells loose are twenty separate 3 HP targets.
+      b) A SEPARATE DAMAGE NUMBER. BulletDefinition.MaterialDamage carries both
+         blockDamage and wallDamage per material per bullet level. The engine
+         picks by target: a wall takes wallDamage, a loose block takes
+         blockDamage. The tooltip in BulletDefinition.cs states the intent
+         exactly: "Lower than blockDamage is what makes a shot chip a wall while
+         destroying a lone block."
+
+    So: CELLS IN A NAMED WALL = COATED.  LOOSE CELLS = UNCOATED.
+
+1.3  THE NUMBERS AS SHIPPED (Assets/GameJam/Config/Bullets/)
+
+        ammo          material    blockDamage   wallDamage   shell factor
+        Rock  Lv1     glass            5            5          none
+                      brick            3            1          3.0x
+                      concrete         0            0          impossible
+        Rock  Lv2     glass            6            6          none
+                      brick            4            3          1.3x
+                      concrete         0            0          impossible
+        Cannon Lv1    glass            8            8          none
+                      brick            6            5          1.2x
+                      concrete         4            2          2.0x
+        Cannon Lv2    glass           10           10          none
+                      brick            8            7          1.1x
+                      concrete         7            5          1.4x
+
+1.4  THREE FACTS THAT CONSTRAIN EVERY DESIGN BELOW
+    - GLASS HAS NO SHELL AT ALL. wallDamage == blockDamage at every level of
+      every ammunition. Coating glass changes difficulty by exactly zero.
+      Grouping glass into walls is still worth doing, but as an ASMR knob: a
+      glass wall releases every pane in one second instead of popping one by one.
+    - CONCRETE IS IMMUNE TO ROCK. Zero, not slow. Any level whose clear condition
+      depends on breaking concrete is gated behind owning the Cannon.
+    - THE SHELL IS STRONGEST EARLY AND FADES. Rock Lv1 vs brick is a 3x shell;
+      by Cannon Lv2 it is 1.1x. Coating is therefore a much bigger difficulty
+      lever for a player on starter gear than for an upgraded one.
+
+
+================================================================================
+2. THE OBSTACLE - WHY A LITERAL READING OF OPTION A BREAKS
+================================================================================
+
+"Uncoated" means loose cells, and every loose cell is its own rigidbody on the
+opening frame. The budget in the spec is 150 loose bodies; beyond that Android
+frame time collapses. Measured against the maps as they stand today:
+
+        LV  map                              entries  brick  glass  concrete
+         1  map_001_hollow_brick_hut              77     96      -        -
+         2  map_002_brick_courtyard_tower        104    126      -        -
+         3  map_003_three_storey_brick_house     217    283      -        -
+         4  map_004_glass_belt_warehouse         166    138     60        -
+         5  map_005_two_storey_glass_house       184    204     26        -
+         6  map_006_large_glass_school           222    222     48        -
+         7  map_007_concrete_frame_school        220    138     28       84
+         8  test_03 (Village Gatehouse)          354     92     56      216
+         9  map_009_hollow_concrete_tower        268    218     18       76
+        (brick/glass/concrete columns are CELL counts, not entries)
+
+Mission 1 under Option A wants brick uncoated on LV1-6. Loose body count that
+would produce: LV1 96, LV2 126, LV3 283, LV4 198, LV5 230, LV6 270. Everything
+from LV3 up blows the 150 cap, some by nearly double. The same problem hits
+Mission 1 LV8, whose 216 concrete cells would all be loose.
+
+This is not a reason to abandon Option A. It is a reason to implement it the way
+section 5 describes rather than by literally un-grouping cells.
+
+
+================================================================================
+3. OPTION A - THE PRIORITY DESIGN
+================================================================================
+
+Read "coating on material M" as: cells of material M take wallDamage instead of
+blockDamage, i.e. they behave as an armoured shell until the shell is broken.
+
+    MISSION 1 - residential / school
+        LV 1-6   no coating on anything. Brick comes off block by block; this is
+                 where the player learns that bricks are individually cheap.
+        LV 7-9   BRICK COATED. First contact with a shell. On Rock Lv1 this is a
+                 3x jump, which is exactly the intended difficulty step.
+                 Concrete (LV7-9) stays uncoated.
+        Glass    never coated anywhere in Mission 1 (no effect anyway); still
+                 grouped into walls per pane group for the shatter moment.
+
+    MISSION 2 - beach architecture
+        LV 1-9   BRICK COATED throughout. The brick shell is now the baseline.
+        LV 7-9   CONCRETE COATED as well. Second shell introduced, and on Cannon
+                 Lv1 concrete is a 2x shell - the hardest single step in the
+                 campaign so far.
+        Glass    grouped for shatter, never counted as coating.
+
+    MISSION 3 - space / spaceport
+        LV 1-9   BOTH BRICK AND CONCRETE COATED from level 1. No ramp-in; the
+                 player is expected to arrive with upgraded ammunition.
+        LV 9     BOSS. Designed to be very hard to solve, not merely tanky. See
+                 the design note below - raw hit points is the wrong way to do
+                 this.
+
+    THE SHAPE OF THE RAMP, STATED PLAINLY
+        M1 LV1-6   0 shells
+        M1 LV7-9   1 shell   (brick)
+        M2 LV1-6   1 shell   (brick)
+        M2 LV7-9   2 shells  (brick + concrete)
+        M3 LV1-9   2 shells  (brick + concrete)
+
+    LEVEL 9 OF MISSION 3 - HOW TO MAKE IT HARD HONESTLY
+        Do not reach for more hit points. A wall of 400 concrete cells is not
+        difficult, it is long. Difficulty comes from the shot economy:
+          - one load-bearing element that must be found (a hidden pillar behind
+            a glass belt, reachable only through a window)
+          - a collapse that only completes if the order is right (fell the
+            skybridge before the tower it leans on, and the tower survives)
+          - a concrete core that cannot be shot directly, only crushed by
+            dropping something heavy on it
+          - ammunition budget tuned so a wasted shot is felt
+        Sections S1-S5 of the Blueprint document cover these patterns.
+
+
+================================================================================
+4. OPTION B - THE FALLBACK
+================================================================================
+
+Leave the current behaviour exactly as it is: every structural cell is grouped
+into a named wall by the face/storey algorithm, so everything is effectively
+coated everywhere, and difficulty comes only from entry count, material mix and
+ammunition budget.
+
+Use this only if section 5's implementation cannot be delivered. It is not
+wrong - it is simply the state the campaign already ships in, and it wastes the
+coating as a progression lever.
+
+
+================================================================================
+5. HOW TO IMPLEMENT OPTION A - RECOMMENDED
+================================================================================
+
+5.1  THE PROBLEM IN ONE SENTENCE
+    Coating is currently welded to grouping: to remove a shell you must un-group
+    cells, and un-grouping costs rigidbodies the platform cannot pay for.
+
+5.2  THE FIX - DECOUPLE THEM WITH ONE FLAG
+    Let a wall stay a wall for physics and rendering, but carry a flag that says
+    whether it is armoured. Unarmoured walls take blockDamage.
+
+    JSON - the flag is an OPT-OUT, absent means armoured:
+        "wall": { "wall_id": "front_brick_b0_3", "bare": true }
+
+    It is written as an opt-out rather than "armored": false on purpose.
+    JsonUtility gives a field the JSON does not mention the type default, and
+    for bool that is false; an "armored" field would have depended on field
+    initialisers running and would have silently disarmed every existing wall if
+    that assumption were ever wrong. "bare" cannot fail that way.
+
+    IMPLEMENTED 2026-08-30 - four edits, already in the branch:
+        1. KnockdownMapDefinition.cs      - KnockdownMapWallRef.bare, plus
+                                            KnockdownMapBlock.WallArmored.
+        2. KnockdownLayoutMapAuthoring.cs - WallBuild.Armored, set in
+                                            CreateWallBuild as the AND over the
+                                            group's blocks, passed to Initialize.
+        3. BreakableWall.cs               - serialized "armored" field (so a
+                                            baked map prefab keeps it), IsArmored,
+                                            Initialize(..., bool isArmored = true).
+        4. GridKnockdownCannonProjectile.cs - ResolveDamage is now called with
+                                            (wall != null && wall.IsArmored), so
+                                            a bare wall returns blockDamage. No
+                                            new damage maths.
+
+    What this buys:
+        - Option A becomes exact, per material, per level, with no compromise.
+        - Loose body count never rises; walls stay grouped, frame time unchanged.
+        - Every existing map keeps behaving identically (absent flag = armoured).
+        - The knob is per wall, not per map, so a single building can mix an
+          armoured concrete frame with unarmoured brick infill - which is the
+          A7 exoskeleton pattern from the Handbook, finally readable in play.
+
+5.3  AUTHORING RULE ONCE THE FLAG EXISTS
+    Set "bare": true on every wall whose material is uncoated at that level per
+    section 3. Leave it out otherwise. Nothing else about wall grouping,
+    sizes, footing or brick_2x1 merging changes - keep following the Handbook.
+
+
+================================================================================
+6. FALLBACK IMPLEMENTATION - IF THE ENGINE CANNOT CHANGE
+================================================================================
+
+If the flag in section 5 is not available, approximate Option A with grouping,
+under a hard rule so the result stays shippable:
+
+    R1  LOOSE CAP IS ABSOLUTE. Never exceed 150 loose bodies on the opening
+        frame, whatever the design says. A level that stutters is worse than a
+        level with the wrong shell.
+    R2  WHEN UNCOATED CELLS EXCEED THE CAP, WALL THE STRUCTURE, LOOSEN THE SKIN.
+        Keep in walls: foundations (row 0), corner piers, lintel bands, roof and
+        floor slabs - the cells that hold the building up. Leave loose: the
+        outer face panels between them. The player then experiences shooting
+        bricks off one at a time, which is the feel of "no coating", while the
+        skeleton stays cheap and the building still collapses properly.
+    R3  NEVER LEAVE A BODY UNFOOTED. The footing repair pass still applies; a
+        loosened skin cell that ends up floating hangs forever and blocks the
+        100% clear.
+    R4  SHRINK BEFORE YOU BREAK THE CAP. A level that cannot be authored
+        uncoated within 150 loose bodies should lose cells - more openings,
+        hollower core - rather than gain walls. Holes are free budget.
+    R5  ACCEPT THE APPROXIMATION AND WRITE IT DOWN. Deliver the manifest line
+        with a "coating: partial (n% loose)" note so the tuning pass knows what
+        it is looking at.
+
+
+================================================================================
+7. CHECKLIST FOR EACH DELIVERED MAP
+================================================================================
+
+    [ ] coating per material matches section 3 for that mission and level
+    [ ] glass never counted as coating; still grouped per pane group
+    [ ] if using section 5: "bare": true present on exactly the right walls
+    [ ] if using section 6: loose bodies <= 150, structure walled, skin loose
+    [ ] every body footed; validator reports 0 errors
+    [ ] entries within the level band; wall sizes 4-24 cells
+    [ ] manifest line states: entries, walls, loose, coating per material
+    [ ] concrete-bearing levels flagged as Cannon-gated (Rock does 0 to concrete)
+
+================================================================================
+END
+================================================================================
