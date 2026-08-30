@@ -1,0 +1,246 @@
+================================================================================
+SMASH - JSON CLONING HANDBOOK
+How to turn a building concept into a map JSON that plays well
+Companion to SMASH_MapJSON_Spec_and_Review.txt (the schema/importer reference)
+Project: Demolition Contracts (FierceTigerGameJam)     Revision 1 - 2026-08-29
+================================================================================
+
+WHO THIS IS FOR
+    The AI or person producing map JSON from a building concept ("cloning" a
+    building into the game). The spec document says what the importer ACCEPTS;
+    this handbook says how to make what it accepts PLAY well: entry budgets,
+    wall grouping that produces satisfying cascades, and the design patterns
+    that keep ten buildings from looking like one box copied ten times.
+
+THE ONE-PARAGRAPH VERSION
+    Plan on a 0.25 m grid. Build a hollow shell with real openings. Assign
+    every structural cell to a NAMED WALL of 4-30 cells, one material per
+    wall, split by face and by storey. Merge even horizontal brick runs into
+    brick_2x1. Keep every body supported. Validate, voxel-render, compare to
+    the concept, ship JSON + render + manifest together.
+
+
+================================================================================
+1. THE CLONING PIPELINE - SEVEN STEPS, IN ORDER
+================================================================================
+
+STEP 1 - SILHOUETTE FIRST
+    Decide the massing before any block exists: footprint (width x depth in
+    cells), height in rows, and the one feature that makes this building
+    recognisable at a glance (a tower, a setback, a gate, a glass belt).
+    Rule: if the silhouette reads as a plain box, add exactly one move from
+    section 5 before continuing. Draw or render the concept AT CELL
+    RESOLUTION - one brick in the concept = one 0.25 m cell - so the concept
+    can never promise detail the JSON cannot deliver.
+
+STEP 2 - GRID PLAN
+    width  = widest x extent used, 4-16 cells
+    height = tallest row used + 1, 3-14 cells
+    layers = depth slices, 2-12; a free-standing building wants depth close
+             to its width (a 10-wide building with 4 layers is a thick wall,
+             not a house)
+    cellSize = 0.25, layerDepth = 0.25, always. They are spacing, not scale.
+
+STEP 3 - SHELL, HOLLOW
+    Author the perimeter walls one cell thick and leave the core EMPTY.
+    Interior cells are only spent on: floor slabs between storeys (one row,
+    they make a collapse "pancake" in stages), interior columns holding a
+    slab, and courtyard floors. A solid-core building wastes half its budget
+    on cells the player never sees and never enjoys breaking.
+
+STEP 4 - OPENINGS ARE HOLES, NOT DECORATION
+    Doorway: 2 wide x 3 tall gap at row 0, bridged by a lintel row that
+    belongs to the wall beside it (a lintel with its own wall id has no
+    footing and hangs forever - known failure, see spec 3.1).
+    Windows: 1x1 or 2x2 gaps, or glass-filled cells when they should shatter.
+    Crenellations: alternate filled/empty on the top row.
+    Every hole is free budget AND better gameplay - shots pass through.
+
+STEP 5 - MATERIALS WITH INTENT
+    brick    = the body of the building (3 HP, mass 1.2)
+    glass    = what the player pops for fun (1 HP, mass 0.6) - windows,
+               curtain belts, skylights
+    concrete = the skeleton that resists (6 HP, mass 2.0) - corner piers,
+               ground frames, lintel bands
+    Progression across a campaign: pure brick -> brick + glass accents ->
+    concrete frame + brick infill + glass. Never mix materials INSIDE one
+    wall id: the engine takes the first block's material for the whole wall,
+    so a mixed wall sounds and scores wrong.
+
+STEP 6 - WALL GROUPING (the step that makes or breaks the feel - see sec. 3)
+
+STEP 7 - VERIFY AND SHIP
+    Run the validator (schema, bounds, overlap, support-per-body, wall
+    connectivity, single-material walls). Voxel-render the JSON and put it
+    beside the concept - if they differ, the JSON is the one that ships, so
+    fix the JSON or re-render the concept. Deliver: the .json, the render,
+    and a manifest line (id, grid, entries, walls, loose bodies, materials).
+
+
+================================================================================
+2. ENTRY OPTIMISATION - FEWER OBJECTS, SAME BUILDING
+================================================================================
+
+Every JSON entry becomes at least one GameObject. Two mechanical reductions
+are always available:
+
+2.1 brick_2x1 MERGING
+    Any two horizontally adjacent brick_1x1 cells at the same row and layer,
+    assigned to the SAME wall, can be one brick_2x1 (rotation 0, positioned
+    at the left cell). Measured on the current pack this cut 15-22% of
+    entries per map (96->77, 254->200, 306->262).
+    The trade, stated honestly: two 1x1 bricks are 6 HP, one 2x1 is 5 HP, so
+    a merged wall is a few percent weaker in total; masses are identical
+    (2.4). Do not merge: glass (shatters per pane), deliberate loose accent
+    blocks, or across a wall boundary.
+
+2.2 HOLES OVER FILLER
+    The cheapest block is the one you do not author. Openings, hollow cores
+    and courtyards do more for both frame rate and fun than any merging.
+
+Budgets (from the spec, restated): tutorial 50-120 entries, mid 120-220,
+hard 220-350, boss 280-400; loose bodies <= 150 on the opening frame; and
+remember merging lowers the STANDING cost only - a knocked wall spawns its
+blocks back, so the total cell count still bounds the worst frame.
+
+
+================================================================================
+3. WALL GROUPING FOR CASCADES - THE ASMR ALGORITHM
+================================================================================
+
+WHY WALL SIZE IS THE FEEL DIAL
+    One wall per building  -> the whole house topples as a single slab: one
+                              thud, no texture, and a huge HP pool the player
+                              chips at with no visible progress. (This was
+                              the pack's one systematic fault: 96-236 cells
+                              in one wall on five of nine maps.)
+    Everything loose       -> hundreds of rigidbodies, mush on Android, and
+                              destruction reads as static.
+    MANY MEDIUM WALLS      -> each hit brings down a satisfying chunk, the
+                              chunk bursts into blocks on landing, and the
+                              storey above follows a beat later. That
+                              staggered thud-thud-crunch IS the ASMR.
+
+THE NUMBERS
+    Wall size sweet spot: 4-24 cells. Hard bounds 2 (engine minimum) and 30.
+    A mid-size map should end up with 10-25 walls plus a handful of loose
+    accent blocks (5-10% of entries).
+
+THE SPLITTING ALGORITHM (deterministic, scriptable - this is exactly what
+produced the current optimised pack):
+    1. Classify every cell by FACE: left (x = min), right (x = max), front
+       (z = min), back (z = max), roof (y = max), floor (y = 0 interior),
+       core (the rest). Side faces claim the corners so each face is a clean
+       slab.
+    2. Within each (material, face) group, cut vertical faces into STOREY
+       BANDS of 3 rows (y / 3). Bands are what makes a building fall floor
+       by floor instead of all at once.
+    3. Within each band, split into CONNECTED components (6-neighbour) -
+       the engine splits disconnected walls itself, noisily; do it first.
+    4. Any component over 30 cells is halved along x until it fits.
+    5. Components of 1 cell become loose blocks.
+    6. FOOTING REPAIR: any wall whose every cell rests only on itself or on
+       air is merged into a touching neighbour wall (prefer the one below).
+       Run to fixpoint. This is what keeps a split roof from hovering.
+    Wall ids: face_material_band_index (front_brick_b1_4) - readable in the
+    hierarchy, unique by construction, ordinal-compared by the engine.
+
+WHAT NOT TO GROUP
+    Glass: one wall per window pane group of 2-6, or fully loose for big
+    shatter moments. Never fold glass into a structural wall.
+    Crenellations, ledge tips, chimney caps: loose, so they rain down
+    individually when the wall under them goes.
+
+
+================================================================================
+4. DESTRUCTION FEEL - JSON-SIDE DIRECTIVES
+================================================================================
+
+The engine already staggers activation (kinematic until hit, support cascade
+upward, walls burst into blocks on landing). The JSON decides whether that
+machinery gets material to perform with:
+
+    D1  STAGED COLLAPSE. Storey bands (sec. 3) + one interior floor slab per
+        storey = the top floor pancakes onto the slab, the slab breaks the
+        floor below, three distinct crunches from one shot.
+    D2  DOMINO PILLARS. A heavy roof or slab carried by 2-3 slim pillars
+        (1x2 or 1x3 concrete walls): shoot one pillar, the slab tips, the
+        slab wipes the far wall. Author the pillars as separate walls so one
+        shot fells exactly one.
+    D3  GLASS RAIN. A continuous glass belt or curtain ABOVE head height,
+        held up by the wall beneath: when that wall band falls, every pane
+        above it releases in the same second. (map_004's belt is the
+        reference; push it to full curtain walls on later levels.)
+    D4  CROWN DEBRIS. Loose 1x1s on the very top (crenellations, chimney
+        pots, parapet caps): the finale of any collapse is single bricks
+        bouncing down the rubble. Cheap, reads beautifully.
+    D5  ONE WEAK SEAM. Give every building a visible "aim here" line - a
+        glass band across the waist, a brick band inside a concrete frame -
+        so the player discovers the collapse rather than sanding the
+        building down.
+    D6  SOUND IDENTITY. One material per wall (sec. 1.5) is also an audio
+        rule: each falling chunk should play as brick OR glass OR concrete.
+        (Engine side, for the team: map the WhackStack per-material hit and
+        crack sounds onto BreakableWall break-up and block landings, add a
+        low thump scaled by wall cell count, and a short 0.2 s slow-mo when
+        a wall of 15+ cells breaks - those three close the ASMR loop.)
+
+
+================================================================================
+5. ARCHITECTURE VARIETY - TWELVE MOVES THAT BREAK THE BOX
+================================================================================
+
+Pick ONE primary move per building (two for boss maps). All of them are
+plain cell geometry - no new engine features needed:
+
+    A1  STEPPED TOWER (setback high-rise, the way real city towers step
+        back as they climb): footprint shrinks by 1-2 cells every 3 rows.
+        Every ledge is a debris shelf during collapse, and the profile reads
+        as a building under construction rather than a box.
+    A2  CORNER TOWER: one corner runs 3-4 rows taller than the body, with
+        its own crenellated top. Fells sideways INTO the building - D2.
+    A3  L / T / U FOOTPRINT: drop a quadrant of the plan, or push a wing
+        forward in z. Costs nothing; kills the box silhouette instantly.
+    A4  GATEHOUSE: two short towers flanking a tall arched gap, bridged by
+        a lintel band - the bridge falling into the gap is a set piece.
+    A5  TWIN TOWERS + SKYBRIDGE: two 3x3 towers, a 1-row slab spanning
+        them at mid-height. Shoot either tower, the bridge goes.
+    A6  GLASS WAIST: one full storey of glass between two brick storeys -
+        the building visibly "sits" on its weakest floor (D5 built in).
+    A7  CONCRETE EXOSKELETON: concrete frame (corners + lintel bands),
+        brick infill panels. Player learns to punch panels, then frame.
+    A8  BUTTRESSES: 1-cell-deep fins on the outer face every 3 cells.
+        Texture in silhouette and extra loose debris.
+    A9  CANTILEVER BALCONY: a 2-cell slab jutting out, propped by one
+        column. Classic one-shot domino.
+    A10 CHIMNEYS / ROOF FURNITURE: 1x2 stacks on the roof, loose caps.
+    A11 RUIN VARIANT: bite 10-20% of the shell off one top corner with
+        real gaps and a few loose bricks at the break line - reads as
+        battle-damaged, not as floating-block noise.
+    A12 COURTYARD + SITE SHED: ring building with an interior court and
+        one small free-standing structure inside it (site office, storage
+        shed) as a bonus target.
+
+    ASYMMETRY RULE: at most one axis of symmetry per building. Perfectly
+    symmetric buildings read as boxes whatever else they do.
+
+
+================================================================================
+6. FINAL CHECKLIST (extends the spec's section 9)
+================================================================================
+
+    [ ] silhouette uses one move from section 5; concept drawn at cell scale
+    [ ] hollow core; interior cells only for slabs/columns/courts
+    [ ] every structural cell in a named wall of 2-30 cells (target 4-24)
+    [ ] vertical faces banded by storey; disconnected walls pre-split
+    [ ] every wall footed (repair pass ran); no floating loose block
+    [ ] one material per wall; glass never inside a structural wall
+    [ ] even brick runs merged to brick_2x1 within walls
+    [ ] 10-25 walls, loose <= 10% of entries, entries within the level band
+    [ ] at least one of D1-D5 present by design
+    [ ] validator: 0 errors; voxel render matches concept side by side
+    [ ] delivered: .json + render + manifest line
+
+================================================================================
+END
+================================================================================

@@ -20,559 +20,43 @@
           },
           "rotation": 0,
           "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f0_c0_r1",
-          "type": "brick_1x1",
-          "position": {
-            "x": 0,
-            "y": 1
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f0_c0_r2",
-          "type": "brick_1x1",
-          "position": {
-            "x": 0,
-            "y": 2
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f0_c0_r3",
-          "type": "brick_1x1",
-          "position": {
-            "x": 0,
-            "y": 3
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f0_c0_r4",
-          "type": "brick_1x1",
-          "position": {
-            "x": 0,
-            "y": 4
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f0_c0_r5",
-          "type": "brick_1x1",
-          "position": {
-            "x": 0,
-            "y": 5
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f0_c0_r6",
-          "type": "brick_1x1",
-          "position": {
-            "x": 0,
-            "y": 6
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f0_c0_r7",
-          "type": "brick_1x1",
-          "position": {
-            "x": 0,
-            "y": 7
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f0_c0_r8",
-          "type": "brick_1x1",
-          "position": {
-            "x": 0,
-            "y": 8
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
+            "wall_id": "left_brick_b0_6"
           }
         },
         {
           "id": "f0_c1_r0",
-          "type": "brick_1x1",
+          "type": "brick_2x1",
           "position": {
             "x": 1,
             "y": 0
           },
           "rotation": 0,
           "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f0_c1_r1",
-          "type": "brick_1x1",
-          "position": {
-            "x": 1,
-            "y": 1
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f0_c1_r2",
-          "type": "brick_1x1",
-          "position": {
-            "x": 1,
-            "y": 2
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f0_c1_r5",
-          "type": "brick_1x1",
-          "position": {
-            "x": 1,
-            "y": 5
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f0_c1_r7",
-          "type": "brick_1x1",
-          "position": {
-            "x": 1,
-            "y": 7
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f0_c1_r8",
-          "type": "brick_1x1",
-          "position": {
-            "x": 1,
-            "y": 8
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f0_c2_r0",
-          "type": "brick_1x1",
-          "position": {
-            "x": 2,
-            "y": 0
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f0_c2_r1",
-          "type": "brick_1x1",
-          "position": {
-            "x": 2,
-            "y": 1
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f0_c2_r2",
-          "type": "brick_1x1",
-          "position": {
-            "x": 2,
-            "y": 2
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f0_c2_r5",
-          "type": "brick_1x1",
-          "position": {
-            "x": 2,
-            "y": 5
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f0_c2_r7",
-          "type": "brick_1x1",
-          "position": {
-            "x": 2,
-            "y": 7
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f0_c2_r8",
-          "type": "brick_1x1",
-          "position": {
-            "x": 2,
-            "y": 8
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
+            "wall_id": "front_brick_b0_3"
           }
         },
         {
           "id": "f0_c3_r0",
-          "type": "brick_1x1",
+          "type": "brick_2x1",
           "position": {
             "x": 3,
             "y": 0
           },
           "rotation": 0,
           "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f0_c3_r3",
-          "type": "brick_1x1",
-          "position": {
-            "x": 3,
-            "y": 3
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f0_c3_r4",
-          "type": "brick_1x1",
-          "position": {
-            "x": 3,
-            "y": 4
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f0_c3_r5",
-          "type": "brick_1x1",
-          "position": {
-            "x": 3,
-            "y": 5
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f0_c3_r6",
-          "type": "brick_1x1",
-          "position": {
-            "x": 3,
-            "y": 6
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f0_c3_r7",
-          "type": "brick_1x1",
-          "position": {
-            "x": 3,
-            "y": 7
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f0_c3_r8",
-          "type": "brick_1x1",
-          "position": {
-            "x": 3,
-            "y": 8
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f0_c4_r0",
-          "type": "brick_1x1",
-          "position": {
-            "x": 4,
-            "y": 0
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f0_c4_r3",
-          "type": "brick_1x1",
-          "position": {
-            "x": 4,
-            "y": 3
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f0_c4_r4",
-          "type": "brick_1x1",
-          "position": {
-            "x": 4,
-            "y": 4
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f0_c4_r5",
-          "type": "brick_1x1",
-          "position": {
-            "x": 4,
-            "y": 5
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f0_c4_r6",
-          "type": "brick_1x1",
-          "position": {
-            "x": 4,
-            "y": 6
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f0_c4_r7",
-          "type": "brick_1x1",
-          "position": {
-            "x": 4,
-            "y": 7
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f0_c4_r8",
-          "type": "brick_1x1",
-          "position": {
-            "x": 4,
-            "y": 8
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
+            "wall_id": "front_brick_b0_3"
           }
         },
         {
           "id": "f0_c5_r0",
-          "type": "brick_1x1",
+          "type": "brick_2x1",
           "position": {
             "x": 5,
             "y": 0
           },
           "rotation": 0,
           "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f0_c5_r1",
-          "type": "brick_1x1",
-          "position": {
-            "x": 5,
-            "y": 1
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f0_c5_r2",
-          "type": "brick_1x1",
-          "position": {
-            "x": 5,
-            "y": 2
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f0_c5_r5",
-          "type": "brick_1x1",
-          "position": {
-            "x": 5,
-            "y": 5
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f0_c5_r7",
-          "type": "brick_1x1",
-          "position": {
-            "x": 5,
-            "y": 7
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f0_c5_r8",
-          "type": "brick_1x1",
-          "position": {
-            "x": 5,
-            "y": 8
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f0_c6_r0",
-          "type": "brick_1x1",
-          "position": {
-            "x": 6,
-            "y": 0
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f0_c6_r1",
-          "type": "brick_1x1",
-          "position": {
-            "x": 6,
-            "y": 1
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f0_c6_r2",
-          "type": "brick_1x1",
-          "position": {
-            "x": 6,
-            "y": 2
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f0_c6_r5",
-          "type": "brick_1x1",
-          "position": {
-            "x": 6,
-            "y": 5
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f0_c6_r7",
-          "type": "brick_1x1",
-          "position": {
-            "x": 6,
-            "y": 7
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f0_c6_r8",
-          "type": "brick_1x1",
-          "position": {
-            "x": 6,
-            "y": 8
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
+            "wall_id": "front_brick_b0_3"
           }
         },
         {
@@ -584,7 +68,43 @@
           },
           "rotation": 0,
           "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
+            "wall_id": "right_brick_b0_9"
+          }
+        },
+        {
+          "id": "f0_c0_r1",
+          "type": "brick_1x1",
+          "position": {
+            "x": 0,
+            "y": 1
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "left_brick_b0_6"
+          }
+        },
+        {
+          "id": "f0_c1_r1",
+          "type": "brick_2x1",
+          "position": {
+            "x": 1,
+            "y": 1
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "front_brick_b0_3"
+          }
+        },
+        {
+          "id": "f0_c5_r1",
+          "type": "brick_2x1",
+          "position": {
+            "x": 5,
+            "y": 1
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "front_brick_b0_3"
           }
         },
         {
@@ -596,7 +116,43 @@
           },
           "rotation": 0,
           "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
+            "wall_id": "right_brick_b0_9"
+          }
+        },
+        {
+          "id": "f0_c0_r2",
+          "type": "brick_1x1",
+          "position": {
+            "x": 0,
+            "y": 2
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "left_brick_b0_6"
+          }
+        },
+        {
+          "id": "f0_c1_r2",
+          "type": "brick_2x1",
+          "position": {
+            "x": 1,
+            "y": 2
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "front_brick_b0_3"
+          }
+        },
+        {
+          "id": "f0_c5_r2",
+          "type": "brick_2x1",
+          "position": {
+            "x": 5,
+            "y": 2
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "front_brick_b0_3"
           }
         },
         {
@@ -608,7 +164,31 @@
           },
           "rotation": 0,
           "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
+            "wall_id": "right_brick_b0_9"
+          }
+        },
+        {
+          "id": "f0_c0_r3",
+          "type": "brick_1x1",
+          "position": {
+            "x": 0,
+            "y": 3
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "left_brick_b1_7"
+          }
+        },
+        {
+          "id": "f0_c3_r3",
+          "type": "brick_2x1",
+          "position": {
+            "x": 3,
+            "y": 3
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "right_brick_b1_10"
           }
         },
         {
@@ -620,7 +200,31 @@
           },
           "rotation": 0,
           "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
+            "wall_id": "right_brick_b1_10"
+          }
+        },
+        {
+          "id": "f0_c0_r4",
+          "type": "brick_1x1",
+          "position": {
+            "x": 0,
+            "y": 4
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "left_brick_b1_7"
+          }
+        },
+        {
+          "id": "f0_c3_r4",
+          "type": "brick_2x1",
+          "position": {
+            "x": 3,
+            "y": 4
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "right_brick_b1_10"
           }
         },
         {
@@ -632,7 +236,55 @@
           },
           "rotation": 0,
           "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
+            "wall_id": "right_brick_b1_10"
+          }
+        },
+        {
+          "id": "f0_c0_r5",
+          "type": "brick_1x1",
+          "position": {
+            "x": 0,
+            "y": 5
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "left_brick_b1_7"
+          }
+        },
+        {
+          "id": "f0_c1_r5",
+          "type": "brick_2x1",
+          "position": {
+            "x": 1,
+            "y": 5
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "right_brick_b1_10"
+          }
+        },
+        {
+          "id": "f0_c3_r5",
+          "type": "brick_2x1",
+          "position": {
+            "x": 3,
+            "y": 5
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "right_brick_b1_10"
+          }
+        },
+        {
+          "id": "f0_c5_r5",
+          "type": "brick_2x1",
+          "position": {
+            "x": 5,
+            "y": 5
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "right_brick_b1_10"
           }
         },
         {
@@ -644,7 +296,31 @@
           },
           "rotation": 0,
           "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
+            "wall_id": "right_brick_b1_10"
+          }
+        },
+        {
+          "id": "f0_c0_r6",
+          "type": "brick_1x1",
+          "position": {
+            "x": 0,
+            "y": 6
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "left_brick_b2_8"
+          }
+        },
+        {
+          "id": "f0_c3_r6",
+          "type": "brick_2x1",
+          "position": {
+            "x": 3,
+            "y": 6
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "front_brick_b2_5"
           }
         },
         {
@@ -656,7 +332,55 @@
           },
           "rotation": 0,
           "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
+            "wall_id": "right_brick_b2_11"
+          }
+        },
+        {
+          "id": "f0_c0_r7",
+          "type": "brick_1x1",
+          "position": {
+            "x": 0,
+            "y": 7
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "left_brick_b2_8"
+          }
+        },
+        {
+          "id": "f0_c1_r7",
+          "type": "brick_2x1",
+          "position": {
+            "x": 1,
+            "y": 7
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "front_brick_b2_5"
+          }
+        },
+        {
+          "id": "f0_c3_r7",
+          "type": "brick_2x1",
+          "position": {
+            "x": 3,
+            "y": 7
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "front_brick_b2_5"
+          }
+        },
+        {
+          "id": "f0_c5_r7",
+          "type": "brick_2x1",
+          "position": {
+            "x": 5,
+            "y": 7
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "front_brick_b2_5"
           }
         },
         {
@@ -668,7 +392,55 @@
           },
           "rotation": 0,
           "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
+            "wall_id": "right_brick_b2_11"
+          }
+        },
+        {
+          "id": "f0_c0_r8",
+          "type": "brick_1x1",
+          "position": {
+            "x": 0,
+            "y": 8
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "left_brick_b2_8"
+          }
+        },
+        {
+          "id": "f0_c1_r8",
+          "type": "brick_2x1",
+          "position": {
+            "x": 1,
+            "y": 8
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "front_brick_b2_5"
+          }
+        },
+        {
+          "id": "f0_c3_r8",
+          "type": "brick_2x1",
+          "position": {
+            "x": 3,
+            "y": 8
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "front_brick_b2_5"
+          }
+        },
+        {
+          "id": "f0_c5_r8",
+          "type": "brick_2x1",
+          "position": {
+            "x": 5,
+            "y": 8
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "front_brick_b2_5"
           }
         },
         {
@@ -680,7 +452,7 @@
           },
           "rotation": 0,
           "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
+            "wall_id": "right_brick_b2_11"
           }
         }
       ]
@@ -697,103 +469,7 @@
           },
           "rotation": 0,
           "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f1_c0_r1",
-          "type": "brick_1x1",
-          "position": {
-            "x": 0,
-            "y": 1
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f1_c0_r2",
-          "type": "brick_1x1",
-          "position": {
-            "x": 0,
-            "y": 2
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f1_c0_r3",
-          "type": "brick_1x1",
-          "position": {
-            "x": 0,
-            "y": 3
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f1_c0_r4",
-          "type": "brick_1x1",
-          "position": {
-            "x": 0,
-            "y": 4
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f1_c0_r5",
-          "type": "brick_1x1",
-          "position": {
-            "x": 0,
-            "y": 5
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f1_c0_r6",
-          "type": "brick_1x1",
-          "position": {
-            "x": 0,
-            "y": 6
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f1_c0_r7",
-          "type": "brick_1x1",
-          "position": {
-            "x": 0,
-            "y": 7
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f1_c0_r8",
-          "type": "brick_1x1",
-          "position": {
-            "x": 0,
-            "y": 8
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
+            "wall_id": "left_brick_b0_6"
           }
         },
         {
@@ -805,7 +481,19 @@
           },
           "rotation": 0,
           "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
+            "wall_id": "right_brick_b0_9"
+          }
+        },
+        {
+          "id": "f1_c0_r1",
+          "type": "brick_1x1",
+          "position": {
+            "x": 0,
+            "y": 1
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "left_brick_b0_6"
           }
         },
         {
@@ -817,7 +505,19 @@
           },
           "rotation": 0,
           "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
+            "wall_id": "right_brick_b0_9"
+          }
+        },
+        {
+          "id": "f1_c0_r2",
+          "type": "brick_1x1",
+          "position": {
+            "x": 0,
+            "y": 2
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "left_brick_b0_6"
           }
         },
         {
@@ -829,7 +529,67 @@
           },
           "rotation": 0,
           "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
+            "wall_id": "right_brick_b0_9"
+          }
+        },
+        {
+          "id": "f1_c0_r3",
+          "type": "brick_1x1",
+          "position": {
+            "x": 0,
+            "y": 3
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "left_brick_b1_7"
+          }
+        },
+        {
+          "id": "f1_c1_r3",
+          "type": "brick_2x1",
+          "position": {
+            "x": 1,
+            "y": 3
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "r2_floor_1_left"
+          }
+        },
+        {
+          "id": "f1_c3_r3",
+          "type": "brick_1x1",
+          "position": {
+            "x": 3,
+            "y": 3
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "r2_floor_1_left"
+          }
+        },
+        {
+          "id": "f1_c4_r3",
+          "type": "brick_2x1",
+          "position": {
+            "x": 4,
+            "y": 3
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "r2_floor_1_right"
+          }
+        },
+        {
+          "id": "f1_c6_r3",
+          "type": "brick_1x1",
+          "position": {
+            "x": 6,
+            "y": 3
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "r2_floor_1_right"
           }
         },
         {
@@ -841,7 +601,19 @@
           },
           "rotation": 0,
           "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
+            "wall_id": "right_brick_b1_10"
+          }
+        },
+        {
+          "id": "f1_c0_r4",
+          "type": "brick_1x1",
+          "position": {
+            "x": 0,
+            "y": 4
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "left_brick_b1_7"
           }
         },
         {
@@ -853,7 +625,19 @@
           },
           "rotation": 0,
           "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
+            "wall_id": "right_brick_b1_10"
+          }
+        },
+        {
+          "id": "f1_c0_r5",
+          "type": "brick_1x1",
+          "position": {
+            "x": 0,
+            "y": 5
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "left_brick_b1_7"
           }
         },
         {
@@ -865,7 +649,67 @@
           },
           "rotation": 0,
           "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
+            "wall_id": "right_brick_b1_10"
+          }
+        },
+        {
+          "id": "f1_c0_r6",
+          "type": "brick_1x1",
+          "position": {
+            "x": 0,
+            "y": 6
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "left_brick_b2_8"
+          }
+        },
+        {
+          "id": "f1_c1_r6",
+          "type": "brick_2x1",
+          "position": {
+            "x": 1,
+            "y": 6
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "r2_floor_2_left"
+          }
+        },
+        {
+          "id": "f1_c3_r6",
+          "type": "brick_1x1",
+          "position": {
+            "x": 3,
+            "y": 6
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "r2_floor_2_left"
+          }
+        },
+        {
+          "id": "f1_c4_r6",
+          "type": "brick_2x1",
+          "position": {
+            "x": 4,
+            "y": 6
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "r2_floor_2_right"
+          }
+        },
+        {
+          "id": "f1_c6_r6",
+          "type": "brick_1x1",
+          "position": {
+            "x": 6,
+            "y": 6
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "r2_floor_2_right"
           }
         },
         {
@@ -877,7 +721,19 @@
           },
           "rotation": 0,
           "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
+            "wall_id": "right_brick_b2_11"
+          }
+        },
+        {
+          "id": "f1_c0_r7",
+          "type": "brick_1x1",
+          "position": {
+            "x": 0,
+            "y": 7
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "left_brick_b2_8"
           }
         },
         {
@@ -889,7 +745,19 @@
           },
           "rotation": 0,
           "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
+            "wall_id": "right_brick_b2_11"
+          }
+        },
+        {
+          "id": "f1_c0_r8",
+          "type": "brick_1x1",
+          "position": {
+            "x": 0,
+            "y": 8
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "left_brick_b2_8"
           }
         },
         {
@@ -901,7 +769,7 @@
           },
           "rotation": 0,
           "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
+            "wall_id": "right_brick_b2_11"
           }
         }
       ]
@@ -918,103 +786,7 @@
           },
           "rotation": 0,
           "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f2_c0_r1",
-          "type": "brick_1x1",
-          "position": {
-            "x": 0,
-            "y": 1
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f2_c0_r2",
-          "type": "brick_1x1",
-          "position": {
-            "x": 0,
-            "y": 2
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f2_c0_r3",
-          "type": "brick_1x1",
-          "position": {
-            "x": 0,
-            "y": 3
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f2_c0_r4",
-          "type": "brick_1x1",
-          "position": {
-            "x": 0,
-            "y": 4
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f2_c0_r5",
-          "type": "brick_1x1",
-          "position": {
-            "x": 0,
-            "y": 5
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f2_c0_r6",
-          "type": "brick_1x1",
-          "position": {
-            "x": 0,
-            "y": 6
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f2_c0_r7",
-          "type": "brick_1x1",
-          "position": {
-            "x": 0,
-            "y": 7
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f2_c0_r8",
-          "type": "brick_1x1",
-          "position": {
-            "x": 0,
-            "y": 8
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
+            "wall_id": "left_brick_b0_6"
           }
         },
         {
@@ -1026,7 +798,19 @@
           },
           "rotation": 0,
           "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
+            "wall_id": "right_brick_b0_9"
+          }
+        },
+        {
+          "id": "f2_c0_r1",
+          "type": "brick_1x1",
+          "position": {
+            "x": 0,
+            "y": 1
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "left_brick_b0_6"
           }
         },
         {
@@ -1038,7 +822,19 @@
           },
           "rotation": 0,
           "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
+            "wall_id": "right_brick_b0_9"
+          }
+        },
+        {
+          "id": "f2_c0_r2",
+          "type": "brick_1x1",
+          "position": {
+            "x": 0,
+            "y": 2
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "left_brick_b0_6"
           }
         },
         {
@@ -1050,7 +846,91 @@
           },
           "rotation": 0,
           "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
+            "wall_id": "right_brick_b0_9"
+          }
+        },
+        {
+          "id": "f2_c0_r3",
+          "type": "brick_1x1",
+          "position": {
+            "x": 0,
+            "y": 3
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "left_brick_b1_7"
+          }
+        },
+        {
+          "id": "f2_c1_r3",
+          "type": "brick_2x1",
+          "position": {
+            "x": 1,
+            "y": 3
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "r2_floor_1_left"
+          }
+        },
+        {
+          "id": "f2_c3_r3",
+          "type": "brick_1x1",
+          "position": {
+            "x": 3,
+            "y": 3
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "r2_floor_1_left"
+          }
+        },
+        {
+          "id": "f2_c4_r3",
+          "type": "brick_2x1",
+          "position": {
+            "x": 4,
+            "y": 3
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "r2_floor_1_right"
+          }
+        },
+        {
+          "id": "f2_c6_r3",
+          "type": "brick_1x1",
+          "position": {
+            "x": 6,
+            "y": 3
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "r2_floor_1_right"
+          }
+        },
+        {
+          "id": "f2_c0_r4",
+          "type": "brick_1x1",
+          "position": {
+            "x": 0,
+            "y": 4
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "left_brick_b1_7"
+          }
+        },
+        {
+          "id": "f2_c0_r5",
+          "type": "brick_1x1",
+          "position": {
+            "x": 0,
+            "y": 5
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "left_brick_b1_7"
           }
         },
         {
@@ -1062,7 +942,67 @@
           },
           "rotation": 0,
           "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
+            "wall_id": "right_brick_b1_10"
+          }
+        },
+        {
+          "id": "f2_c0_r6",
+          "type": "brick_1x1",
+          "position": {
+            "x": 0,
+            "y": 6
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "left_brick_b2_8"
+          }
+        },
+        {
+          "id": "f2_c1_r6",
+          "type": "brick_2x1",
+          "position": {
+            "x": 1,
+            "y": 6
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "r2_floor_2_left"
+          }
+        },
+        {
+          "id": "f2_c3_r6",
+          "type": "brick_1x1",
+          "position": {
+            "x": 3,
+            "y": 6
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "r2_floor_2_left"
+          }
+        },
+        {
+          "id": "f2_c4_r6",
+          "type": "brick_2x1",
+          "position": {
+            "x": 4,
+            "y": 6
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "r2_floor_2_right"
+          }
+        },
+        {
+          "id": "f2_c6_r6",
+          "type": "brick_1x1",
+          "position": {
+            "x": 6,
+            "y": 6
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "r2_floor_2_right"
           }
         },
         {
@@ -1074,7 +1014,19 @@
           },
           "rotation": 0,
           "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
+            "wall_id": "right_brick_b2_11"
+          }
+        },
+        {
+          "id": "f2_c0_r7",
+          "type": "brick_1x1",
+          "position": {
+            "x": 0,
+            "y": 7
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "left_brick_b2_8"
           }
         },
         {
@@ -1086,7 +1038,19 @@
           },
           "rotation": 0,
           "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
+            "wall_id": "right_brick_b2_11"
+          }
+        },
+        {
+          "id": "f2_c0_r8",
+          "type": "brick_1x1",
+          "position": {
+            "x": 0,
+            "y": 8
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "left_brick_b2_8"
           }
         },
         {
@@ -1098,7 +1062,7 @@
           },
           "rotation": 0,
           "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
+            "wall_id": "right_brick_b2_11"
           }
         }
       ]
@@ -1115,103 +1079,31 @@
           },
           "rotation": 0,
           "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
+            "wall_id": "left_brick_b0_6"
           }
         },
         {
-          "id": "f3_c0_r1",
+          "id": "f3_c2_r0",
           "type": "brick_1x1",
           "position": {
-            "x": 0,
-            "y": 1
+            "x": 2,
+            "y": 0
           },
           "rotation": 0,
           "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
+            "wall_id": "r2_floor_1_left"
           }
         },
         {
-          "id": "f3_c0_r2",
+          "id": "f3_c5_r0",
           "type": "brick_1x1",
           "position": {
-            "x": 0,
-            "y": 2
+            "x": 5,
+            "y": 0
           },
           "rotation": 0,
           "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f3_c0_r3",
-          "type": "brick_1x1",
-          "position": {
-            "x": 0,
-            "y": 3
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f3_c0_r4",
-          "type": "brick_1x1",
-          "position": {
-            "x": 0,
-            "y": 4
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f3_c0_r5",
-          "type": "brick_1x1",
-          "position": {
-            "x": 0,
-            "y": 5
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f3_c0_r6",
-          "type": "brick_1x1",
-          "position": {
-            "x": 0,
-            "y": 6
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f3_c0_r7",
-          "type": "brick_1x1",
-          "position": {
-            "x": 0,
-            "y": 7
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f3_c0_r8",
-          "type": "brick_1x1",
-          "position": {
-            "x": 0,
-            "y": 8
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
+            "wall_id": "r2_floor_1_right"
           }
         },
         {
@@ -1223,7 +1115,43 @@
           },
           "rotation": 0,
           "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
+            "wall_id": "right_brick_b0_9"
+          }
+        },
+        {
+          "id": "f3_c0_r1",
+          "type": "brick_1x1",
+          "position": {
+            "x": 0,
+            "y": 1
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "left_brick_b0_6"
+          }
+        },
+        {
+          "id": "f3_c2_r1",
+          "type": "brick_1x1",
+          "position": {
+            "x": 2,
+            "y": 1
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "r2_floor_1_left"
+          }
+        },
+        {
+          "id": "f3_c5_r1",
+          "type": "brick_1x1",
+          "position": {
+            "x": 5,
+            "y": 1
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "r2_floor_1_right"
           }
         },
         {
@@ -1235,7 +1163,43 @@
           },
           "rotation": 0,
           "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
+            "wall_id": "right_brick_b0_9"
+          }
+        },
+        {
+          "id": "f3_c0_r2",
+          "type": "brick_1x1",
+          "position": {
+            "x": 0,
+            "y": 2
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "left_brick_b0_6"
+          }
+        },
+        {
+          "id": "f3_c2_r2",
+          "type": "brick_1x1",
+          "position": {
+            "x": 2,
+            "y": 2
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "r2_floor_1_left"
+          }
+        },
+        {
+          "id": "f3_c5_r2",
+          "type": "brick_1x1",
+          "position": {
+            "x": 5,
+            "y": 2
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "r2_floor_1_right"
           }
         },
         {
@@ -1247,7 +1211,139 @@
           },
           "rotation": 0,
           "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
+            "wall_id": "right_brick_b0_9"
+          }
+        },
+        {
+          "id": "f3_c0_r3",
+          "type": "brick_1x1",
+          "position": {
+            "x": 0,
+            "y": 3
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "left_brick_b1_7"
+          }
+        },
+        {
+          "id": "f3_c1_r3",
+          "type": "brick_2x1",
+          "position": {
+            "x": 1,
+            "y": 3
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "r2_floor_1_left"
+          }
+        },
+        {
+          "id": "f3_c3_r3",
+          "type": "brick_1x1",
+          "position": {
+            "x": 3,
+            "y": 3
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "r2_floor_1_left"
+          }
+        },
+        {
+          "id": "f3_c4_r3",
+          "type": "brick_2x1",
+          "position": {
+            "x": 4,
+            "y": 3
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "r2_floor_1_right"
+          }
+        },
+        {
+          "id": "f3_c6_r3",
+          "type": "brick_1x1",
+          "position": {
+            "x": 6,
+            "y": 3
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "r2_floor_1_right"
+          }
+        },
+        {
+          "id": "f3_c0_r4",
+          "type": "brick_1x1",
+          "position": {
+            "x": 0,
+            "y": 4
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "left_brick_b1_7"
+          }
+        },
+        {
+          "id": "f3_c2_r4",
+          "type": "brick_1x1",
+          "position": {
+            "x": 2,
+            "y": 4
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "r2_floor_2_left"
+          }
+        },
+        {
+          "id": "f3_c5_r4",
+          "type": "brick_1x1",
+          "position": {
+            "x": 5,
+            "y": 4
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "r2_floor_2_right"
+          }
+        },
+        {
+          "id": "f3_c0_r5",
+          "type": "brick_1x1",
+          "position": {
+            "x": 0,
+            "y": 5
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "left_brick_b1_7"
+          }
+        },
+        {
+          "id": "f3_c2_r5",
+          "type": "brick_1x1",
+          "position": {
+            "x": 2,
+            "y": 5
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "r2_floor_2_left"
+          }
+        },
+        {
+          "id": "f3_c5_r5",
+          "type": "brick_1x1",
+          "position": {
+            "x": 5,
+            "y": 5
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "r2_floor_2_right"
           }
         },
         {
@@ -1259,7 +1355,67 @@
           },
           "rotation": 0,
           "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
+            "wall_id": "right_brick_b1_10"
+          }
+        },
+        {
+          "id": "f3_c0_r6",
+          "type": "brick_1x1",
+          "position": {
+            "x": 0,
+            "y": 6
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "left_brick_b2_8"
+          }
+        },
+        {
+          "id": "f3_c1_r6",
+          "type": "brick_2x1",
+          "position": {
+            "x": 1,
+            "y": 6
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "r2_floor_2_left"
+          }
+        },
+        {
+          "id": "f3_c3_r6",
+          "type": "brick_1x1",
+          "position": {
+            "x": 3,
+            "y": 6
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "r2_floor_2_left"
+          }
+        },
+        {
+          "id": "f3_c4_r6",
+          "type": "brick_2x1",
+          "position": {
+            "x": 4,
+            "y": 6
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "r2_floor_2_right"
+          }
+        },
+        {
+          "id": "f3_c6_r6",
+          "type": "brick_1x1",
+          "position": {
+            "x": 6,
+            "y": 6
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "r2_floor_2_right"
           }
         },
         {
@@ -1271,7 +1427,19 @@
           },
           "rotation": 0,
           "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
+            "wall_id": "right_brick_b2_11"
+          }
+        },
+        {
+          "id": "f3_c0_r7",
+          "type": "brick_1x1",
+          "position": {
+            "x": 0,
+            "y": 7
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "left_brick_b2_8"
           }
         },
         {
@@ -1283,7 +1451,19 @@
           },
           "rotation": 0,
           "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
+            "wall_id": "right_brick_b2_11"
+          }
+        },
+        {
+          "id": "f3_c0_r8",
+          "type": "brick_1x1",
+          "position": {
+            "x": 0,
+            "y": 8
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "left_brick_b2_8"
           }
         },
         {
@@ -1295,7 +1475,7 @@
           },
           "rotation": 0,
           "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
+            "wall_id": "right_brick_b2_11"
           }
         }
       ]
@@ -1312,103 +1492,7 @@
           },
           "rotation": 0,
           "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f4_c0_r1",
-          "type": "brick_1x1",
-          "position": {
-            "x": 0,
-            "y": 1
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f4_c0_r2",
-          "type": "brick_1x1",
-          "position": {
-            "x": 0,
-            "y": 2
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f4_c0_r3",
-          "type": "brick_1x1",
-          "position": {
-            "x": 0,
-            "y": 3
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f4_c0_r4",
-          "type": "brick_1x1",
-          "position": {
-            "x": 0,
-            "y": 4
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f4_c0_r5",
-          "type": "brick_1x1",
-          "position": {
-            "x": 0,
-            "y": 5
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f4_c0_r6",
-          "type": "brick_1x1",
-          "position": {
-            "x": 0,
-            "y": 6
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f4_c0_r7",
-          "type": "brick_1x1",
-          "position": {
-            "x": 0,
-            "y": 7
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f4_c0_r8",
-          "type": "brick_1x1",
-          "position": {
-            "x": 0,
-            "y": 8
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
+            "wall_id": "left_brick_b0_6"
           }
         },
         {
@@ -1420,7 +1504,19 @@
           },
           "rotation": 0,
           "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
+            "wall_id": "right_brick_b0_9"
+          }
+        },
+        {
+          "id": "f4_c0_r1",
+          "type": "brick_1x1",
+          "position": {
+            "x": 0,
+            "y": 1
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "left_brick_b0_6"
           }
         },
         {
@@ -1432,7 +1528,19 @@
           },
           "rotation": 0,
           "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
+            "wall_id": "right_brick_b0_9"
+          }
+        },
+        {
+          "id": "f4_c0_r2",
+          "type": "brick_1x1",
+          "position": {
+            "x": 0,
+            "y": 2
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "left_brick_b0_6"
           }
         },
         {
@@ -1444,7 +1552,67 @@
           },
           "rotation": 0,
           "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
+            "wall_id": "right_brick_b0_9"
+          }
+        },
+        {
+          "id": "f4_c0_r3",
+          "type": "brick_1x1",
+          "position": {
+            "x": 0,
+            "y": 3
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "left_brick_b1_7"
+          }
+        },
+        {
+          "id": "f4_c1_r3",
+          "type": "brick_2x1",
+          "position": {
+            "x": 1,
+            "y": 3
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "r2_floor_1_left"
+          }
+        },
+        {
+          "id": "f4_c3_r3",
+          "type": "brick_1x1",
+          "position": {
+            "x": 3,
+            "y": 3
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "r2_floor_1_left"
+          }
+        },
+        {
+          "id": "f4_c4_r3",
+          "type": "brick_2x1",
+          "position": {
+            "x": 4,
+            "y": 3
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "r2_floor_1_right"
+          }
+        },
+        {
+          "id": "f4_c6_r3",
+          "type": "brick_1x1",
+          "position": {
+            "x": 6,
+            "y": 3
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "r2_floor_1_right"
           }
         },
         {
@@ -1456,7 +1624,19 @@
           },
           "rotation": 0,
           "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
+            "wall_id": "right_brick_b1_10"
+          }
+        },
+        {
+          "id": "f4_c0_r4",
+          "type": "brick_1x1",
+          "position": {
+            "x": 0,
+            "y": 4
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "left_brick_b1_7"
           }
         },
         {
@@ -1468,7 +1648,19 @@
           },
           "rotation": 0,
           "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
+            "wall_id": "right_brick_b1_10"
+          }
+        },
+        {
+          "id": "f4_c0_r5",
+          "type": "brick_1x1",
+          "position": {
+            "x": 0,
+            "y": 5
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "left_brick_b1_7"
           }
         },
         {
@@ -1480,7 +1672,79 @@
           },
           "rotation": 0,
           "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
+            "wall_id": "right_brick_b1_10"
+          }
+        },
+        {
+          "id": "f4_c0_r6",
+          "type": "brick_1x1",
+          "position": {
+            "x": 0,
+            "y": 6
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "left_brick_b2_8"
+          }
+        },
+        {
+          "id": "f4_c1_r6",
+          "type": "brick_2x1",
+          "position": {
+            "x": 1,
+            "y": 6
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "r2_floor_2_left"
+          }
+        },
+        {
+          "id": "f4_c3_r6",
+          "type": "brick_1x1",
+          "position": {
+            "x": 3,
+            "y": 6
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "r2_floor_2_left"
+          }
+        },
+        {
+          "id": "f4_c4_r6",
+          "type": "brick_2x1",
+          "position": {
+            "x": 4,
+            "y": 6
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "r2_floor_2_right"
+          }
+        },
+        {
+          "id": "f4_c6_r6",
+          "type": "brick_1x1",
+          "position": {
+            "x": 6,
+            "y": 6
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "r2_floor_2_right"
+          }
+        },
+        {
+          "id": "f4_c0_r7",
+          "type": "brick_1x1",
+          "position": {
+            "x": 0,
+            "y": 7
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "left_brick_b2_8"
           }
         },
         {
@@ -1492,7 +1756,19 @@
           },
           "rotation": 0,
           "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
+            "wall_id": "right_brick_b2_11"
+          }
+        },
+        {
+          "id": "f4_c0_r8",
+          "type": "brick_1x1",
+          "position": {
+            "x": 0,
+            "y": 8
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "left_brick_b2_8"
           }
         },
         {
@@ -1504,7 +1780,7 @@
           },
           "rotation": 0,
           "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
+            "wall_id": "right_brick_b2_11"
           }
         }
       ]
@@ -1521,103 +1797,7 @@
           },
           "rotation": 0,
           "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f5_c0_r1",
-          "type": "brick_1x1",
-          "position": {
-            "x": 0,
-            "y": 1
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f5_c0_r2",
-          "type": "brick_1x1",
-          "position": {
-            "x": 0,
-            "y": 2
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f5_c0_r3",
-          "type": "brick_1x1",
-          "position": {
-            "x": 0,
-            "y": 3
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f5_c0_r4",
-          "type": "brick_1x1",
-          "position": {
-            "x": 0,
-            "y": 4
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f5_c0_r5",
-          "type": "brick_1x1",
-          "position": {
-            "x": 0,
-            "y": 5
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f5_c0_r6",
-          "type": "brick_1x1",
-          "position": {
-            "x": 0,
-            "y": 6
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f5_c0_r7",
-          "type": "brick_1x1",
-          "position": {
-            "x": 0,
-            "y": 7
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f5_c0_r8",
-          "type": "brick_1x1",
-          "position": {
-            "x": 0,
-            "y": 8
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
+            "wall_id": "left_brick_b0_6"
           }
         },
         {
@@ -1629,7 +1809,19 @@
           },
           "rotation": 0,
           "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
+            "wall_id": "right_brick_b0_9"
+          }
+        },
+        {
+          "id": "f5_c0_r1",
+          "type": "brick_1x1",
+          "position": {
+            "x": 0,
+            "y": 1
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "left_brick_b0_6"
           }
         },
         {
@@ -1641,7 +1833,19 @@
           },
           "rotation": 0,
           "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
+            "wall_id": "right_brick_b0_9"
+          }
+        },
+        {
+          "id": "f5_c0_r2",
+          "type": "brick_1x1",
+          "position": {
+            "x": 0,
+            "y": 2
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "left_brick_b0_6"
           }
         },
         {
@@ -1653,7 +1857,67 @@
           },
           "rotation": 0,
           "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
+            "wall_id": "right_brick_b0_9"
+          }
+        },
+        {
+          "id": "f5_c0_r3",
+          "type": "brick_1x1",
+          "position": {
+            "x": 0,
+            "y": 3
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "left_brick_b1_7"
+          }
+        },
+        {
+          "id": "f5_c1_r3",
+          "type": "brick_2x1",
+          "position": {
+            "x": 1,
+            "y": 3
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "r2_floor_1_left"
+          }
+        },
+        {
+          "id": "f5_c3_r3",
+          "type": "brick_1x1",
+          "position": {
+            "x": 3,
+            "y": 3
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "r2_floor_1_left"
+          }
+        },
+        {
+          "id": "f5_c4_r3",
+          "type": "brick_2x1",
+          "position": {
+            "x": 4,
+            "y": 3
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "r2_floor_1_right"
+          }
+        },
+        {
+          "id": "f5_c6_r3",
+          "type": "brick_1x1",
+          "position": {
+            "x": 6,
+            "y": 3
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "r2_floor_1_right"
           }
         },
         {
@@ -1665,7 +1929,19 @@
           },
           "rotation": 0,
           "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
+            "wall_id": "right_brick_b1_10"
+          }
+        },
+        {
+          "id": "f5_c0_r4",
+          "type": "brick_1x1",
+          "position": {
+            "x": 0,
+            "y": 4
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "left_brick_b1_7"
           }
         },
         {
@@ -1677,7 +1953,19 @@
           },
           "rotation": 0,
           "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
+            "wall_id": "right_brick_b1_10"
+          }
+        },
+        {
+          "id": "f5_c0_r5",
+          "type": "brick_1x1",
+          "position": {
+            "x": 0,
+            "y": 5
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "left_brick_b1_7"
           }
         },
         {
@@ -1689,7 +1977,67 @@
           },
           "rotation": 0,
           "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
+            "wall_id": "right_brick_b1_10"
+          }
+        },
+        {
+          "id": "f5_c0_r6",
+          "type": "brick_1x1",
+          "position": {
+            "x": 0,
+            "y": 6
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "left_brick_b2_8"
+          }
+        },
+        {
+          "id": "f5_c1_r6",
+          "type": "brick_2x1",
+          "position": {
+            "x": 1,
+            "y": 6
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "r2_floor_2_left"
+          }
+        },
+        {
+          "id": "f5_c3_r6",
+          "type": "brick_1x1",
+          "position": {
+            "x": 3,
+            "y": 6
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "r2_floor_2_left"
+          }
+        },
+        {
+          "id": "f5_c4_r6",
+          "type": "brick_2x1",
+          "position": {
+            "x": 4,
+            "y": 6
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "r2_floor_2_right"
+          }
+        },
+        {
+          "id": "f5_c6_r6",
+          "type": "brick_1x1",
+          "position": {
+            "x": 6,
+            "y": 6
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "r2_floor_2_right"
           }
         },
         {
@@ -1701,7 +2049,19 @@
           },
           "rotation": 0,
           "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
+            "wall_id": "right_brick_b2_11"
+          }
+        },
+        {
+          "id": "f5_c0_r7",
+          "type": "brick_1x1",
+          "position": {
+            "x": 0,
+            "y": 7
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "left_brick_b2_8"
           }
         },
         {
@@ -1713,7 +2073,19 @@
           },
           "rotation": 0,
           "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
+            "wall_id": "right_brick_b2_11"
+          }
+        },
+        {
+          "id": "f5_c0_r8",
+          "type": "brick_1x1",
+          "position": {
+            "x": 0,
+            "y": 8
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "left_brick_b2_8"
           }
         },
         {
@@ -1725,7 +2097,7 @@
           },
           "rotation": 0,
           "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
+            "wall_id": "right_brick_b2_11"
           }
         }
       ]
@@ -1742,751 +2114,43 @@
           },
           "rotation": 0,
           "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f6_c0_r1",
-          "type": "brick_1x1",
-          "position": {
-            "x": 0,
-            "y": 1
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f6_c0_r2",
-          "type": "brick_1x1",
-          "position": {
-            "x": 0,
-            "y": 2
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f6_c0_r3",
-          "type": "brick_1x1",
-          "position": {
-            "x": 0,
-            "y": 3
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f6_c0_r4",
-          "type": "brick_1x1",
-          "position": {
-            "x": 0,
-            "y": 4
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f6_c0_r5",
-          "type": "brick_1x1",
-          "position": {
-            "x": 0,
-            "y": 5
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f6_c0_r6",
-          "type": "brick_1x1",
-          "position": {
-            "x": 0,
-            "y": 6
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f6_c0_r7",
-          "type": "brick_1x1",
-          "position": {
-            "x": 0,
-            "y": 7
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f6_c0_r8",
-          "type": "brick_1x1",
-          "position": {
-            "x": 0,
-            "y": 8
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
+            "wall_id": "left_brick_b0_6"
           }
         },
         {
           "id": "f6_c1_r0",
-          "type": "brick_1x1",
+          "type": "brick_2x1",
           "position": {
             "x": 1,
             "y": 0
           },
           "rotation": 0,
           "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f6_c1_r1",
-          "type": "brick_1x1",
-          "position": {
-            "x": 1,
-            "y": 1
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f6_c1_r2",
-          "type": "brick_1x1",
-          "position": {
-            "x": 1,
-            "y": 2
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f6_c1_r3",
-          "type": "brick_1x1",
-          "position": {
-            "x": 1,
-            "y": 3
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f6_c1_r4",
-          "type": "brick_1x1",
-          "position": {
-            "x": 1,
-            "y": 4
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f6_c1_r5",
-          "type": "brick_1x1",
-          "position": {
-            "x": 1,
-            "y": 5
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f6_c1_r6",
-          "type": "brick_1x1",
-          "position": {
-            "x": 1,
-            "y": 6
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f6_c1_r7",
-          "type": "brick_1x1",
-          "position": {
-            "x": 1,
-            "y": 7
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f6_c1_r8",
-          "type": "brick_1x1",
-          "position": {
-            "x": 1,
-            "y": 8
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f6_c2_r0",
-          "type": "brick_1x1",
-          "position": {
-            "x": 2,
-            "y": 0
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f6_c2_r1",
-          "type": "brick_1x1",
-          "position": {
-            "x": 2,
-            "y": 1
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f6_c2_r2",
-          "type": "brick_1x1",
-          "position": {
-            "x": 2,
-            "y": 2
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f6_c2_r3",
-          "type": "brick_1x1",
-          "position": {
-            "x": 2,
-            "y": 3
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f6_c2_r4",
-          "type": "brick_1x1",
-          "position": {
-            "x": 2,
-            "y": 4
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f6_c2_r5",
-          "type": "brick_1x1",
-          "position": {
-            "x": 2,
-            "y": 5
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f6_c2_r6",
-          "type": "brick_1x1",
-          "position": {
-            "x": 2,
-            "y": 6
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f6_c2_r7",
-          "type": "brick_1x1",
-          "position": {
-            "x": 2,
-            "y": 7
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f6_c2_r8",
-          "type": "brick_1x1",
-          "position": {
-            "x": 2,
-            "y": 8
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
+            "wall_id": "back_brick_b0_0"
           }
         },
         {
           "id": "f6_c3_r0",
-          "type": "brick_1x1",
+          "type": "brick_2x1",
           "position": {
             "x": 3,
             "y": 0
           },
           "rotation": 0,
           "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f6_c3_r1",
-          "type": "brick_1x1",
-          "position": {
-            "x": 3,
-            "y": 1
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f6_c3_r2",
-          "type": "brick_1x1",
-          "position": {
-            "x": 3,
-            "y": 2
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f6_c3_r3",
-          "type": "brick_1x1",
-          "position": {
-            "x": 3,
-            "y": 3
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f6_c3_r4",
-          "type": "brick_1x1",
-          "position": {
-            "x": 3,
-            "y": 4
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f6_c3_r5",
-          "type": "brick_1x1",
-          "position": {
-            "x": 3,
-            "y": 5
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f6_c3_r6",
-          "type": "brick_1x1",
-          "position": {
-            "x": 3,
-            "y": 6
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f6_c3_r7",
-          "type": "brick_1x1",
-          "position": {
-            "x": 3,
-            "y": 7
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f6_c3_r8",
-          "type": "brick_1x1",
-          "position": {
-            "x": 3,
-            "y": 8
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f6_c4_r0",
-          "type": "brick_1x1",
-          "position": {
-            "x": 4,
-            "y": 0
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f6_c4_r1",
-          "type": "brick_1x1",
-          "position": {
-            "x": 4,
-            "y": 1
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f6_c4_r2",
-          "type": "brick_1x1",
-          "position": {
-            "x": 4,
-            "y": 2
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f6_c4_r3",
-          "type": "brick_1x1",
-          "position": {
-            "x": 4,
-            "y": 3
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f6_c4_r4",
-          "type": "brick_1x1",
-          "position": {
-            "x": 4,
-            "y": 4
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f6_c4_r5",
-          "type": "brick_1x1",
-          "position": {
-            "x": 4,
-            "y": 5
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f6_c4_r6",
-          "type": "brick_1x1",
-          "position": {
-            "x": 4,
-            "y": 6
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f6_c4_r7",
-          "type": "brick_1x1",
-          "position": {
-            "x": 4,
-            "y": 7
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f6_c4_r8",
-          "type": "brick_1x1",
-          "position": {
-            "x": 4,
-            "y": 8
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
+            "wall_id": "back_brick_b0_0"
           }
         },
         {
           "id": "f6_c5_r0",
-          "type": "brick_1x1",
+          "type": "brick_2x1",
           "position": {
             "x": 5,
             "y": 0
           },
           "rotation": 0,
           "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f6_c5_r1",
-          "type": "brick_1x1",
-          "position": {
-            "x": 5,
-            "y": 1
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f6_c5_r2",
-          "type": "brick_1x1",
-          "position": {
-            "x": 5,
-            "y": 2
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f6_c5_r3",
-          "type": "brick_1x1",
-          "position": {
-            "x": 5,
-            "y": 3
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f6_c5_r4",
-          "type": "brick_1x1",
-          "position": {
-            "x": 5,
-            "y": 4
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f6_c5_r5",
-          "type": "brick_1x1",
-          "position": {
-            "x": 5,
-            "y": 5
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f6_c5_r6",
-          "type": "brick_1x1",
-          "position": {
-            "x": 5,
-            "y": 6
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f6_c5_r7",
-          "type": "brick_1x1",
-          "position": {
-            "x": 5,
-            "y": 7
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f6_c5_r8",
-          "type": "brick_1x1",
-          "position": {
-            "x": 5,
-            "y": 8
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f6_c6_r0",
-          "type": "brick_1x1",
-          "position": {
-            "x": 6,
-            "y": 0
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f6_c6_r1",
-          "type": "brick_1x1",
-          "position": {
-            "x": 6,
-            "y": 1
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f6_c6_r2",
-          "type": "brick_1x1",
-          "position": {
-            "x": 6,
-            "y": 2
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f6_c6_r3",
-          "type": "brick_1x1",
-          "position": {
-            "x": 6,
-            "y": 3
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f6_c6_r4",
-          "type": "brick_1x1",
-          "position": {
-            "x": 6,
-            "y": 4
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f6_c6_r5",
-          "type": "brick_1x1",
-          "position": {
-            "x": 6,
-            "y": 5
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f6_c6_r6",
-          "type": "brick_1x1",
-          "position": {
-            "x": 6,
-            "y": 6
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f6_c6_r7",
-          "type": "brick_1x1",
-          "position": {
-            "x": 6,
-            "y": 7
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
-          }
-        },
-        {
-          "id": "f6_c6_r8",
-          "type": "brick_1x1",
-          "position": {
-            "x": 6,
-            "y": 8
-          },
-          "rotation": 0,
-          "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
+            "wall_id": "back_brick_b0_0"
           }
         },
         {
@@ -2498,7 +2162,55 @@
           },
           "rotation": 0,
           "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
+            "wall_id": "right_brick_b0_9"
+          }
+        },
+        {
+          "id": "f6_c0_r1",
+          "type": "brick_1x1",
+          "position": {
+            "x": 0,
+            "y": 1
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "left_brick_b0_6"
+          }
+        },
+        {
+          "id": "f6_c1_r1",
+          "type": "brick_2x1",
+          "position": {
+            "x": 1,
+            "y": 1
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "back_brick_b0_0"
+          }
+        },
+        {
+          "id": "f6_c3_r1",
+          "type": "brick_2x1",
+          "position": {
+            "x": 3,
+            "y": 1
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "back_brick_b0_0"
+          }
+        },
+        {
+          "id": "f6_c5_r1",
+          "type": "brick_2x1",
+          "position": {
+            "x": 5,
+            "y": 1
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "back_brick_b0_0"
           }
         },
         {
@@ -2510,7 +2222,55 @@
           },
           "rotation": 0,
           "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
+            "wall_id": "right_brick_b0_9"
+          }
+        },
+        {
+          "id": "f6_c0_r2",
+          "type": "brick_1x1",
+          "position": {
+            "x": 0,
+            "y": 2
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "left_brick_b0_6"
+          }
+        },
+        {
+          "id": "f6_c1_r2",
+          "type": "brick_2x1",
+          "position": {
+            "x": 1,
+            "y": 2
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "back_brick_b0_0"
+          }
+        },
+        {
+          "id": "f6_c3_r2",
+          "type": "brick_2x1",
+          "position": {
+            "x": 3,
+            "y": 2
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "back_brick_b0_0"
+          }
+        },
+        {
+          "id": "f6_c5_r2",
+          "type": "brick_2x1",
+          "position": {
+            "x": 5,
+            "y": 2
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "back_brick_b0_0"
           }
         },
         {
@@ -2522,7 +2282,55 @@
           },
           "rotation": 0,
           "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
+            "wall_id": "right_brick_b0_9"
+          }
+        },
+        {
+          "id": "f6_c0_r3",
+          "type": "brick_1x1",
+          "position": {
+            "x": 0,
+            "y": 3
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "left_brick_b1_7"
+          }
+        },
+        {
+          "id": "f6_c1_r3",
+          "type": "brick_2x1",
+          "position": {
+            "x": 1,
+            "y": 3
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "back_brick_b1_1"
+          }
+        },
+        {
+          "id": "f6_c3_r3",
+          "type": "brick_2x1",
+          "position": {
+            "x": 3,
+            "y": 3
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "back_brick_b1_1"
+          }
+        },
+        {
+          "id": "f6_c5_r3",
+          "type": "brick_2x1",
+          "position": {
+            "x": 5,
+            "y": 3
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "back_brick_b1_1"
           }
         },
         {
@@ -2534,7 +2342,55 @@
           },
           "rotation": 0,
           "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
+            "wall_id": "right_brick_b1_10"
+          }
+        },
+        {
+          "id": "f6_c0_r4",
+          "type": "brick_1x1",
+          "position": {
+            "x": 0,
+            "y": 4
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "left_brick_b1_7"
+          }
+        },
+        {
+          "id": "f6_c1_r4",
+          "type": "brick_2x1",
+          "position": {
+            "x": 1,
+            "y": 4
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "back_brick_b1_1"
+          }
+        },
+        {
+          "id": "f6_c3_r4",
+          "type": "brick_2x1",
+          "position": {
+            "x": 3,
+            "y": 4
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "back_brick_b1_1"
+          }
+        },
+        {
+          "id": "f6_c5_r4",
+          "type": "brick_2x1",
+          "position": {
+            "x": 5,
+            "y": 4
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "back_brick_b1_1"
           }
         },
         {
@@ -2546,7 +2402,55 @@
           },
           "rotation": 0,
           "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
+            "wall_id": "right_brick_b1_10"
+          }
+        },
+        {
+          "id": "f6_c0_r5",
+          "type": "brick_1x1",
+          "position": {
+            "x": 0,
+            "y": 5
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "left_brick_b1_7"
+          }
+        },
+        {
+          "id": "f6_c1_r5",
+          "type": "brick_2x1",
+          "position": {
+            "x": 1,
+            "y": 5
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "back_brick_b1_1"
+          }
+        },
+        {
+          "id": "f6_c3_r5",
+          "type": "brick_2x1",
+          "position": {
+            "x": 3,
+            "y": 5
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "back_brick_b1_1"
+          }
+        },
+        {
+          "id": "f6_c5_r5",
+          "type": "brick_2x1",
+          "position": {
+            "x": 5,
+            "y": 5
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "back_brick_b1_1"
           }
         },
         {
@@ -2558,7 +2462,55 @@
           },
           "rotation": 0,
           "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
+            "wall_id": "right_brick_b1_10"
+          }
+        },
+        {
+          "id": "f6_c0_r6",
+          "type": "brick_1x1",
+          "position": {
+            "x": 0,
+            "y": 6
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "left_brick_b2_8"
+          }
+        },
+        {
+          "id": "f6_c1_r6",
+          "type": "brick_2x1",
+          "position": {
+            "x": 1,
+            "y": 6
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "back_brick_b2_2"
+          }
+        },
+        {
+          "id": "f6_c3_r6",
+          "type": "brick_2x1",
+          "position": {
+            "x": 3,
+            "y": 6
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "back_brick_b2_2"
+          }
+        },
+        {
+          "id": "f6_c5_r6",
+          "type": "brick_2x1",
+          "position": {
+            "x": 5,
+            "y": 6
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "back_brick_b2_2"
           }
         },
         {
@@ -2570,7 +2522,55 @@
           },
           "rotation": 0,
           "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
+            "wall_id": "right_brick_b2_11"
+          }
+        },
+        {
+          "id": "f6_c0_r7",
+          "type": "brick_1x1",
+          "position": {
+            "x": 0,
+            "y": 7
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "left_brick_b2_8"
+          }
+        },
+        {
+          "id": "f6_c1_r7",
+          "type": "brick_2x1",
+          "position": {
+            "x": 1,
+            "y": 7
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "back_brick_b2_2"
+          }
+        },
+        {
+          "id": "f6_c3_r7",
+          "type": "brick_2x1",
+          "position": {
+            "x": 3,
+            "y": 7
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "back_brick_b2_2"
+          }
+        },
+        {
+          "id": "f6_c5_r7",
+          "type": "brick_2x1",
+          "position": {
+            "x": 5,
+            "y": 7
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "back_brick_b2_2"
           }
         },
         {
@@ -2582,7 +2582,55 @@
           },
           "rotation": 0,
           "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
+            "wall_id": "right_brick_b2_11"
+          }
+        },
+        {
+          "id": "f6_c0_r8",
+          "type": "brick_1x1",
+          "position": {
+            "x": 0,
+            "y": 8
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "left_brick_b2_8"
+          }
+        },
+        {
+          "id": "f6_c1_r8",
+          "type": "brick_2x1",
+          "position": {
+            "x": 1,
+            "y": 8
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "back_brick_b2_2"
+          }
+        },
+        {
+          "id": "f6_c3_r8",
+          "type": "brick_2x1",
+          "position": {
+            "x": 3,
+            "y": 8
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "back_brick_b2_2"
+          }
+        },
+        {
+          "id": "f6_c5_r8",
+          "type": "brick_2x1",
+          "position": {
+            "x": 5,
+            "y": 8
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "back_brick_b2_2"
           }
         },
         {
@@ -2594,7 +2642,7 @@
           },
           "rotation": 0,
           "wall": {
-            "wall_id": "map_003_three_storey_brick_house_brick_01"
+            "wall_id": "right_brick_b2_11"
           }
         }
       ]
