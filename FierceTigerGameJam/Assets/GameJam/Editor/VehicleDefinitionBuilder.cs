@@ -4,7 +4,9 @@ using GameJam.Gameplay.Cannon;
 using GameJam.Gameplay.Combat;
 using UnityEditor;
 using UnityEditor.Animations;
+using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace GameJam.EditorTools
 {
@@ -89,6 +91,29 @@ namespace GameJam.EditorTools
         /// the base and wheels stay planted.
         /// </summary>
         private const string MuzzleFlashRootName = "MuzzleFlashRoot";
+
+        /// <summary>
+        /// What the aim rotates now that the old cannon art is gone. CannonA used to be both the
+        /// barrel you could see and the transform the aim turned; deleting it took the aim pivot
+        /// and the muzzle with it, and the game cannot run without them. This is the same role
+        /// with nothing to draw - an empty the aim turns and the muzzle hangs off.
+        /// </summary>
+        private const string AimPivotName = "AimPivot";
+
+        /// <summary>
+        /// CannonA's pose, kept as numbers because the object it came from no longer exists. This
+        /// is where the cannon was aimed from when the whole game was laid out around it, so a
+        /// rebuilt pivot has to land here or every shot leaves from somewhere new.
+        /// </summary>
+        private static readonly Vector3 AimPivotLocalPosition =
+            new Vector3(0.0073143532f, 0.07317917f, -0.46163517f);
+
+        private static readonly Quaternion AimPivotLocalRotation =
+            new Quaternion(-0.27092943f, 0f, 0f, 0.9625992f);
+
+        /// <summary>MuzzlePoint's offset inside that pivot, kept for the same reason.</summary>
+        private static readonly Vector3 MuzzleLocalPosition =
+            new Vector3(-0.0073143532f, 0.5320612f, 0.10477993f);
 
         /// <summary>
         /// A fitted model may be a twentieth of the pack's size or twice it; anything outside
@@ -206,20 +231,15 @@ namespace GameJam.EditorTools
 
                 Transform fallback = FindDescendant(root.transform, FallbackModelName);
 
-                // The old barrel is what the aim rotates, and it is switched off, so nothing on
-                // screen moves with it. Handing it to the mount is what lets the vehicle's own
-                // barrel copy the aim without the aim controller ever hearing about vehicles.
-                Transform barrel = FindDescendant(root.transform, BarrelObjectName);
-                if (barrel == null)
-                {
-                    Debug.LogWarning(
-                        $"{nameof(VehicleDefinitionBuilder)} found no \"{BarrelObjectName}\" inside "
-                        + $"{SlingshotPrefabPath}, so the mounted model's barrel will not follow the aim.");
-                }
+                // The transform the aim turns. CannonA while the old cannon art is still there,
+                // and the rebuilt empty once it has been deleted - the aim, the muzzle, the model
+                // frame and the flash all hang off whichever one is present, so resolving it in
+                // one place is what keeps the deletion from breaking four things at once.
+                changed |= EnsureAimPivot(cannon, out Transform barrel, out Transform muzzle);
 
                 changed |= EnsureCannonRoot(cannon, barrel, out Transform cannonRoot);
                 changed |= EnsureMuzzleFlashRoot(cannon, barrel, out Transform muzzleFlashRoot);
-                changed |= MoveSmokeToMuzzle(root.transform, muzzleFlashRoot, barrel);
+                changed |= MoveSmokeToMuzzle(root.transform, muzzleFlashRoot, muzzle);
 
                 SerializedObject serializedMount = new SerializedObject(mount);
                 SetIfEmpty(serializedMount, "loadout", loadout);
@@ -268,6 +288,77 @@ namespace GameJam.EditorTools
             {
                 PrefabUtility.UnloadPrefabContents(root);
             }
+
+            // After the prefab is saved and its contents released, so the scene's instance is
+            // already carrying whatever the pass just added.
+            RepairSceneCannonReferences();
+        }
+
+        /// <summary>
+        /// Re-points the scene's aim and fire references when the objects they named have been
+        /// deleted from the prefab.
+        ///
+        /// These two live on a scene object, not in the Slingshot prefab, so rebuilding the pivot
+        /// and the muzzle inside the prefab cannot heal them: the scene still holds a reference to
+        /// a transform that no longer exists, which loads as null and stops the run before the
+        /// first shot. Unity gives no warning for this - the inspector simply reads "Missing".
+        ///
+        /// Only a reference that is actually empty is filled, so a cannon deliberately aimed at
+        /// something else is left alone; a dangling reference reads as null here, which is exactly
+        /// the case worth repairing.
+        /// </summary>
+        private static void RepairSceneCannonReferences()
+        {
+            Scene scene = SceneManager.GetActiveScene();
+            if (!scene.IsValid() || !scene.isLoaded)
+            {
+                return;
+            }
+
+            VehicleMount mount = Object.FindFirstObjectByType<VehicleMount>(FindObjectsInactive.Include);
+            if (mount == null)
+            {
+                return;
+            }
+
+            // The pivot the prefab pass settled on, found in the scene's own instance: CannonA
+            // where it survives, the rebuilt empty where it does not.
+            Transform pivot = FindDescendant(mount.transform, BarrelObjectName)
+                ?? FindDescendant(mount.transform, AimPivotName);
+            Transform muzzle = pivot != null ? FindDescendant(pivot, MuzzleObjectName) : null;
+            if (pivot == null || muzzle == null)
+            {
+                return;
+            }
+
+            bool repaired = false;
+
+            CannonAimController aim = Object.FindFirstObjectByType<CannonAimController>(FindObjectsInactive.Include);
+            if (aim != null)
+            {
+                SerializedObject serializedAim = new SerializedObject(aim);
+                SetIfEmpty(serializedAim, "aimPivot", pivot);
+                repaired |= serializedAim.ApplyModifiedPropertiesWithoutUndo();
+            }
+
+            GridKnockdownCannonFireController fire =
+                Object.FindFirstObjectByType<GridKnockdownCannonFireController>(FindObjectsInactive.Include);
+            if (fire != null)
+            {
+                SerializedObject serializedFire = new SerializedObject(fire);
+                SetIfEmpty(serializedFire, "fireOrigin", muzzle);
+                repaired |= serializedFire.ApplyModifiedPropertiesWithoutUndo();
+            }
+
+            if (!repaired)
+            {
+                return;
+            }
+
+            EditorSceneManager.MarkSceneDirty(scene);
+            Debug.Log(
+                $"{nameof(VehicleDefinitionBuilder)} re-pointed the scene's aim pivot and muzzle at "
+                + $"\"{pivot.name}\". Save the scene to keep the repair.");
         }
 
         /// <summary>
@@ -797,6 +888,62 @@ namespace GameJam.EditorTools
 
         /// <summary>Depth-first by name, inactive included: the fallback model may be switched off.</summary>
         /// <summary>
+        /// Resolves what the aim turns, rebuilding it if the old cannon art has been deleted.
+        ///
+        /// CannonA carried three jobs at once: a barrel you could see, the transform the aim
+        /// rotated, and the parent of MuzzlePoint. Deleting it to be rid of the first took the
+        /// other two with it, which leaves CannonAimController with no pivot and the fire
+        /// controller with no origin - and a run cannot start without either. Rebuilding them as
+        /// empties keeps the art gone and the wiring intact.
+        ///
+        /// CannonA is still preferred when it exists, so a project that has not deleted it keeps
+        /// aiming exactly the object it always did rather than quietly gaining a second pivot.
+        /// </summary>
+        /// <returns>True when the prefab changed and needs saving.</returns>
+        private static bool EnsureAimPivot(Transform cannon, out Transform pivot, out Transform muzzle)
+        {
+            bool changed = false;
+
+            Transform legacyBarrel = FindDescendant(cannon, BarrelObjectName);
+            pivot = legacyBarrel;
+            if (pivot == null)
+            {
+                pivot = FindDescendant(cannon, AimPivotName);
+                if (pivot == null)
+                {
+                    pivot = new GameObject(AimPivotName).transform;
+                    pivot.SetParent(cannon, false);
+
+                    // Only on creation. The pose is CannonA's, recorded rather than copied because
+                    // the object it belongs to is gone; writing it every run would overwrite a
+                    // deliberate re-aim by whoever tunes the cannon next.
+                    pivot.localPosition = AimPivotLocalPosition;
+                    pivot.localRotation = AimPivotLocalRotation;
+                    pivot.localScale = Vector3.one;
+                    changed = true;
+
+                    Debug.Log(
+                        $"{nameof(VehicleDefinitionBuilder)} rebuilt \"{AimPivotName}\" inside "
+                        + $"{SlingshotPrefabPath}: \"{BarrelObjectName}\" is gone, and the aim and the "
+                        + "muzzle both hung off it.");
+                }
+            }
+
+            muzzle = FindDescendant(pivot, MuzzleObjectName);
+            if (muzzle == null)
+            {
+                muzzle = new GameObject(MuzzleObjectName).transform;
+                muzzle.SetParent(pivot, false);
+                muzzle.localPosition = MuzzleLocalPosition;
+                muzzle.localRotation = Quaternion.identity;
+                muzzle.localScale = Vector3.one;
+                changed = true;
+            }
+
+            return changed;
+        }
+
+        /// <summary>
         /// Ensures the live frame the model mounts in, sitting exactly where the switched-off
         /// CannonA sits. Its pose is re-copied on every run rather than only on creation: CannonA
         /// is the yardstick the whole cannon is laid out around, so if an artist moves it the
@@ -892,9 +1039,9 @@ namespace GameJam.EditorTools
         /// world - and because that frame mirrors the aim, the flash swings with the barrel.
         /// </summary>
         /// <returns>True when the prefab changed and needs saving.</returns>
-        private static bool MoveSmokeToMuzzle(Transform root, Transform muzzleFlashRoot, Transform barrel)
+        private static bool MoveSmokeToMuzzle(Transform root, Transform muzzleFlashRoot, Transform muzzle)
         {
-            if (muzzleFlashRoot == null)
+            if (muzzleFlashRoot == null || muzzle == null)
             {
                 return false;
             }
@@ -905,15 +1052,6 @@ namespace GameJam.EditorTools
                 Debug.LogWarning(
                     $"{nameof(VehicleDefinitionBuilder)} found no \"{SmokeObjectName}\" inside "
                     + $"{SlingshotPrefabPath}, so the muzzle flash was left where it was.");
-                return false;
-            }
-
-            Transform muzzle = barrel != null ? FindDescendant(barrel, MuzzleObjectName) : null;
-            if (muzzle == null)
-            {
-                Debug.LogWarning(
-                    $"{nameof(VehicleDefinitionBuilder)} found no \"{MuzzleObjectName}\" under "
-                    + $"\"{BarrelObjectName}\", so the muzzle flash could not be placed.");
                 return false;
             }
 
