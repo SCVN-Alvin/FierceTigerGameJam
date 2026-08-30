@@ -576,7 +576,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3932054204040538283}
-  - component: {fileID: 8327836981511292083}
   - component: {fileID: 2001987200480567458}
   m_Layer: 0
   m_Name: BulletTypeViewItem
@@ -611,18 +610,6 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 490, y: 91}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!225 &8327836981511292083
-CanvasGroup:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6855379825337405868}
-  m_Enabled: 1
-  m_Alpha: 1
-  m_Interactable: 1
-  m_BlocksRaycasts: 1
-  m_IgnoreParentGroups: 0
 --- !u!114 &2001987200480567458
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -643,9 +630,6 @@ MonoBehaviour:
   buyLabel: {fileID: 4149559866060480113}
   selectButton: {fileID: 5580036351035396627}
   equippedBadge: {fileID: 9078372733734186277}
-  group: {fileID: 8327836981511292083}
-  equippedAlpha: 1
-  otherAlpha: 0.5
 --- !u!1 &7015990693082725575
 GameObject:
   m_ObjectHideFlags: 0

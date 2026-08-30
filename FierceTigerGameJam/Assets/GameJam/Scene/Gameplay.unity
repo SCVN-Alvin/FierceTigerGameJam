@@ -3474,6 +3474,14 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 2893863966870339525, guid: fd03ae5daefa848f3b708019c566d8cb, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4733897721293064417, guid: fd03ae5daefa848f3b708019c566d8cb, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 6409795507839588656, guid: fd03ae5daefa848f3b708019c566d8cb, type: 3}
       propertyPath: m_Name
       value: Slingshot
