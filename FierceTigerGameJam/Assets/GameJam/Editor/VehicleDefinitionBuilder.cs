@@ -72,10 +72,9 @@ namespace GameJam.EditorTools
         private const string BarrelObjectName = "CannonA";
 
         /// <summary>
-        /// The frame the vehicle model and the muzzle smoke hang in: a live child of Cannon that
-        /// copies CannonA's rest pose. CannonA itself is switched off, so nothing may be parented
-        /// under it and expect to render; this is the active stand-in that sits in the same place.
-        /// It does not follow the aim - the barrel bone does that - so the base stays planted.
+        /// The frame the vehicle model hangs in: a live child of Cannon, seeded at the aim pivot's
+        /// pose when it is first created and hand-tunable from then on. It does not follow the aim
+        /// - the barrel bone does that - so the base and wheels stay planted.
         /// </summary>
         private const string CannonRootObjectName = "CannonRoot";
 
@@ -944,43 +943,38 @@ namespace GameJam.EditorTools
         }
 
         /// <summary>
-        /// Ensures the live frame the model mounts in, sitting exactly where the switched-off
-        /// CannonA sits. Its pose is re-copied on every run rather than only on creation: CannonA
-        /// is the yardstick the whole cannon is laid out around, so if an artist moves it the
-        /// mount must move with it, and a frame that silently kept a stale pose would put every
-        /// vehicle in the wrong place with nothing on screen to say why.
+        /// Ensures the live frame the model mounts in, seeded where the aim pivot sits.
+        ///
+        /// The pose is written on creation only. It used to be re-copied every run, on the
+        /// reasoning that the pivot is the yardstick the cannon is laid out around and the mount
+        /// should follow it - but that only holds while nobody touches the mount. Once the model's
+        /// placement is tuned by hand, re-copying silently drags it back onto the pivot on the
+        /// next run, and a builder that undoes deliberate work is worse than one that leaves a
+        /// stale pose a human can see and move. Same rule as every other reference here: fill what
+        /// is missing, never overwrite what is set.
         /// </summary>
         /// <returns>True when the prefab changed and needs saving.</returns>
         private static bool EnsureCannonRoot(Transform cannon, Transform barrel, out Transform cannonRoot)
         {
             cannonRoot = FindDescendant(cannon, CannonRootObjectName);
-            bool changed = false;
-            if (cannonRoot == null)
+            if (cannonRoot != null)
             {
-                cannonRoot = new GameObject(CannonRootObjectName).transform;
-                cannonRoot.SetParent(cannon, false);
-                changed = true;
+                return false;
             }
 
-            if (barrel == null)
-            {
-                // Without the yardstick the frame still exists, so the mount has somewhere to put
-                // a model; it just cannot be placed, and identity under Cannon is the old
-                // behaviour rather than a new kind of wrong.
-                return changed;
-            }
+            cannonRoot = new GameObject(CannonRootObjectName).transform;
+            cannonRoot.SetParent(cannon, false);
 
-            if (cannonRoot.localPosition != barrel.localPosition
-                || cannonRoot.localRotation != barrel.localRotation
-                || cannonRoot.localScale != Vector3.one)
+            if (barrel != null)
             {
                 cannonRoot.localPosition = barrel.localPosition;
                 cannonRoot.localRotation = barrel.localRotation;
-                cannonRoot.localScale = Vector3.one;
-                changed = true;
             }
 
-            return changed;
+            // Without the pivot the frame still exists, so the mount has somewhere to put a model;
+            // it just starts at identity under Cannon, which is where it sat before any of this.
+            cannonRoot.localScale = Vector3.one;
+            return true;
         }
 
         /// <summary>
