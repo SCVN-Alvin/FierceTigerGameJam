@@ -3063,11 +3063,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Button
---- !u!4 &2059440829 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 8840965861166768960, guid: fd03ae5daefa848f3b708019c566d8cb, type: 3}
-  m_PrefabInstance: {fileID: 4100000001}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &2066028390
 GameObject:
   m_ObjectHideFlags: 0
@@ -3145,7 +3140,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f345cd6bc7a64210904f1e8502c19f39, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameJam.Gameplay.Cannon.CannonAimController
-  aimPivot: {fileID: 2059440829}
+  aimPivot: {fileID: 4100000003}
   aimSpeed: 2
   minYaw: -90
   maxYaw: 90
@@ -3172,7 +3167,7 @@ MonoBehaviour:
   projectilePool: {fileID: 1038934809}
   runController: {fileID: 1430230332}
   projectileParent: {fileID: 2066028391}
-  fireOrigin: {fileID: 4100000003}
+  fireOrigin: {fileID: 4100000005}
   shotPresenter: {fileID: 4100000004}
   aimController: {fileID: 2066028395}
   aimPlaneZ: 20
@@ -3498,7 +3493,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
 --- !u!4 &4100000003 stripped
 Transform:
-  m_CorrespondingSourceObject: {fileID: 5627002687054128869, guid: fd03ae5daefa848f3b708019c566d8cb, type: 3}
+  m_CorrespondingSourceObject: {fileID: 2691864347249270551, guid: fd03ae5daefa848f3b708019c566d8cb, type: 3}
   m_PrefabInstance: {fileID: 4100000001}
   m_PrefabAsset: {fileID: 0}
 --- !u!114 &4100000004 stripped
@@ -3512,6 +3507,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c8e4f1a23b5d64788900112233445577, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!4 &4100000005 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 5912849491473299577, guid: fd03ae5daefa848f3b708019c566d8cb, type: 3}
+  m_PrefabInstance: {fileID: 4100000001}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &5100000000
 GameObject:
   m_ObjectHideFlags: 0
