@@ -22,6 +22,12 @@ namespace GameJam.Gameplay.Cannon
                  + "watches rather than something that ends the instant it lands.")]
         [SerializeField] private float postImpactLifetime = 0.4f;
 
+        [Tooltip("Ceiling on the tumble a launched ball is given, in radians per second. Rolling "
+                 + "contact on a ball this small works out at hundreds of radians per second, "
+                 + "which is more than a turn per physics step and reads as a strobe, so this "
+                 + "clamp is what is actually seen on almost every shot.")]
+        [SerializeField] private float maxTumbleAngularSpeed = 20f;
+
         [Header("Damage")]
         [Tooltip("Where the loaded ammunition and its level are read from. Without one, the flat "
                  + "fallback damage below is used and every material takes the same hit.")]
@@ -52,6 +58,12 @@ namespace GameJam.Gameplay.Cannon
         private static readonly Collider[] OverlapBuffer = new Collider[32];
 
         private static readonly HashSet<KnockdownBlock> ProcessedBlocks = new HashSet<KnockdownBlock>();
+
+        /// <summary>
+        /// Below this, the axis the tumble would turn about has collapsed - a shot fired straight
+        /// up, where there is no horizontal heading to roll over - and the ball flies unspun.
+        /// </summary>
+        private const float MinTumbleAxisSqrMagnitude = 0.0001f;
 
         private Rigidbody projectileRigidbody;
         private Collider projectileCollider;
@@ -106,6 +118,7 @@ namespace GameJam.Gameplay.Cannon
             neighborImpulseMultiplier = Mathf.Max(0f, neighborImpulseMultiplier);
             upwardForce = Mathf.Max(0f, upwardForce);
             postImpactLifetime = Mathf.Max(0f, postImpactLifetime);
+            maxTumbleAngularSpeed = Mathf.Max(0f, maxTumbleAngularSpeed);
             directHitDamage = Mathf.Max(0f, directHitDamage);
             splashDamage = Mathf.Max(0f, splashDamage);
             bulletLevelOverride = Mathf.Max(1, bulletLevelOverride);
@@ -269,9 +282,78 @@ namespace GameJam.Gameplay.Cannon
             // Back to the setting a shot in flight needs. A pooled ball was switched to Discrete
             // when its last shot landed, and would otherwise tunnel straight through thin glass.
             projectileRigidbody.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
-            projectileRigidbody.angularVelocity = Vector3.zero;
-            projectileRigidbody.linearVelocity = direction.normalized * speed;
+            Vector3 launchVelocity = direction.normalized * speed;
+            projectileRigidbody.linearVelocity = launchVelocity;
+            ApplyFlightTumble(launchVelocity, speed);
             IgnoreSpawnOverlaps();
+        }
+
+        /// <summary>
+        /// Spins the ball about the axis it is arcing over, so the slow flight the arc needs reads
+        /// as a heavy shot rather than a floating sphere. Set here rather than on the way back to
+        /// the pool because this is where the linear velocity is already established for the same
+        /// reason - it is the one call every shot makes, pooled or freshly instantiated - and it
+        /// unconditionally overwrites whatever the previous flight ended with, which is what stops
+        /// a reused ball inheriting spin. Nothing about a hit changes: both the damage and the
+        /// knock impulse are read from the linear velocity and the loaded ammunition, never from
+        /// the spin, and the ball is already done dealing damage by the time friction on a
+        /// spinning sphere could send its bounce anywhere new.
+        /// </summary>
+        private void ApplyFlightTumble(Vector3 launchVelocity, float speed)
+        {
+            // First, so every path out of this method leaves a defined spin rather than the last
+            // flight's.
+            projectileRigidbody.angularVelocity = Vector3.zero;
+
+            Vector3 tumbleAxis = Vector3.Cross(Vector3.up, launchVelocity);
+            if (speed <= 0f || maxTumbleAngularSpeed <= 0f || tumbleAxis.sqrMagnitude < MinTumbleAxisSqrMagnitude)
+            {
+                return;
+            }
+
+            float radius = ResolveBallRadius();
+            if (radius <= 0f)
+            {
+                return;
+            }
+
+            // Rolling contact would be speed / radius, which on a ball a few centimetres across is
+            // hundreds of radians per second - past a full turn per physics step, so it would read
+            // as a stutter. The clamp is therefore the rate normally seen; the rolling figure only
+            // matters for a ball big or slow enough to fall under it.
+            float tumbleRate = Mathf.Min(speed / radius, maxTumbleAngularSpeed);
+            projectileRigidbody.angularVelocity = tumbleAxis.normalized * tumbleRate;
+        }
+
+        /// <summary>
+        /// The ball's radius in world units. Read per shot rather than cached, because a pooled
+        /// ball is reparented on every rent and its lossy scale is only settled at that point.
+        /// A non-sphere collider falls back to its largest extent, which is the same number for
+        /// the sphere case and merely approximate for anything else.
+        /// </summary>
+        private float ResolveBallRadius()
+        {
+            if (projectileCollider == null)
+            {
+                projectileCollider = GetComponent<Collider>();
+            }
+
+            if (projectileCollider == null)
+            {
+                return 0f;
+            }
+
+            if (projectileCollider is SphereCollider sphere)
+            {
+                Vector3 scale = sphere.transform.lossyScale;
+                float largestScale = Mathf.Max(
+                    Mathf.Abs(scale.x),
+                    Mathf.Max(Mathf.Abs(scale.y), Mathf.Abs(scale.z)));
+                return sphere.radius * largestScale;
+            }
+
+            Vector3 extents = projectileCollider.bounds.extents;
+            return Mathf.Max(extents.x, Mathf.Max(extents.y, extents.z));
         }
 
         /// <summary>
@@ -372,10 +454,11 @@ namespace GameJam.Gameplay.Cannon
 
         /// <summary>
         /// Damage comes from the loaded ammunition, looked up against the material that was hit,
-        /// rather than from the projectile's speed. The ball is launched at around a hundred
-        /// metres per second, so any speed-derived figure would clear every material's threshold
-        /// and shatter the whole blast radius on every shot; how hard a shot lands is a tuning
-        /// decision, not a physics reading.
+        /// rather than from the projectile's speed. Deliberately independent of it: the launch
+        /// speed is a feel setting that has already been changed by a factor of five to make the
+        /// arc visible, and damage that moved with it would silently re-tune every material
+        /// threshold in the game. How hard a shot lands is a design decision, not a physics
+        /// reading.
         /// </summary>
         private void KnockBlocks(Vector3 impactPoint, Vector3 impulseDirection, KnockdownBlock directlyHitBlock)
         {

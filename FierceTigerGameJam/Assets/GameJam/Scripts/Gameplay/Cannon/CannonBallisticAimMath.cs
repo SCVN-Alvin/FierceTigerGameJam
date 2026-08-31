@@ -14,6 +14,13 @@ namespace GameJam.Gameplay.Cannon
         private const float MaxLaunchAngleDegrees = 35f;
         private const float DefaultFixedDeltaTime = 0.02f;
 
+        /// <summary>
+        /// How far the capped search below may land from the aimed point before the shot is
+        /// treated as unmakeable and said so in a development build. A metre: wider than the
+        /// step error of the simulation, narrower than a block.
+        /// </summary>
+        private const float UnreachableMissSqrMagnitude = 1f;
+
         public static bool TryGetLaunchDirection(Vector3 origin, Vector3 target, float speed, out Vector3 direction)
         {
             direction = Vector3.forward;
@@ -75,6 +82,12 @@ namespace GameJam.Gameplay.Cannon
             direction = Vector3.forward;
 
             float sqrtDiscriminant = Mathf.Sqrt(discriminant);
+
+            // The minus root on purpose. The two ballistic solutions differ only in the sign in
+            // front of the square root, and this one is the smaller tangent, so it is the shallower
+            // of the two: the direct lob a player reads as a shot, rather than the mortar arc that
+            // climbs out of frame and drops on the same block. There is no toggle because a mortar
+            // is never what this cannon wants.
             float tanTheta = (speedSqr - sqrtDiscriminant) / (gravity * horizontalDistance);
             float cosTheta = 1f / Mathf.Sqrt(1f + tanTheta * tanTheta);
             float sinTheta = tanTheta * cosTheta;
@@ -109,6 +122,21 @@ namespace GameJam.Gameplay.Cannon
                 bestMissSqr = missSqr;
                 bestAngleRad = angleRad;
             }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            // Said here because this is the only place that knows it. The closed form has already
+            // declined the shot, and the search above is capped at MaxLaunchAngleDegrees, so a best
+            // miss this wide means the target is out of the cannon's reach at this speed rather
+            // than merely awkward. The symptom a map author would otherwise see is a tap near the
+            // top of a tall structure that quietly does nothing.
+            if (bestMissSqr > UnreachableMissSqrMagnitude)
+            {
+                Debug.LogWarning(
+                    $"Cannon aim out of reach: no launch at or below {MaxLaunchAngleDegrees} degrees "
+                    + $"and {speed} units per second gets within {Mathf.Sqrt(bestMissSqr):0.##} units "
+                    + "of the aimed point. Raise the projectile speed or lower the structure.");
+            }
+#endif
 
             return TryBuildDirectionFromAngle(horizontalDirection, bestAngleRad, out direction);
         }
