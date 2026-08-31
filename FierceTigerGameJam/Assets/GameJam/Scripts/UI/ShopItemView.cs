@@ -80,11 +80,11 @@ namespace GameJam.UI
         [Tooltip("The item's picture, in the slot baked into the row's left edge.")]
         [SerializeField] private Image icon;
 
-        [Tooltip("\"TRUCK \u00b7 LEVEL 2\", or just the name beside the lock graphic.")]
+        [Tooltip("The item's name, on its own - \"CANNON A\". The level is the pip bar's job.")]
         [SerializeField] private TMP_Text label;
 
-        [Tooltip("The UI_Locked graphic, shown in place of the level on a row the player does "
-                 + "not own yet.")]
+        [Tooltip("The UI_Locked graphic, shown beside the name on a row the player does not "
+                 + "own yet.")]
         [SerializeField] private GameObject locked;
 
         [SerializeField] private UpgradeLevelBarView levels;
@@ -140,11 +140,10 @@ namespace GameJam.UI
                     ? string.Empty
                     : state.DisplayName.ToUpperInvariant();
 
-                // A locked row's level would be the level it would start at, which reads as a
-                // promise; the lock graphic beside the name says the true thing instead.
-                label.text = state.Unlocked
-                    ? $"{displayName} {LevelSeparator} LEVEL {state.Level}"
-                    : displayName;
+                // The name alone. The level used to be spelled out here as well, which said the
+                // same thing twice: the pip bar beside it already shows the level, and shows it
+                // at a glance rather than as a number to read.
+                label.text = displayName;
             }
 
             if (levels != null)
@@ -180,12 +179,6 @@ namespace GameJam.UI
                 equippedBadge.SetActive(unlocked && state.Equipped);
             }
         }
-
-        /// <summary>
-        /// Between the name and the level. A middle dot, which the default font carries; pulled
-        /// out as a constant so a font that does not can be answered in one place.
-        /// </summary>
-        private const string LevelSeparator = "\u00b7";
 
         /// <summary>
         /// Fills in whatever was left empty from the children, by the names the prefab uses.
