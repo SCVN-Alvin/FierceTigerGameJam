@@ -100,6 +100,14 @@ namespace GameJam.EditorTools
         private const string AimPivotName = "AimPivot";
 
         /// <summary>
+        /// The mount's height inside Cannon, chosen so a model standing on its own origin stands
+        /// on the ground: Cannon sits 0.087 below the Slingshot root, and the root sits on y = 0,
+        /// so cancelling that number puts the model's feet exactly on the floor. Pulled out
+        /// because it is a fact about where the cannon is bolted, not a number worth guessing at.
+        /// </summary>
+        private const float GroundedMountHeight = 0.087f;
+
+        /// <summary>
         /// CannonA's pose, kept as numbers because the object it came from no longer exists. This
         /// is where the cannon was aimed from when the whole game was laid out around it, so a
         /// rebuilt pivot has to land here or every shot leaves from somewhere new.
@@ -967,8 +975,16 @@ namespace GameJam.EditorTools
 
             if (barrel != null)
             {
-                cannonRoot.localPosition = barrel.localPosition;
-                cannonRoot.localRotation = barrel.localRotation;
+                // The pivot's place, but never its rotation. The pivot rests nose-up by about 31
+                // degrees, which is right for a barrel and wrong for a vehicle: a model that
+                // inherited it stood tilted, and its rear wheels swung down through the ground.
+                // The pack cannons are modelled standing level on their own origin, so level is
+                // what this frame gives them, and the barrel bone adds the aim on top.
+                cannonRoot.localPosition = new Vector3(
+                    barrel.localPosition.x,
+                    GroundedMountHeight,
+                    barrel.localPosition.z);
+                cannonRoot.localRotation = Quaternion.identity;
             }
 
             // Without the pivot the frame still exists, so the mount has somewhere to put a model;
