@@ -41,9 +41,6 @@ namespace GameJam.EditorTools
         private const string RetrySprite = MissionTextures + "/Btn_Retry.png";
         private const string PlaySprite = MissionTextures + "/Btn_Play_Small.png";
         private const string LockedSprite = MissionTextures + "/Btn_Locked.png";
-        private const string MoneySprite = MenuTextures + "/UI_Money.png";
-        private const string MissionSprite = MenuTextures + "/UI_Mission.png";
-        private const string CloseSprite = GarageTextures + "/Btn_Esc.png";
         private const string PrevSprite = MissionTextures + "/Btn_Mission_Prev.png";
         private const string NextSprite = MissionTextures + "/Btn_Mission_Next.png";
 
@@ -62,10 +59,38 @@ namespace GameJam.EditorTools
         /// The one number to tune, at the frame sprite's own aspect (975:1436). Everything inside
         /// the frame is a fraction of it. Identical to the garage's on purpose.
         /// </summary>
-        private static readonly Vector2 FrameSize = new Vector2(600f, 884f);
+        private static readonly Vector2 FrameSize = new Vector2(660f, 972f);
 
-        /// <summary>Hangs the frame off the top of the screen, clear of the gold chip and the X.</summary>
-        private static readonly Vector2 FrameOffset = new Vector2(0f, -96f);
+        /// <summary>
+        /// Hangs the frame off the top of the screen. It used to duck under a row of chips and a
+        /// close button; with those gone the board can start higher and simply be bigger.
+        /// </summary>
+        private static readonly Vector2 FrameOffset = new Vector2(0f, -48f);
+
+        /// <summary>
+        /// What the frame measured before the top row was retired. Only a frame still carrying
+        /// exactly these numbers is resized, so a board someone has since tuned by hand keeps the
+        /// size they gave it - the same "replace the known stale value, never a chosen one" rule
+        /// the rest of this builder follows.
+        /// </summary>
+        private static readonly Vector2 PreviousFrameSize = new Vector2(600f, 884f);
+
+        private static readonly Vector2 PreviousFrameOffset = new Vector2(0f, -96f);
+
+        /// <summary>
+        /// The bottom bar navigates now, so the board no longer carries its own gold chip, its own
+        /// mission counter or a close button. Named here so a re-run clears them from a board that
+        /// was built before the change rather than leaving them floating over the new frame.
+        /// </summary>
+        private static readonly string[] RetiredChildren = { "MoneyChip", "MissionChip", "CloseButton" };
+
+        private const string BackdropName = "Backdrop";
+
+        /// <summary>
+        /// Black at a bit over half, so the board reads as sitting in front of the menu rather
+        /// than pasted onto it, and the menu stays legible behind it.
+        /// </summary>
+        private static readonly Color BackdropColor = new Color(0f, 0f, 0f, 0.6f);
 
         /// <summary>232x209 of card art at the frame's 600/975 scale, so three fit across the inset.</summary>
         private static readonly Vector2 CardSize = new Vector2(143f, 129f);
@@ -187,9 +212,22 @@ namespace GameJam.EditorTools
                     Place(rect, ScreenAnchorMin, ScreenAnchorMax);
                 }
 
+                RemoveRetiredChildren(rect);
+                EnsureBackdrop(rect);
+
                 bool frameCreated = rect.Find("Frame") == null;
                 RectTransform frame = EnsureImage("Frame", rect, FrameSprite,
                     Vector2.zero, Vector2.one, Image.Type.Simple, false);
+
+                if (!frameCreated
+                    && frame.sizeDelta == PreviousFrameSize
+                    && frame.anchoredPosition == PreviousFrameOffset)
+                {
+                    // Grown into the space the retired chips used to occupy. Guarded on the old
+                    // numbers so this fires once, on a board that has not been touched since.
+                    frame.sizeDelta = FrameSize;
+                    frame.anchoredPosition = FrameOffset;
+                }
 
                 if (frameCreated)
                 {
@@ -266,48 +304,9 @@ namespace GameJam.EditorTools
 
                 RectTransform grid = BuildGrid(inset);
 
-                // Its own gold chip, not the menu's: the main menu root is switched off while the
-                // mission screen is up, and the levels are picked with the gold in mind.
-                RectTransform money = EnsureImage("MoneyChip", rect, MoneySprite,
-                    new Vector2(0.046f, 0.926f), new Vector2(0.268f, 0.975f), Image.Type.Simple, false);
-                TMP_Text goldLabel = EnsureLabel("GoldLabel", money, "0", 34,
-                    TextAlignmentOptions.Center, new Vector2(0.2f, 0.1f), new Vector2(0.82f, 0.9f),
-                    out bool goldCreated);
-                if (goldCreated)
-                {
-                    Place((RectTransform)goldLabel.transform, new Vector2(0.2f, 0.1f), new Vector2(0.82f, 0.9f));
-                    goldLabel.raycastTarget = false;
-                }
 
-                RectTransform mission = EnsureImage("MissionChip", rect, MissionSprite,
-                    new Vector2(0.60f, 0.926f), new Vector2(0.84f, 0.975f), Image.Type.Simple, true);
-
-                // Right-aligned: the chip art has a flag baked into its left end, so the count
-                // sits in the paper beside it rather than over it.
-                TMP_Text missionLabel = EnsureLabel("MissionLabel", mission, "0/0", 34,
-                    TextAlignmentOptions.Right, new Vector2(0.42f, 0.1f), new Vector2(0.92f, 0.9f),
-                    out bool missionCreated);
-                if (missionCreated)
-                {
-                    Place((RectTransform)missionLabel.transform, new Vector2(0.42f, 0.1f), new Vector2(0.92f, 0.9f));
-                    missionLabel.raycastTarget = false;
-                }
-
-                bool closeCreated = rect.Find("CloseButton") == null;
-                Button close = UiBuilder.EnsureSpriteButton("CloseButton", rect, CloseSprite,
-                    new Vector2(0.867f, 0.925f), new Vector2(0.944f, 0.976f));
-                if (closeCreated)
-                {
-                    Place((RectTransform)close.transform, new Vector2(0.867f, 0.925f), new Vector2(0.944f, 0.976f));
-                    if (close.targetGraphic is Image closeImage)
-                    {
-                        closeImage.preserveAspect = true;
-                    }
-                }
 
                 WirePanelView(root, grid, itemPrefab);
-                WireGoldView(money.gameObject, goldLabel);
-                WireProgressView(mission.gameObject, missionLabel);
 
                 if (created)
                 {
@@ -403,23 +402,7 @@ namespace GameJam.EditorTools
             serialized.ApplyModifiedPropertiesWithoutUndo();
         }
 
-        private static void WireGoldView(GameObject chip, TMP_Text goldLabel)
-        {
-            GoldView view = UiBuilder.Ensure<GoldView>(chip);
-            SerializedObject serialized = new SerializedObject(view);
-            UiBuilder.SetIfEmpty(serialized, "economy", UiBuilder.LoadFirstAsset<EconomyService>());
-            UiBuilder.SetIfEmpty(serialized, "goldLabel", goldLabel);
-            serialized.ApplyModifiedPropertiesWithoutUndo();
-        }
 
-        private static void WireProgressView(GameObject chip, TMP_Text label)
-        {
-            MapProgressView view = UiBuilder.Ensure<MapProgressView>(chip);
-            SerializedObject serialized = new SerializedObject(view);
-            UiBuilder.SetIfEmpty(serialized, "mapConfig", UiBuilder.LoadFirstAsset<MapConfig>());
-            UiBuilder.SetIfEmpty(serialized, "label", label);
-            serialized.ApplyModifiedPropertiesWithoutUndo();
-        }
 
         // ------------------------------------------------------------------ scene
 
@@ -486,15 +469,11 @@ namespace GameJam.EditorTools
                 instance.SetActive(false);
             }
 
-            Transform close = instance.transform.Find("CloseButton");
-            Button closeButton = close != null ? close.GetComponent<Button>() : null;
-
             GameFlowController flow = Object.FindFirstObjectByType<GameFlowController>(FindObjectsInactive.Include);
             if (flow != null)
             {
                 SerializedObject serialized = new SerializedObject(flow);
                 UiBuilder.SetIfEmpty(serialized, "mapSelectionRoot", instance);
-                UiBuilder.SetIfEmpty(serialized, "closeMissionButton", closeButton);
                 serialized.ApplyModifiedPropertiesWithoutUndo();
             }
             else
@@ -602,6 +581,54 @@ namespace GameJam.EditorTools
         /// Finds or creates an image and, only if it had to make one, gives it the look this
         /// layout wants. An image somebody re-sliced or nudged is handed straight back.
         /// </summary>
+        /// <summary>
+        /// Clears the controls the bottom bar took over. Deleting rather than hiding: a hidden
+        /// object is still something a later reader has to work out the purpose of, and the bar
+        /// is not going away.
+        /// </summary>
+        private static void RemoveRetiredChildren(RectTransform rect)
+        {
+            for (int i = 0; i < RetiredChildren.Length; i++)
+            {
+                Transform child = rect.Find(RetiredChildren[i]);
+                if (child != null)
+                {
+                    Object.DestroyImmediate(child.gameObject);
+                }
+            }
+        }
+
+        /// <summary>
+        /// The dark ground the board sits on, behind everything else on the screen.
+        ///
+        /// A sprite-less Image, which draws as a flat quad its colour tints - no art needed, and
+        /// nothing to re-import if the shade changes. It stops at the screen root, so the bottom
+        /// bar underneath stays at full strength: it is the live navigation now and dimming it
+        /// would say the opposite.
+        ///
+        /// It takes raycasts on purpose. Every tap that is not on the board is one the board
+        /// should swallow rather than let through to whatever is behind it.
+        /// </summary>
+        private static void EnsureBackdrop(RectTransform rect)
+        {
+            bool created = rect.Find(BackdropName) == null;
+            RectTransform backdrop = UiBuilder.EnsureRect(BackdropName, rect, Vector2.zero, Vector2.one);
+
+            if (created)
+            {
+                Place(backdrop, Vector2.zero, Vector2.one);
+
+                Image image = UiBuilder.Ensure<Image>(backdrop.gameObject);
+                image.sprite = null;
+                image.color = BackdropColor;
+                image.raycastTarget = true;
+            }
+
+            // Enforced on every run, not only on creation: being behind everything is the whole
+            // job, and a screen built later would otherwise be able to slide underneath it.
+            backdrop.SetAsFirstSibling();
+        }
+
         private static RectTransform EnsureImage(
             string name,
             Transform parent,
