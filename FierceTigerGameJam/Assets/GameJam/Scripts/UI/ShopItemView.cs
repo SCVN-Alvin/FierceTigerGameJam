@@ -140,10 +140,13 @@ namespace GameJam.UI
                     ? string.Empty
                     : state.DisplayName.ToUpperInvariant();
 
-                // The name alone. The level used to be spelled out here as well, which said the
-                // same thing twice: the pip bar beside it already shows the level, and shows it
-                // at a glance rather than as a number to read.
-                label.text = displayName;
+                // Nothing at all while the row is locked. The lock graphic stands where the name
+                // would go and already says what the row is, so drawing both put the two on top
+                // of one another (see RefAI/ItemView). The name arrives with the unlock.
+                //
+                // The level is not spelled out either way: the pip bar beside it already shows
+                // that, at a glance rather than as a number to read.
+                label.text = state.Unlocked ? displayName : string.Empty;
             }
 
             if (levels != null)
@@ -302,6 +305,53 @@ namespace GameJam.UI
             // Also at runtime, so a row instantiated from a prefab that was never opened in the
             // inspector still knows its own parts.
             ResolveMissingReferences();
+
+            HideStateVisuals();
+        }
+
+        /// <summary>
+        /// Switches off everything whose state only <see cref="Bind"/> knows, before the row can
+        /// be drawn once.
+        ///
+        /// The prefab has to be authored with these on so they can be seen and laid out in the
+        /// editor, which means a freshly instantiated row carries SELECT and LOCKED at the same
+        /// time - a combination no real row ever has. Awake runs inside Instantiate, before the
+        /// frame is rendered, so blanking them here is what stops the wrong controls appearing
+        /// for a frame when a tab is opened. Bind then turns on the ones that belong.
+        ///
+        /// Buy is deliberately left alone: it is on every row in every state, and only its
+        /// caption changes, so hiding and re-showing it would introduce the very flicker this
+        /// removes.
+        /// </summary>
+        private void HideStateVisuals()
+        {
+            // The authored placeholder name and icon are as wrong as the wrong button, and more
+            // readable: a row that flashed "CANNON A" before becoming Cannon C would be the most
+            // noticeable thing on the screen.
+            if (label != null)
+            {
+                label.text = string.Empty;
+            }
+
+            if (icon != null)
+            {
+                icon.enabled = false;
+            }
+
+            if (locked != null)
+            {
+                locked.SetActive(false);
+            }
+
+            if (equippedBadge != null)
+            {
+                equippedBadge.SetActive(false);
+            }
+
+            if (selectButton != null && selectButton.gameObject != gameObject)
+            {
+                selectButton.gameObject.SetActive(false);
+            }
         }
     }
 }
