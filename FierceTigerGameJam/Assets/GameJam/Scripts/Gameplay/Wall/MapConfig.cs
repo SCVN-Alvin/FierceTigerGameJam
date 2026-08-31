@@ -21,6 +21,7 @@ namespace GameJam.Gameplay.Wall
                  + "and spawning block by block. Delete it (or re-bake) after editing the JSON.")]
         [SerializeField] private GameObject mapPrefab;
 
+
         public string Id => id;
         public string DisplayName => string.IsNullOrEmpty(displayName) ? id : displayName;
         public TextAsset MapJson => mapJson;

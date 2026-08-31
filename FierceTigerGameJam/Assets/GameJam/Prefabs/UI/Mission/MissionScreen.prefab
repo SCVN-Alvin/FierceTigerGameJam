@@ -67,6 +67,9 @@ MonoBehaviour:
     - map_007_concrete_frame_school
     - 2
     - map_009_hollow_concrete_tower
+    background: {fileID: 21300000, guid: 2131a16cb61e94fdcb1f0e248445debb, type: 3}
+    floorTexture: {fileID: 2800000, guid: 0af3932cc55254546b1783f2ff19c2d4, type: 3}
+    floorTiling: 0.25
   - locked: 0
     slotMapIds:
     - map_m2_001_beach_hut_row
@@ -78,16 +81,31 @@ MonoBehaviour:
     - map_m2_007_lighthouse
     - map_m2_008_sea_fort
     - map_m2_009_boardwalk_resort
-  - locked: 1
+    background: {fileID: 21300000, guid: 80bf4c2206133418091c26c875735ecc, type: 3}
+    floorTexture: {fileID: 2800000, guid: 4f49490b2d0204481bc78951075d1d47, type: 3}
+    floorTiling: 0
+  - locked: 0
     slotMapIds:
-    - map_004_level_01
-    - map_005_level_02
-    - map_005_two_storey_hollow_courtyard
+    - map_m3_001_relay_dish
+    - map_m3_002_launch_gantry
+    - map_m3_003_solar_farm
+    - map_m3_004_fuel_tanks
+    - map_m3_005_control_tower
+    - map_m3_006_biodome
+    - map_m3_007_landed_shuttle
+    - map_m3_008_docking_arm
+    - map_m3_009_spaceport
+    background: {fileID: 21300000, guid: 3385774b0bdd640dc9c141212adcf92a, type: 3}
+    floorTexture: {fileID: 2800000, guid: ab2d5556b72da4663bd8dea807350703, type: 3}
+    floorTiling: 0
   missionTitle: {fileID: 7690073280359268874}
   previousMissionButton: {fileID: 5119333212499603365}
   nextMissionButton: {fileID: 5830249466207725138}
   noticeLabel: {fileID: 4035503670801151493}
   missingMapNotice: NO MAP YET!
+  missionBackdrop: {fileID: 0}
+  visitedBackdropTint: {r: 1, g: 1, b: 1, a: 1}
+  unvisitedBackdropTint: {r: 0.42, g: 0.46, b: 0.52, a: 1}
   lockedMissionAlpha: 0.5
 --- !u!1 &960441161909170278
 GameObject:

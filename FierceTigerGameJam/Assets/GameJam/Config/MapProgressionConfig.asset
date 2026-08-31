@@ -118,3 +118,48 @@ MonoBehaviour:
     passMapRewardId: pass_map_18
     clearMapRewardId: clear_map_18
     bulletPickLimit: 22
+  - mapId: map_m3_001_relay_dish
+    requiredClearPercent: 0.8
+    passMapRewardId: pass_map_19
+    clearMapRewardId: clear_map_19
+    bulletPickLimit: 14
+  - mapId: map_m3_002_launch_gantry
+    requiredClearPercent: 0.8
+    passMapRewardId: pass_map_20
+    clearMapRewardId: clear_map_20
+    bulletPickLimit: 14
+  - mapId: map_m3_003_solar_farm
+    requiredClearPercent: 0.8
+    passMapRewardId: pass_map_21
+    clearMapRewardId: clear_map_21
+    bulletPickLimit: 16
+  - mapId: map_m3_004_fuel_tanks
+    requiredClearPercent: 0.8
+    passMapRewardId: pass_map_22
+    clearMapRewardId: clear_map_22
+    bulletPickLimit: 16
+  - mapId: map_m3_005_control_tower
+    requiredClearPercent: 0.8
+    passMapRewardId: pass_map_23
+    clearMapRewardId: clear_map_23
+    bulletPickLimit: 18
+  - mapId: map_m3_006_biodome
+    requiredClearPercent: 0.8
+    passMapRewardId: pass_map_24
+    clearMapRewardId: clear_map_24
+    bulletPickLimit: 18
+  - mapId: map_m3_007_landed_shuttle
+    requiredClearPercent: 0.8
+    passMapRewardId: pass_map_25
+    clearMapRewardId: clear_map_25
+    bulletPickLimit: 20
+  - mapId: map_m3_008_docking_arm
+    requiredClearPercent: 0.8
+    passMapRewardId: pass_map_26
+    clearMapRewardId: clear_map_26
+    bulletPickLimit: 22
+  - mapId: map_m3_009_spaceport
+    requiredClearPercent: 0.8
+    passMapRewardId: pass_map_27
+    clearMapRewardId: clear_map_27
+    bulletPickLimit: 24

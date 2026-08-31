@@ -85,3 +85,39 @@ MonoBehaviour:
     gold: 950
   - rewardId: clear_map_18
     gold: 1200
+  - rewardId: pass_map_19
+    gold: 1000
+  - rewardId: clear_map_19
+    gold: 1250
+  - rewardId: pass_map_20
+    gold: 1040
+  - rewardId: clear_map_20
+    gold: 1300
+  - rewardId: pass_map_21
+    gold: 1080
+  - rewardId: clear_map_21
+    gold: 1350
+  - rewardId: pass_map_22
+    gold: 1120
+  - rewardId: clear_map_22
+    gold: 1400
+  - rewardId: pass_map_23
+    gold: 1160
+  - rewardId: clear_map_23
+    gold: 1450
+  - rewardId: pass_map_24
+    gold: 1200
+  - rewardId: clear_map_24
+    gold: 1500
+  - rewardId: pass_map_25
+    gold: 1240
+  - rewardId: clear_map_25
+    gold: 1550
+  - rewardId: pass_map_26
+    gold: 1280
+  - rewardId: clear_map_26
+    gold: 1600
+  - rewardId: pass_map_27
+    gold: 1320
+  - rewardId: clear_map_27
+    gold: 1650

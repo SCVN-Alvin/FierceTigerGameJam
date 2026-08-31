@@ -1,0 +1,177 @@
+================================================================================
+SMASH - BACKGROUND AND FLOOR SPEC
+What the camera actually shows, and the values art has to hit
+Project: Demolition Contracts (FierceTigerGameJam)     Revision 1 - 2026-08-31
+================================================================================
+
+WHY THIS EXISTS
+    Three background paintings in a row were composed for the whole canvas and
+    then lost most of their subject when the game cropped them. Two of the three
+    put their main elements exactly where the camera cannot see. Every number
+    below was measured out of the scene and the shipped art, not estimated, and
+    it is here rather than in a chat log because the same mistake has now been
+    made three times.
+
+
+================================================================================
+1. THE SAFE BOX - THE SINGLE MOST IMPORTANT NUMBER
+================================================================================
+
+A backdrop sprite is 20 x 16.7 world units. The camera is a perspective camera
+with a 22.5 degree VERTICAL field of view, sitting at y 1.01, z -8.74, pitched
+1.282 degrees down. The backdrop plane is at z 19.43, so the camera is 28.17
+units from it.
+
+    visible height = 2 x 28.17 x tan(11.25 deg)      = 11.21 units of 16.7
+    visible width  = 11.21 x 9/16 (portrait 9:16)    =  6.30 units of 20
+
+Which lands as:
+
+    HORIZONTAL      34% to 66% of the image width
+    VERTICAL        28% to 95% of the image height, measured from the TOP
+
+    On a 2000 x 1670 canvas that is a box of 628 x 1122 pixels in the middle.
+
+    The outer two thirds of the width are NEVER on screen.
+    The top quarter is NEVER on screen.
+
+CHECKED AGAINST THE SHIPPED ART
+    BG_Beach_01 has its sea horizon at 47% of the image height. The box predicts
+    it appears 28% down the screen, and that is where it is in play.
+
+WHAT THIS MEANS FOR COMPOSITION
+    Anything that must be seen goes inside the box. Anything outside it is a
+    continuation that keeps the picture whole for the artist and is thrown away
+    by the game.
+
+    Framing elements - rocks, walls, cliffs, hangar sides - do NOT go at the
+    edges of the canvas. They go at roughly 28-40% and 60-72% of the width, so
+    each leans into the visible middle from its own side. At the canvas edge
+    they are invisible; dead centre they collide with the gameplay.
+
+    A worked failure, measured: the beach painting of 2026-08-31 put its two
+    rock-and-palm clusters at 20-36% and 67-88%. The left one showed a 2% sliver
+    and the right one did not appear at all.
+
+IF THE CAMERA CHANGES, RECOMPUTE
+    All of the above comes from four numbers in Scene/Gameplay.unity: the
+    camera's field of view, its position, its pitch, and the backdrop plane's z.
+    Change any of them and this section is wrong.
+
+
+================================================================================
+2. VALUES - WHAT THE FLOOR HAS TO DO
+================================================================================
+
+The blocks the player shoots, measured from their albedo textures:
+
+    concrete   #70726E   luminance 113
+    brick      #AB5C3A   luminance 112
+    glass      #B8DBEB   luminance 214
+
+Brick and concrete are the SAME luminance. They separate by hue only, which is
+enough against each other and useless against a floor. So:
+
+    THE FLOOR MUST BE FAR FROM 112, AND THE FAR SIDE HAS TO BE LIGHTER.
+
+    beach, shipping and correct   sand 237, blocks 112, separation 125
+    space deck, first attempt     deck 103, blocks 112, separation  -9
+    space deck, corrected         deck 180, blocks 112, separation  68
+
+A dark floor is the natural instinct for a night or space scene and it is the
+one thing that cannot be done: grey concrete blocks dissolve into it. Keep the
+floor at 70 percent of white or above and let the SKY carry the darkness - the
+sky is above everything and nothing has to be read against it.
+
+Sky may be as dark as 12-25 percent. Mid-distance structures sit around 45. The
+floor is always the brightest thing in the frame.
+
+
+================================================================================
+3. THE TWO FILES, AND HOW THEY MEET
+================================================================================
+
+BACKGROUND SPRITE
+    2000 x 1670 pixels exactly, aspect 1.198.
+    Texture Type must be Sprite (2D and UI) or the picker will not find it.
+    Name must begin with BG.
+
+    LevelScenery rescales any sprite to cover the same world area, so a picture
+    of a different size still fills the frame - but a different ASPECT is
+    stretched. The beach painting of 2026-08-31 came in at 1.333 and would have
+    been pulled 11 percent taller.
+
+FLOOR TEXTURE
+    Square, tileable, name begins with Floor. It is a Texture, not a Material
+    and not a Sprite: the ground keeps one material for the whole game and only
+    the picture on it changes.
+
+    TILING travels with the picture, per level, set in the Mission Editor beside
+    the floor slot. The ground plane is forty metres across, so:
+
+        grass, sand, anything without straight lines      1
+        deck plating, tiles, anything with a grid         8
+
+    At 1 a deck plate is stretched to the width of a building. Grass hides that;
+    plating does not.
+
+    NO LANDMARKS. A tile can be mathematically seamless and still read as an
+    obvious grid if it contains one thing the eye can pick out. A single hazard
+    stripe did exactly that: the tile's edges matched perfectly and the floor
+    still looked like wallpaper, because the stripe repeated every 5 metres.
+    No stripes, arrows, numbers, hatches, drains or logos.
+
+    SEAM TEST - run it, do not eyeball it:
+        compare the average pixel difference between the left and right edge
+        columns against the average difference between neighbouring columns
+        inside the image. Under about 2x is seamless.
+            space deck plate   3.08 vs 2.82   ratio 1.1   good
+            beach sand         3.75 vs 1.75   ratio 2.1   marginal
+
+WHERE THEY MEET
+    The background paints its own ground in the lower part of the frame, and the
+    3D floor plane is drawn over it. Those two must be the same tone or the join
+    shows as a band. Beach: painted sand 237, tile 240 - invisible. Aim within
+    about 10 levels of luminance.
+
+
+================================================================================
+4. BRIEF TEMPLATE
+================================================================================
+
+Give the artist these, filled in, every time:
+
+    canvas            2000 x 1670 exactly
+    safe box          middle third of the width, 28-95 percent of the height
+    framing elements  at 28-40 and 60-72 percent of the width
+    horizon           at N percent of the image height
+    floor luminance   about X percent of white, and the tile it must match
+    sky luminance     about Y percent of white
+    forbidden         foreground objects, anything standing on the play area,
+                      cables across the frame, lens flare, god rays, vignette,
+                      text, characters
+
+And read back the three measurements from the delivered file before accepting
+it: canvas aspect, floor luminance, and where the main elements fall as a
+percentage of the width.
+
+
+================================================================================
+5. THE THREE FAILURES, SO THEY ARE NOT REPEATED
+================================================================================
+
+    TOO DARK        space background at luminance 28 against blocks at 112.
+                    Concrete vanished into the deck. Fixed by lifting the floor,
+                    not by lifting the sky.
+
+    TOO PALE        the correction overshot to 218 and read as a pastel sunrise.
+                    "Brighter" is a value instruction and needs a number, not an
+                    adjective.
+
+    WRONG PLACE     walls, then rocks, composed at the canvas edges and cropped
+                    away entirely. This is the one that keeps happening, and
+                    section 1 is the answer to it.
+
+================================================================================
+END
+================================================================================

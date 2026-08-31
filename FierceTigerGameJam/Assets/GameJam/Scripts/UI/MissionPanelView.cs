@@ -37,6 +37,20 @@ namespace GameJam.UI
             [Tooltip("One entry per card: a map id from the map config, or empty for a "
                      + "placeholder level that is not authored yet.")]
             public string[] slotMapIds;
+
+            [Tooltip("Scenery for every level in this mission. The Mission Editor copies these "
+                     + "onto each level, skipping any level whose scenery was set by hand.")]
+            public Sprite background;
+
+            public Texture2D floorTexture;
+
+            // No initialiser: this is a struct, and C# 9 - which is what this project
+            // compiles against - does not allow field initialisers in one. A mission that
+            // has never been touched therefore reads back 0, so every place that USES this
+            // treats 0 as "not set" and falls back to 1.
+            [Tooltip("Repeats of the floor picture across the ground plane. 1 for grass and "
+                     + "sand, 8 or so for deck plating. 0 counts as 1.")]
+            [Range(0f, 32f)] public float floorTiling;
         }
 
         [Tooltip("Where the choice is recorded, and the source of the map list.")]
@@ -86,6 +100,17 @@ namespace GameJam.UI
         [Tooltip("What that notice says.")]
         [SerializeField] private string missingMapNotice = "NO MAP YET!";
 
+        [Tooltip("The picture behind the whole screen. It changes to the mission being "
+                 + "looked at, so paging through the missions previews where each one is set.")]
+        [SerializeField] private Image missionBackdrop;
+
+        [Tooltip("Tint for a mission whose first level has been played.")]
+        [SerializeField] private Color visitedBackdropTint = Color.white;
+
+        [Tooltip("Tint for a mission not yet visited: the picture is shown but held back, so a "
+                 + "player can see there is somewhere new without being shown it plainly.")]
+        [SerializeField] private Color unvisitedBackdropTint = new Color(0.42f, 0.46f, 0.52f, 1f);
+
         [Tooltip("How grey a locked mission's cards are drawn.")]
         [Range(0f, 1f)]
         [SerializeField] private float lockedMissionAlpha = 0.5f;
@@ -118,8 +143,10 @@ namespace GameJam.UI
                 nextMissionButton.onClick.AddListener(SelectNextMission);
             }
 
-            // Always opens on mission 1, the campaign in progress. The rest is one tap away.
-            missionIndex = 0;
+            // Opens where the player left off, not at the beginning. Coming back to mission 1
+            // every time makes the screen feel like it has forgotten them, and by mission 3 it
+            // is two taps of housekeeping before every level.
+            missionIndex = FurthestMission();
 
             // Rebuilt rather than refreshed: the slots may have been re-authored, and cards do
             // not survive an assembly reload.
@@ -232,6 +259,8 @@ namespace GameJam.UI
                 missionTitle.text = $"MISSION {missionIndex + 1}";
             }
 
+            ApplyBackdrop(config, missionIndex);
+
             if (previousMissionButton != null)
             {
                 previousMissionButton.gameObject.SetActive(missionIndex > 0);
@@ -241,6 +270,185 @@ namespace GameJam.UI
             {
                 nextMissionButton.gameObject.SetActive(missionIndex < MissionCount() - 1);
             }
+        }
+
+        /// <summary>
+        /// Puts the mission's own picture behind the screen, dimmed until the player has been
+        /// there. Dimming rather than hiding: a mission nobody has opened should still read as a
+        /// place that exists, which is most of the reason to show a picture at all.
+        ///
+        /// "Been there" means the first level has been PLAYED, not passed. A player who tried it
+        /// and lost has seen the place, and hiding it again afterwards would read as the game
+        /// taking something away.
+        /// </summary>
+        private void ApplyBackdrop(MapConfig config, int missionIndex)
+        {
+            if (missionBackdrop == null)
+            {
+                missionBackdrop = FindBackdrop();
+            }
+
+            if (missionBackdrop == null || missions == null
+                || missionIndex < 0 || missionIndex >= missions.Length)
+            {
+                return;
+            }
+
+            Sprite picture = missions[missionIndex].background;
+            if (picture != null)
+            {
+                missionBackdrop.sprite = picture;
+            }
+
+            missionBackdrop.color = HasVisited(config, missionIndex)
+                ? visitedBackdropTint
+                : unvisitedBackdropTint;
+        }
+
+        /// <summary>
+        /// The screen-wide picture, when nobody has assigned one.
+        ///
+        /// It lives on the main menu prefab and this panel is a different prefab, so the two
+        /// cannot be wired to each other in the project - only in a scene where both happen to be
+        /// instances. Rather than depend on someone remembering that, the panel looks up its own
+        /// canvas for an Image called "Background". Assign the field to override this; the search
+        /// runs once and only while the field is empty.
+        /// </summary>
+        private Image FindBackdrop()
+        {
+            Canvas canvas = GetComponentInParent<Canvas>();
+            Transform root = canvas != null ? canvas.rootCanvas.transform : transform.root;
+            foreach (Image image in root.GetComponentsInChildren<Image>(true))
+            {
+                if (image.name == "Background")
+                {
+                    return image;
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// The mission to open on: the last one the player has actually been into.
+        ///
+        /// Deliberately the last VISITED mission rather than the last unlocked one. Finishing a
+        /// mission unlocks the next, and opening straight onto a mission the player has never
+        /// seen skips past the screen that just congratulated them - they should arrive there by
+        /// choosing to.
+        /// </summary>
+        private int FurthestMission()
+        {
+            MapConfig config = mapSelection != null ? mapSelection.Config : null;
+            if (config == null)
+            {
+                return 0;
+            }
+
+            int furthest = 0;
+            for (int m = 0; m < MissionCount(); m++)
+            {
+                if (!IsMissionLocked(m) && HasVisited(config, m))
+                {
+                    furthest = m;
+                }
+            }
+
+            return furthest;
+        }
+
+        /// <summary>True once the first real level of this mission has been played at all.</summary>
+        private bool HasVisited(MapConfig config, int missionIndex)
+        {
+            string[] slots = ResolveSlots(missionIndex, config);
+            for (int i = 0; i < slots.Length; i++)
+            {
+                if (string.IsNullOrEmpty(slots[i]) || !config.TryGet(slots[i], out _))
+                {
+                    continue;
+                }
+
+                // The first real level decides it, and a record exists the moment a run on it
+                // finishes - won or lost.
+                return UserData.Maps.TryGet(slots[i], out _);
+            }
+
+            return false;
+        }
+
+        /// <summary>How many missions are authored. Public so the scene can ask.</summary>
+        public int MissionTotal => MissionCount();
+
+        /// <summary>
+        /// Which mission a map belongs to, or -1 if no mission lists it. The scene needs this to
+        /// dress the playfield per mission: a map on its own knows its own scenery but not which
+        /// mission it sits in, and the mission is the unit people think in.
+        /// </summary>
+        public int MissionOf(string mapId, MapConfig config)
+        {
+            if (string.IsNullOrEmpty(mapId) || config == null)
+            {
+                return -1;
+            }
+
+            for (int m = 0; m < MissionCount(); m++)
+            {
+                string[] slots = ResolveSlots(m, config);
+                for (int i = 0; i < slots.Length; i++)
+                {
+                    if (slots[i] == mapId)
+                    {
+                        return m;
+                    }
+                }
+            }
+
+            return -1;
+        }
+
+        /// <summary>
+        /// Which slot inside its mission a map sits in, zero-based, or -1.
+        ///
+        /// Level 1 of a mission is slot 0. Needed so a backdrop can be placed for one level
+        /// rather than for the whole mission.
+        /// </summary>
+        public int SlotOf(string mapId, MapConfig config)
+        {
+            if (string.IsNullOrEmpty(mapId) || config == null)
+            {
+                return -1;
+            }
+
+            for (int m = 0; m < MissionCount(); m++)
+            {
+                string[] slots = ResolveSlots(m, config);
+                for (int i = 0; i < slots.Length; i++)
+                {
+                    if (slots[i] == mapId)
+                    {
+                        return i;
+                    }
+                }
+            }
+
+            return -1;
+        }
+
+        /// <summary>The scenery authored for one mission, zero-based.</summary>
+        public bool TryGetMissionScenery(int mission, out Sprite background, out Texture2D floor, out float tiling)
+        {
+            background = null;
+            floor = null;
+            tiling = 1f;
+            if (missions == null || mission < 0 || mission >= missions.Length)
+            {
+                return false;
+            }
+
+            background = missions[mission].background;
+            floor = missions[mission].floorTexture;
+            tiling = missions[mission].floorTiling <= 0f ? 1f : missions[mission].floorTiling;
+            return true;
         }
 
         private int MissionCount()

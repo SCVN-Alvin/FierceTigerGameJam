@@ -33,6 +33,33 @@ namespace GameJam.EditorTools
         private Vector2 scroll;
         private readonly Dictionary<string, MapFacts> factsCache = new Dictionary<string, MapFacts>();
 
+        /// <summary>
+        /// Everything the window reads from the asset database, held between repaints.
+        ///
+        /// This window redraws on every mouse move, so anything it looks up while drawing is
+        /// looked up dozens of times a second. Finding a level's JSON meant loading and parsing
+        /// every file in the maps folder, once per row - twenty rows over twenty files, hundreds
+        /// of asset loads a frame, which is what made the window crawl. All of it is now built
+        /// once and thrown away when the project changes.
+        /// </summary>
+        private Dictionary<string, TextAsset> jsonById;
+        private Dictionary<string, int> rowById;
+        private readonly Dictionary<string, UnityEngine.Object[]> sceneryChoices =
+            new Dictionary<string, UnityEngine.Object[]>();
+
+        /// <summary>MapConfig read through one SerializedObject per repaint, not one per row.</summary>
+        private SerializedObject configObject;
+        private SerializedProperty configRows;
+
+        private const string BackgroundPrefix = "BG";
+
+        /// <summary>
+        /// The floor slot takes the PNG itself, not a material. The ground plane keeps one
+        /// material for the whole game and only the picture on it changes per level, so dressing
+        /// a beach is dropping in a texture rather than authoring a material asset for it.
+        /// </summary>
+        private const string FloorPrefix = "Floor";
+
         /// <summary>What the JSON itself says, read straight from the file so the window cannot
         /// disagree with what the game will build.</summary>
         private struct MapFacts
@@ -48,12 +75,62 @@ namespace GameJam.EditorTools
         [MenuItem("Tools/Smashdown/Mission Editor")]
         public static void Open()
         {
-            GetWindow<MissionEditorWindow>("Missions").minSize = new Vector2(760, 420);
+            GetWindow<MissionEditorWindow>("Missions").minSize = new Vector2(1080, 460);
         }
 
         private void OnEnable()
         {
             AutoFind();
+        }
+
+        /// <summary>Anything imported, moved or deleted invalidates what the window remembers.</summary>
+        private void OnProjectChange()
+        {
+            InvalidateCaches();
+            Repaint();
+        }
+
+        private void InvalidateCaches()
+        {
+            factsCache.Clear();
+            sceneryChoices.Clear();
+            jsonById = null;
+            rowById = null;
+        }
+
+        /// <summary>id -> the JSON file that declares it, built in one pass over the maps folder.</summary>
+        private void BuildJsonIndex()
+        {
+            jsonById = new Dictionary<string, TextAsset>(StringComparer.Ordinal);
+            foreach (string guid in AssetDatabase.FindAssets("t:TextAsset", new[] { MapsFolder }))
+            {
+                string path = AssetDatabase.GUIDToAssetPath(guid);
+                if (!path.EndsWith(".json", StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                TextAsset asset = AssetDatabase.LoadAssetAtPath<TextAsset>(path);
+                string id = asset != null ? ReadId(asset.text) : null;
+                if (!string.IsNullOrEmpty(id))
+                {
+                    jsonById[id] = asset;
+                }
+            }
+        }
+
+        /// <summary>id -> its row in MapConfig, so a row lookup is not a scan.</summary>
+        private void BuildRowIndex()
+        {
+            rowById = new Dictionary<string, int>(StringComparer.Ordinal);
+            for (int i = 0; i < configRows.arraySize; i++)
+            {
+                string id = configRows.GetArrayElementAtIndex(i).FindPropertyRelative("id").stringValue;
+                if (!string.IsNullOrEmpty(id))
+                {
+                    rowById[id] = i;
+                }
+            }
         }
 
         private void AutoFind()
@@ -101,6 +178,20 @@ namespace GameJam.EditorTools
             SerializedObject viewObject = new SerializedObject(missionView);
             SerializedProperty missions = viewObject.FindProperty("missions");
 
+            // Read-only for the whole pass. Every write goes through its own SerializedObject and
+            // then drops the caches, so nothing drawn this frame can overwrite it.
+            configObject = new SerializedObject(mapConfig);
+            configRows = configObject.FindProperty("maps");
+            if (jsonById == null)
+            {
+                BuildJsonIndex();
+            }
+
+            if (rowById == null)
+            {
+                BuildRowIndex();
+            }
+
             scroll = EditorGUILayout.BeginScrollView(scroll);
             for (int m = 0; m < missions.arraySize; m++)
             {
@@ -135,7 +226,7 @@ namespace GameJam.EditorTools
                 missionView = (MissionPanelView)EditorGUILayout.ObjectField(missionView, typeof(MissionPanelView), false);
                 if (GUILayout.Button("Refresh", GUILayout.Width(70)))
                 {
-                    factsCache.Clear();
+                    InvalidateCaches();
                     AutoFind();
                 }
             }
@@ -154,8 +245,12 @@ namespace GameJam.EditorTools
                 using (new EditorGUILayout.HorizontalScope())
                 {
                     EditorGUILayout.LabelField($"MISSION {missionIndex + 1}", EditorStyles.boldLabel, GUILayout.Width(110));
-                    locked.boolValue = EditorGUILayout.ToggleLeft(
-                        locked.boolValue ? "Locked" : "Open", locked.boolValue, GUILayout.Width(80));
+                    // The toggle is "Open", not "locked". Showing the locked flag under a
+                    // label that reads Open means an unticked box sits beside the word
+                    // Open, and ticking it - the natural thing to do to open a mission -
+                    // locks it instead. That is how Mission 3 ended up shut.
+                    locked.boolValue = !EditorGUILayout.ToggleLeft(
+                        "Open", !locked.boolValue, GUILayout.Width(80));
                     GUILayout.FlexibleSpace();
                     EditorGUILayout.LabelField($"{ids.arraySize} levels", EditorStyles.miniLabel, GUILayout.Width(70));
                     if (GUILayout.Button("Remove mission", GUILayout.Width(120)))
@@ -163,6 +258,21 @@ namespace GameJam.EditorTools
                         missions.DeleteArrayElementAtIndex(missionIndex);
                         return;
                     }
+                }
+
+                // Scenery belongs to the mission and only to the mission. Levels used to carry
+                // their own copy with an "overridden" flag to protect it, which was three places
+                // to set one thing and two of them silently drifting.
+                SerializedProperty background = mission.FindPropertyRelative("background");
+                SerializedProperty floor = mission.FindPropertyRelative("floorTexture");
+                using (new EditorGUILayout.HorizontalScope())
+                {
+                    EditorGUILayout.LabelField("Scenery", GUILayout.Width(70));
+
+                    SceneryField(background, typeof(Sprite), BackgroundPrefix, false, 210f);
+                    SceneryField(floor, typeof(Texture2D), FloorPrefix, false, 180f);
+                    TilingField(mission.FindPropertyRelative("floorTiling"), missionView);
+
                 }
 
                 for (int slot = 0; slot < ids.arraySize; slot++)
@@ -207,10 +317,10 @@ namespace GameJam.EditorTools
                 if (next != current)
                 {
                     idProperty.stringValue = next == null ? string.Empty : ApplyJson(next);
-                    factsCache.Clear();
+                    InvalidateCaches();
                 }
 
-                DrawFacts(id, current);
+                    DrawFacts(id, current);
 
                 if (GUILayout.Button("↑", GUILayout.Width(24)) && slot > 0)
                 {
@@ -227,6 +337,211 @@ namespace GameJam.EditorTools
                     ids.DeleteArrayElementAtIndex(slot);
                 }
             }
+        }
+
+        /// <summary>
+        /// One scenery slot. Clicking it drops a list of the handful of assets whose name starts
+        /// with the slot's prefix, rather than opening Unity's object picker on every sprite and
+        /// texture in the project.
+        ///
+        /// The list is ours rather than Unity's on purpose: the picker is filtered by a search
+        /// string, which is a suggestion the picker is free to ignore - and did, offering
+        /// unrelated assets. A menu built from the assets we found can only offer those.
+        ///
+        /// The name prefix is a convention, not a guarantee, so anything already assigned that
+        /// does not match is shown in red rather than silently replaced.
+        /// </summary>
+        private void SceneryField(SerializedProperty property, Type type, string prefix, bool onMapConfig, float width)
+        {
+            UnityEngine.Object current = property.objectReferenceValue;
+            bool offConvention = current != null
+                && !current.name.StartsWith(prefix, StringComparison.OrdinalIgnoreCase);
+
+            Color previous = GUI.color;
+            if (offConvention)
+            {
+                GUI.color = new Color(1f, 0.7f, 0.65f);
+            }
+
+            string label = current != null ? current.name : $"{prefix}\u2026  (none)";
+            if (GUILayout.Button(label, EditorStyles.popup, GUILayout.Width(width)))
+            {
+                ShowSceneryMenu(property, type, prefix, onMapConfig);
+            }
+
+            GUI.color = previous;
+
+            if (current != null && GUILayout.Button("\u00d7", EditorStyles.miniButton, GUILayout.Width(20)))
+            {
+                AssignScenery(onMapConfig ? (UnityEngine.Object)mapConfig : missionView,
+                    property.propertyPath, null, type, onMapConfig);
+            }
+        }
+
+        /// <summary>
+        /// Turns a plain texture into a sprite, in place, so a PNG can be chosen as a
+        /// background without anyone remembering to change its import settings first.
+        /// Unity gives a PNG the Default texture type, and a Default texture contains no
+        /// sprite at all - the field would silently stay empty.
+        /// </summary>
+        private static UnityEngine.Object AsSprite(UnityEngine.Object picked)
+        {
+            if (picked == null || picked is Sprite)
+            {
+                return picked;
+            }
+
+            string assetPath = AssetDatabase.GetAssetPath(picked);
+            if (AssetImporter.GetAtPath(assetPath) is TextureImporter importer
+                && importer.textureType != TextureImporterType.Sprite)
+            {
+                importer.textureType = TextureImporterType.Sprite;
+                importer.spriteImportMode = SpriteImportMode.Single;
+                importer.alphaIsTransparency = true;
+                importer.SaveAndReimport();
+                Debug.Log($"Mission Editor: reimported \"{Path.GetFileName(assetPath)}\" as a Sprite "
+                          + "so it can be used as a background.");
+            }
+
+            return AssetDatabase.LoadAssetAtPath<Sprite>(assetPath);
+        }
+
+        /// <summary>
+        /// How many times the floor picture repeats across the ground plane. The plane is forty
+        /// metres across, so one repeat stretches a deck plate to the width of a building. Grass
+        /// hides that; anything with straight lines does not.
+        /// </summary>
+        private void TilingField(SerializedProperty tiling, UnityEngine.Object owner)
+        {
+            if (tiling == null)
+            {
+                return;
+            }
+
+            EditorGUI.BeginChangeCheck();
+            float next = EditorGUILayout.FloatField(tiling.floatValue, GUILayout.Width(38));
+            if (EditorGUI.EndChangeCheck())
+            {
+                SerializedObject serialized = new SerializedObject(owner);
+                SerializedProperty target = serialized.FindProperty(tiling.propertyPath);
+                if (target != null)
+                {
+                    target.floatValue = Mathf.Clamp(next, 0.25f, 32f);
+                    serialized.ApplyModifiedProperties();
+                    EditorUtility.SetDirty(owner);
+                    InvalidateCaches();
+                }
+            }
+        }
+
+        /// <summary>The assets whose name starts with the prefix, found once and kept.</summary>
+        private UnityEngine.Object[] SceneryChoices(Type type, string prefix)
+        {
+            string key = $"{prefix}:{type.Name}";
+            if (sceneryChoices.TryGetValue(key, out UnityEngine.Object[] cached))
+            {
+                return cached;
+            }
+
+            // For the background slot the search is for TEXTURES, not sprites. A PNG
+            // dropped into the project imports as a plain texture, has no sprite in it,
+            // and so never appears in a t:Sprite search - which has now cost three
+            // rounds of "why is my background missing". They are listed here and
+            // converted on selection instead.
+            List<UnityEngine.Object> found = new List<UnityEngine.Object>();
+            HashSet<string> seen = new HashSet<string>();
+            string searchType = type == typeof(Sprite) ? "Texture2D" : type.Name;
+            foreach (string guid in AssetDatabase.FindAssets($"t:{searchType}"))
+            {
+                string path = AssetDatabase.GUIDToAssetPath(guid);
+                if (!Path.GetFileNameWithoutExtension(path).StartsWith(prefix, StringComparison.OrdinalIgnoreCase)
+                    || !seen.Add(path))
+                {
+                    continue;
+                }
+
+                UnityEngine.Object asset = AssetDatabase.LoadAssetAtPath(path, type)
+                                           ?? AssetDatabase.LoadAssetAtPath<Texture2D>(path);
+                if (asset != null)
+                {
+                    found.Add(asset);
+                }
+            }
+
+            found.Sort((a, b) => string.CompareOrdinal(a.name, b.name));
+            cached = found.ToArray();
+            sceneryChoices[key] = cached;
+            return cached;
+        }
+
+        private void ShowSceneryMenu(SerializedProperty property, Type type, string prefix, bool onMapConfig)
+        {
+            UnityEngine.Object owner = onMapConfig ? (UnityEngine.Object)mapConfig : missionView;
+            string path = property.propertyPath;
+            UnityEngine.Object current = property.objectReferenceValue;
+
+            GenericMenu menu = new GenericMenu();
+            menu.AddItem(new GUIContent("None"), current == null, () => AssignScenery(owner, path, null, type, onMapConfig));
+            menu.AddSeparator(string.Empty);
+
+            UnityEngine.Object[] choices = SceneryChoices(type, prefix);
+            if (choices.Length == 0)
+            {
+                menu.AddDisabledItem(new GUIContent($"No {type.Name} named {prefix}\u2026 in the project"));
+            }
+
+            foreach (UnityEngine.Object choice in choices)
+            {
+                UnityEngine.Object picked = choice;
+                menu.AddItem(new GUIContent(picked.name), picked == current,
+                    () => AssignScenery(owner, path, picked, type, onMapConfig));
+            }
+
+            menu.ShowAsContext();
+        }
+
+        /// <summary>
+        /// Writes one scenery slot. The menu answers after the window has finished drawing, so
+        /// this opens its own SerializedObject rather than writing through one the repaint owns.
+        /// </summary>
+        private void AssignScenery(UnityEngine.Object owner, string path, UnityEngine.Object value, Type expected, bool onMapConfig)
+        {
+            if (expected == typeof(Sprite))
+            {
+                value = AsSprite(value);
+            }
+
+            SerializedObject serialized = new SerializedObject(owner);
+            SerializedProperty target = serialized.FindProperty(path);
+            if (target == null)
+            {
+                return;
+            }
+
+            target.objectReferenceValue = value;
+
+            serialized.ApplyModifiedProperties();
+            EditorUtility.SetDirty(owner);
+            InvalidateCaches();
+            Repaint();
+        }
+
+        /// <summary>A row of the MapConfig this repaint opened. Read-only.</summary>
+        private bool TryFindMapRow(string id, out SerializedProperty row)
+        {
+            row = null;
+            if (rowById == null || configRows == null || !rowById.TryGetValue(id, out int index))
+            {
+                return false;
+            }
+
+            if (index >= configRows.arraySize)
+            {
+                return false;
+            }
+
+            row = configRows.GetArrayElementAtIndex(index);
+            return true;
         }
 
         private void DrawFacts(string id, TextAsset json)
@@ -392,29 +707,19 @@ namespace GameJam.EditorTools
             return 0;
         }
 
-        private static TextAsset FindJsonFor(string id)
+        private TextAsset FindJsonFor(string id)
         {
             if (string.IsNullOrEmpty(id))
             {
                 return null;
             }
 
-            foreach (string guid in AssetDatabase.FindAssets("t:TextAsset", new[] { MapsFolder }))
+            if (jsonById == null)
             {
-                string path = AssetDatabase.GUIDToAssetPath(guid);
-                if (!path.EndsWith(".json", StringComparison.OrdinalIgnoreCase))
-                {
-                    continue;
-                }
-
-                TextAsset asset = AssetDatabase.LoadAssetAtPath<TextAsset>(path);
-                if (asset != null && ReadId(asset.text) == id)
-                {
-                    return asset;
-                }
+                BuildJsonIndex();
             }
 
-            return null;
+            return jsonById.TryGetValue(id, out TextAsset asset) ? asset : null;
         }
 
         private MapFacts Facts(TextAsset json)

@@ -1,0 +1,709 @@
+================================================================================
+SMASH - MISSION 3 - SPACEPORT
+Production brief: one image prompt and one JSON prompt per level
+Project: Demolition Contracts (FierceTigerGameJam)     Revision 1 - 2026-08-31
+================================================================================
+
+WHO THIS IS FOR
+    Two different AIs, and they must not do each other's job.
+
+    THE IMAGE AI reads section 2 and its own prompt in section 5. It produces
+    ONE picture per level. It does not produce JSON, wall groupings, entry
+    counts or manifests - those are discarded on arrival.
+
+    THE JSON AI reads section 3 and its own prompt in section 5. It produces
+    ONE map file per level. It builds from the picture and the prompt together;
+    where they disagree, the prompt wins, because the prompt is measured against
+    the engine and the picture is not.
+
+WHY THE SPLIT, STATED PLAINLY
+    In Mission 2 the same AI did both and delivered nine maps that passed every
+    automated check and were still wrong: huts twice as tall as they were wide, a
+    lighthouse gallery that flared from six cells to twenty in a single row, a
+    fort you could see straight through. None of that is visible to a validator.
+    All of it is obvious in a render. Meanwhile its concept images were good.
+    So: draw with the eye, build with the ruler.
+
+WHAT IS ALREADY SETTLED AND MUST NOT BE RENEGOTIATED
+    Theme, level order, grids and collapse stories come from
+    SMASH_Mission2_3_Level_Blueprint section 4 and are reproduced here.
+    Coating rules come from SMASH_WallCoating_Spec.
+    Everything in sections 1 and 3 was read out of the engine source and the
+    shipped config on 2026-08-31. It is not opinion and not up for discussion.
+
+
+================================================================================
+1. THE MISSION IN ONE PARAGRAPH
+================================================================================
+
+A planetary spaceport: landed ships, domes, gantries, station modules on
+cradles. The engine has gravity and nothing may float, so every "space"
+structure is GROUNDED - landed, docked, or standing on pedestal cradles. That
+constraint is the mission's gameplay. Almost everything stands on legs, and legs
+are for cutting.
+
+Palette carries the theme with the same three materials as every other mission:
+
+    CONCRETE grey   hull plate, armour, cradle stands, launch pads
+    GLASS blue      domes, viewports, cockpit bands, solar panels
+    BRICK sandy     painted cargo modules, scaffolds, crates
+
+DIFFICULTY POSITION
+    Mission 3 is the last mission and the hardest. Both brick AND concrete are
+    coated from level 1 - no ramp-in. The player is expected to arrive with
+    upgraded ammunition. This has a hard consequence the JSON AI must
+    understand, spelled out in 3.6: concrete takes ZERO damage from Rock at
+    either level, so any concrete in a level gates that level to the Cannon.
+
+
+================================================================================
+2. RULES FOR THE IMAGE AI
+================================================================================
+
+2.1  ONE CUBE IN YOUR IMAGE = ONE CELL OF THE GRID
+    Everything is built from cubes 0.25 m on a side. There are no smaller
+    pieces, ever. Read the grid line for your level - "14 wide x 8 tall x 7
+    deep" means exactly 14 cubes across, 8 up, 7 back. Count the cubes along
+    the top edge of your drawing. If the count does not match, redraw. Do not
+    draw a hull as a smooth surface, a dome as a curve, or a rocket as a cone:
+    draw them as stepped stacks of cubes, because that is what will be built.
+
+2.2  EVERYTHING RAISED STANDS ON A VISIBLE LEG
+    A rocket on legs, a shuttle on landing gear, a station core on cradles, a
+    control tower on a stem - draw the support, and draw the mass RESTING on
+    its top, not hovering a cell above it. Anything that appears to hang off a
+    side with nothing underneath cannot be built: in the engine a body held only
+    from the side is never released, so it hangs in the air forever and the
+    level cannot be finished. Cantilevers - solar wings, umbilical arms, stub
+    wings - are allowed but must overhang by ONE cell only, or carry a visible
+    prop.
+
+2.3  HOLLOW, NOT SOLID
+    These are shells one cell thick with real openings. Draw doors, viewports
+    and hangar mouths as holes you can see through, not as painted rectangles.
+
+2.4  OPENINGS ARE NARROW, OR A WHOLE STOREY
+    A two-cell hole in a four-cell face removes everything holding the wall
+    above it. The two shapes that work are a tall narrow slit, and one full
+    band of glass all the way round. Nothing in between.
+
+2.5  PROPORTION - THE FAULT THAT KILLED FOUR MISSION 2 MAPS
+    For a BUILDING (hangar, observatory drum, lab annex, biodome, station core):
+    height must not exceed 1.5x the larger of width and depth.
+    For a MAST (gantry, rocket, control tower stem): height may be up to 3x the
+    footprint, but NO ROW MAY BE MORE THAN 6 CELLS WIDER THAN THE ROW BELOW IT,
+    and no cell may sit more than one cell outside the footprint beneath it.
+    Taper, do not flare. A head on a stalk is the single most common failure.
+
+2.6  DENSITY
+    A shell meant to read as solid must be at least 95 per cent of its
+    perimeter. A shell meant to read as open needs ONE stated opening, not
+    scattered gaps. "Some cells missing here and there" always reads as damage.
+
+2.7  ONE AXIS OF SYMMETRY AT MOST
+    Offset the door, the annex, the antenna. Symmetric on both axes reads as a
+    box whatever else it does.
+
+2.8  DISTINCT SILHOUETTES
+    Nine buildings sharing one palette must differ in OUTLINE: a low barrel
+    hangar, a ladder-like open frame, a fat legged rocket, a drum with a dome,
+    two domes and a tube, a mushroom on a stem, a long low ship, a cylinder on
+    cradles, and the whole port together. If two read the same, one is wrong.
+
+2.9  PRESENTATION
+    Isometric three-quarter, slightly from above, THE SAME ANGLE for all nine.
+    Plain white or very light grey background. No ground plane, no sky, no
+    scenery, no stars - the mission gets its space from the background art in
+    the game, not from your drawing. The building alone.
+
+2.10 WHAT TO SEND BACK, PER LEVEL
+    The image, plus three lines:
+        dimensions used:   "14 wide x 8 tall x 7 deep"
+        visible support:   "four landing legs, fuselage resting on their tops"
+        anything you were unsure fits the grid
+    If a building will not fit its grid, SAY SO. The grid can be argued about;
+    the cell size cannot.
+
+
+================================================================================
+3. RULES FOR THE JSON AI
+================================================================================
+
+These were read out of the engine source, not inferred. Breaking any of them
+produces a map that validates and then misbehaves in play.
+
+3.1  FILE SHAPE
+    {
+      "schemaVersion": 1,
+      "id": "map_m3_00N_short_name",
+      "grid": { "width": W, "height": H, "cellSize": 0.25, "layerDepth": 0.25 },
+      "layers": [ { "level": 0, "blocks": [ ... ] }, ... ]
+    }
+    A layer is a DEPTH slice; "level" is its z. Inside a block, position.x runs
+    across the width and position.y is height above the ground. Block ids follow
+    "f{z}_c{x}_r{y}". cellSize is SPACING, not scale - never change it.
+
+3.2  THE ONLY FOUR BLOCK TYPES
+        brick_1x1      3 HP    1.2 kg
+        brick_2x1      5 HP    2.4 kg   spans X; rotation 90 spans Y instead.
+                                        IT CAN NEVER SPAN Z. If you need two
+                                        cells of depth, that is two entries.
+        glass_1x1      1 HP    0.6 kg
+        concrete_1x1   6 HP    2.0 kg
+    rotation must be 0, 90, 180 or 270. Anything else is rejected outright.
+
+3.3  WALLS - THE RULE THAT BITES
+    A wall_id groups blocks into ONE rigidbody. Its hit points are the SUM of
+    its members' hit points. When it dies it bursts into its member blocks.
+
+    A WALL IS COUNTED IN ENTRIES, NOT CELLS. The engine builds any wall with
+    fewer than TWO ENTRIES as a plain loose block and logs a warning. So a wall
+    of two cells written as a single brick_2x1 is not a wall at all - it
+    silently becomes a loose block. Write those two cells as two brick_1x1.
+
+    A wall must also be CONNECTED. The engine splits a disconnected wall_id into
+    connected parts, and any part with fewer than two entries becomes loose. Do
+    not group four corner legs under one wall_id: that is one body whose
+    collider spans the whole footprint, i.e. a solid slab where you drew air.
+
+    Size: hard bounds 2-30 cells, comfortable 4-24. One wall per face per band
+    is the shape that works - see how LV8 of Mission 2 is grouped.
+
+    A wall may not span two separate structures. Prefix every wall_id with its
+    structure ("shuttle_leg_fl", "gantry_frame_lo", "core_cradle_left") and
+    never let a prefix bridge a gap.
+
+3.4  SUPPORT - THE FAULT THAT MAKES A LEVEL UNFINISHABLE
+    The cascade releases a body when nothing overlaps it from below in BOTH x
+    and z. A body held only from the SIDE is never released: it hangs in the air
+    for the rest of the run and 100 per cent clear becomes impossible.
+    Therefore: every body must have something under part of its own footprint,
+    and no body may sit more than one cell outside the footprint beneath it.
+    Cantilevers get a prop on the ground every two or three cells of their run.
+
+3.5  COATING
+    An armoured wall is the default. Absence of a flag means armoured; write
+        "wall": { "wall_id": "x", "bare": true }
+    only to opt a wall OUT of its coating. An armoured wall takes the bullet's
+    wallDamage; a bare one takes the much larger blockDamage.
+    MISSION 3: everything is coated, brick and concrete alike, from level 1.
+    Use "bare" only where a specific level note below says so.
+
+3.6  THE DAMAGE TABLE - READ THIS BEFORE CHOOSING A MATERIAL
+                        glass          brick          concrete
+                     block / wall   block / wall    block / wall
+        Rock   Lv1       5 / 5          3 / 1           0 / 0
+        Rock   Lv2       6 / 6          4 / 3           0 / 0
+        Cannon Lv1       8 / 8          6 / 5           4 / 2
+        Cannon Lv2      10 / 10         8 / 7           7 / 5
+
+    CONCRETE IS IMMUNE TO ROCK. Not slow - zero. A single concrete wall in the
+    load path gates the whole level to the Cannon. That is intended for Mission
+    3, but it means concrete must never be the ONLY way to reach 50 per cent.
+    GLASS HAS NO COATING ADVANTAGE - its block and wall numbers are identical at
+    every level, which is why glass is always the cheap target.
+
+3.7  WHAT WINNING MEANS
+    Clear per cent = destroyed blocks / blocks actually placed. Pass at
+    requiredClearPercent (0.5 across the campaign today); full clear at 1.0.
+    A block breaks when it lands at 1.5 m/s or faster, so TOPPLING CLEARS MASS -
+    a structure that falls from three rows up shatters on the pad. This is why
+    the mission is built on legs: the player spends shots on supports, not on
+    grinding walls.
+
+    DO THE SHOT ARITHMETIC BEFORE YOU DELIVER. Worked example, Mission 2 LV1:
+    twelve legs of two brick cells = 6 HP each; Cannon Lv1 does 5 wall damage,
+    so two shots a leg; two legs felled per hut, three huts, twelve shots - and
+    the level carries twelve ammunition. State this arithmetic in your delivery
+    note for every level.
+
+3.8  BUDGETS
+    Entries: follow the per-level target below, plus or minus 15 per cent.
+    Loose blocks (no wall_id): 150 maximum on the opening frame, and prefer far
+    fewer - they are individual rigidbodies.
+    Grid: 16 wide, 14 tall, 12 layers deep are the ceilings. Portrait screen:
+    anything wider than 16 renders small.
+    Centring is automatic. The engine now centres a map on the cells that are
+    actually filled, not on the declared grid width, so you do NOT need to pad a
+    grid symmetrically. Declare the grid that fits your building.
+
+3.9  SELF-CHECK BEFORE DELIVERING - ALL SIX, EVERY LEVEL
+    [ ] no wall under 2 entries, none over 30 cells, none disconnected
+    [ ] no body more than one cell outside the footprint below it
+    [ ] every structure's prefix is its own; no wall bridges a gap
+    [ ] proportion rule of 2.5 holds for every named structure
+    [ ] shot arithmetic reaches 50 per cent inside the ammunition, with the
+        bullet the level assumes
+    [ ] RENDER THE MAP AND LOOK AT IT. Four of Mission 2's nine maps passed
+        every automated check and were still wrong. Rendering catches it in one
+        glance.
+
+
+================================================================================
+4. THE STANDARD TO MATCH
+================================================================================
+
+Approved and shipped, use these as the reference for density and grouping:
+
+    Mission 2 LV2  lifeguard tower    102 entries   15 walls   8x11x6
+        Four one-cell legs, deck overhanging them by a cell, cabin inset on the
+        deck, roof overhanging the cabin again, a raised box on the roof, an
+        offset stair. Two clean overhangs stacked. This is the house style.
+
+    Mission 2 LV8  sea fort           338 entries   28 walls   12x10x8
+        How to group a shell: one wall per face per band. Front and back split
+        in half because a full face across three rows is 36 cells, past the size
+        where a wall still behaves like one slab. Six walls per band, twelve in
+        all, plus four for the glass slit and four for the plinth.
+
+    Mission 2 LV1  beach hut row      150 entries   21 walls   16x6x3
+        How to build legs: two cells each, own wall, four per hut, floor resting
+        on their tops. One cell would be demoted to a loose block and could not
+        be cut as a wall.
+
+    Mission 2 LV9  boardwalk resort   259 entries   43 walls   16x9x10
+        How to make several structures share a map: strict prefixes, clear sand
+        between them, and exactly one deliberate interaction - the pier deck
+        reaches one cell over the bar's roof so felling one lands on the other.
+
+
+================================================================================
+5. THE NINE LEVELS
+================================================================================
+
+Format per level: the fixed facts, then the two prompts. The image prompt is
+written to be pasted whole. The JSON prompt is written to be followed literally.
+
+--------------------------------------------------------------------------------
+LV1  CARGO HANGAR                      grid 14 x 8 x 7   ~140 entries   ammo 14
+--------------------------------------------------------------------------------
+MATERIALS  brick shell, brick crates. No concrete, no glass.
+COATING    brick coated. Crates bare - see the JSON prompt.
+LESSON     the arch IS the building. Chip a haunch and the roof ring drops into
+           the crate stack.
+
+IMAGE PROMPT
+    "Isometric voxel spaceport cargo hangar built from chunky sandy-brick cubes,
+    drawn three-quarter view slightly from above on a plain white background.
+    A low wide barrel-profile shed, 14 cubes across, 8 cubes tall, 7 cubes deep,
+    wider than it is tall. Its roof is a STEPPED arch - a staircase of cubes
+    rising from each side wall to a flat crown three cubes wide, never a smooth
+    curve. The front face is almost entirely one huge rectangular door opening
+    you can see straight through, four cubes wide and four cubes tall, offset to
+    the left of centre rather than centred, with a narrow column of brick left
+    standing on each side. Inside, visible through the opening, a loose stack of
+    small brick crate cubes piled two and three high, untidy, not aligned to the
+    walls. The side walls are one cube thick with one tall narrow slit window
+    each. Nothing floats: the arch springs from the tops of the side walls and
+    every crate rests on the floor or on another crate. Cube blocks with visible
+    individual faces, warm sandy red-brown, no wood grain, no metal, no
+    lettering, no ground plane, no sky."
+
+JSON PROMPT
+    Build map_m3_001_cargo_hangar, grid 14 x 8 x 7.
+    Shell: side walls at x0-1 and x12-13, full depth z0-6, rows y0-y4. Group
+    each side as two walls of about 15 cells - lower band y0-y2, upper y3-y4.
+    Arch: rows y5, y6, y7 stepping inward - y5 spans x1-12, y6 spans x2-11, y7
+    spans x4-9 as the flat crown. Each arch row is one wall per half, split at
+    the centre line, so a haunch can be taken off without the whole roof going
+    at once. No row may be more than 6 cells narrower than the row below.
+    Door: remove x4-x7 from the front face at z0 for rows y0-y3. Leave x2-x3 and
+    x8-x11 standing as the door jambs, each its own wall of 8 cells. Do NOT
+    centre the opening.
+    Back wall z6 is solid across x2-11, rows y0-y4, in two walls.
+    Crates: 18 to 24 brick_1x1 with NO wall_id, sitting on the floor at y0 and
+    y1 inside the shed, in a ragged pile. Mark nothing bare except these - they
+    have no wall so the flag does not apply to them.
+    Support: every arch row must overlap the row beneath it in both x and z.
+    Check: shell rows at least 95 per cent complete apart from the one door.
+    Shot arithmetic to state: a haunch wall of 15 brick cells is 45 HP; Cannon
+    Lv1 does 5 wall damage, so 9 shots - too many. Split the haunch into three
+    walls of 5 cells (15 HP, 3 shots) so the first collapse is reachable inside
+    14 ammunition.
+
+--------------------------------------------------------------------------------
+LV2  LAUNCH GANTRY                     grid 10 x 13 x 6  ~160 entries   ammo 14
+--------------------------------------------------------------------------------
+MATERIALS  brick frame, brick rocket, one glass band on the rocket.
+COATING    all coated.
+LESSON     fell the gantry INTO the rocket. The mission opens with its own
+           little disaster movie.
+
+IMAGE PROMPT
+    "Isometric voxel launch gantry built from chunky sandy-brick cubes, drawn
+    three-quarter view slightly from above on a plain white background.
+    On the left, a tall open scaffold tower 3 cubes wide, 3 cubes deep and 12
+    cubes tall - a ladder-like lattice, not a solid tower: two vertical cube
+    columns at each corner with horizontal cube braces every third row, and open
+    air between them so you can see straight through the frame. On the right,
+    standing separately with a clear gap of empty ground between them, a simple
+    stacked rocket 4 cubes wide at the base tapering to 2 cubes at the nose, 9
+    cubes tall, with a single horizontal band of pale blue glass cubes near its
+    top. Two horizontal umbilical arms of 2 cubes each bridge the gap from the
+    tower to the rocket at two different heights, each resting on a cube bracket
+    so neither hangs unsupported. The tower is markedly taller than the rocket.
+    Cube blocks with visible faces, warm sandy red-brown plus pale blue glass,
+    no metal sheen, no flame, no launch pad markings, no ground plane, no sky."
+
+JSON PROMPT
+    Build map_m3_002_launch_gantry, grid 10 x 13 x 6.
+    Gantry: x0-2, z1-3, rows y0-y11. Four corner columns of brick_1x1 at
+    (0,1),(2,1),(0,3),(2,3), each ONE wall running the full height - 12 cells,
+    inside the comfortable range and the single thing the player cuts. Braces:
+    horizontal rings at y2, y5, y8, y11 joining the columns, one wall per ring
+    of about 8 cells. Everything between is EMPTY - the frame must read open.
+    Rocket: x6-9, z1-4, rows y0-y8, tapering - y0-y3 spans x6-9, y4-y6 spans
+    x6-8, y7-y8 spans x7-8. Hollow: one cell thick, empty core. Glass band at
+    y6 all the way round, its own wall.
+    Arms: at y5 and y8, two brick_1x1 each spanning x3-x4, wall ids
+    "gantry_arm_lo" and "gantry_arm_hi". Each arm needs a bracket cell directly
+    under its inner end, or it is a body held only from the side.
+    Separation: nothing with a "gantry" prefix may share a wall with anything
+    with a "rocket" prefix. The arms belong to the gantry.
+    The domino: the gantry at 12 rows must be able to reach the rocket at x6 -
+    measure it. If it cannot, move the rocket in by a column, not the tower.
+    Shot arithmetic: a 12-cell brick column is 36 HP, Cannon Lv1 5 per shot = 8
+    shots. That is too many for a domino to be the fun answer. Split each column
+    into a lower wall of 5 cells and an upper of 7, so cutting the lower one
+    (15 HP, 3 shots) drops the tower.
+
+--------------------------------------------------------------------------------
+LV3  ROCKET ON LEGS                    grid 9 x 13 x 7   ~170 entries   ammo 16
+--------------------------------------------------------------------------------
+MATERIALS  brick body, glass band, concrete launch ring.
+COATING    all coated. First concrete of the mission - the level is Cannon-only
+           below the ring, which is fine because the legs are brick.
+LESSON     pure leg-cut, tallest payoff so far.
+
+IMAGE PROMPT
+    "Isometric voxel cartoon rocket standing on legs, chunky cube blocks, drawn
+    three-quarter view slightly from above on a plain white background.
+    A fat stacked rocket 5 cubes wide at the base, stepping inward twice as it
+    rises to 3 cubes and then 2 cubes at the nose, 9 cubes of body, hollow with
+    one visible round-cornered viewport of pale blue glass cubes running as a
+    band near the top. It stands on THREE slim legs, each 1 cube wide and 2
+    cubes tall, splayed at the base, with the rocket's bottom plate resting flat
+    on the tops of all three legs so the gap underneath is clearly visible. Two
+    triangular stepped fins of cubes buttress the lower body between the legs.
+    Beneath it, a flat grey concrete launch ring one cube thick and 7 cubes
+    across, lying on the ground like a plate, with the legs standing on it.
+    The rocket is tall and narrow; each step inward is small, never a sudden
+    flare. Warm sandy red-brown body, pale blue glass band, flat mid-grey ring.
+    No flame, no smoke, no ground plane, no sky."
+
+JSON PROMPT
+    Build map_m3_003_rocket_on_legs, grid 9 x 13 x 7.
+    Launch ring: y0, concrete_1x1, a ring 7 across at x1-7, z1-5, one cell
+    thick. Four walls, one per side, about 6 cells each.
+    Legs: three, at (2,2), (6,2) and (4,5) - deliberately not symmetric on both
+    axes. Each leg is y1-y2, two brick_1x1, its own wall. TWO cells, TWO
+    entries: never write a leg as one brick_2x1.
+    Body: y3-y11 above the legs. y3-y6 spans x2-6, z2-5. y7-y9 spans x3-5,
+    z3-5. y10-y11 spans x3-4, z3-4. Hollow, one cell thick.
+    Every step inward is at most 2 cells per row - well inside the 6-cell rule.
+    The bottom plate at y3 must cover all three leg tops, or the rocket is held
+    from the side and will never fall.
+    Glass band: y9, all the way round the y7-y9 section, its own wall.
+    Fins: two stepped brick buttresses from y3 to y6 on the outside faces,
+    overhanging by at most one cell, each its own wall of 5-8 cells.
+    Shot arithmetic: a leg is 2 brick cells = 6 HP; Cannon Lv1 5 per shot = 2
+    shots. Two legs down and the rocket topples - 4 shots. The other 12 rounds
+    are for the fall not clearing 50 per cent on its own. Verify that it does.
+
+--------------------------------------------------------------------------------
+LV4  OBSERVATORY                       grid 11 x 10 x 8  ~200 entries   ammo 18
+--------------------------------------------------------------------------------
+MATERIALS  brick drum and annex, glass dome.
+COATING    all coated.
+LESSON     the dome is a glass avalanche waiting for its rim to break. One clean
+           shot under the cap empties the whole bowl.
+
+IMAGE PROMPT
+    "Isometric voxel observatory built from chunky cubes, three-quarter view
+    slightly from above, plain white background.
+    A squat round-ish drum tower made of sandy brick cubes, 7 cubes across and 6
+    cubes tall - wider than it is tall is wrong here, but it must not be more
+    than one and a half times taller than wide. Its plan is a stepped octagon,
+    drawn as cubes with the corners cut back one cube. On top sits a STEPPED
+    dome of pale blue glass cubes: three rings, each one cube narrower than the
+    one below, never a smooth curve, with a flat cap of four cubes at the top. A
+    vertical slit one cube wide runs down the front of the dome from the cap to
+    the drum rim, an actual hole you can see through. Attached to the drum's
+    right-hand side and clearly lower, a small flat-roofed brick lab annex 4
+    cubes wide, 3 cubes deep and 3 cubes tall, with a doorway one cube wide.
+    The drum is hollow, one cube thick. Warm sandy brick and pale blue glass.
+    No telescope, no stars, no ground plane, no sky."
+
+JSON PROMPT
+    Build map_m3_004_observatory, grid 11 x 10 x 8.
+    Drum: x1-7, z1-7, rows y0-y5, a hollow octagon ring one cell thick - take
+    the single corner cell off each corner at every row. About 22 cells a row.
+    Group as two bands of three rows, each band split into four walls by
+    quadrant: about 16 cells each, well inside the comfortable range.
+    Dome: y6 spans the full drum ring; y7 one cell narrower all round; y8 one
+    narrower again; y9 a flat cap of 4. ALL glass_1x1. Each ring is ONE wall.
+    Each ring must overlap the ring below by its whole footprint minus one cell
+    - never more than one cell proud.
+    Slit: remove the front cell from each dome ring at z1, so the slit runs top
+    to bottom. One cell wide only.
+    Annex: x8-10, z3-5, y0-y2, brick, its own prefix "annex_". A doorway one
+    cell wide in its front face at y0. Its roof is a separate wall.
+    The annex must NOT share a wall with the drum. It stands against it; a
+    shared wall would weld two structures into one body.
+    Shot arithmetic: the dome rings are glass at 1 HP a cell. The bottom ring of
+    about 22 cells is 22 HP; Cannon Lv1 does 8 to glass, so 3 shots and the
+    whole dome above it loses its footing. State how much of the map's mass that
+    releases - it should be about a third.
+
+--------------------------------------------------------------------------------
+LV5  BIODOME PAIR                      grid 15 x 8 x 8   ~220 entries   ammo 18
+--------------------------------------------------------------------------------
+MATERIALS  brick ring foundations, glass domes, glass tube.
+COATING    all coated.
+LESSON     two shatter targets and a fragile bridge. Felling the big dome's ring
+           drags the corridor out of the small one.
+
+IMAGE PROMPT
+    "Isometric voxel greenhouse domes built from chunky cubes, three-quarter
+    view slightly from above, plain white background.
+    Two STEPPED domes of pale blue glass cubes of clearly different sizes,
+    standing apart with a clear gap of empty ground between them. The left dome
+    is larger: a sandy brick ring foundation 7 cubes across and 2 cubes tall,
+    carrying three stepped glass rings each one cube narrower than the last,
+    topped by a flat cap. The right dome is smaller: a brick ring 5 cubes across
+    and 2 cubes tall with two glass rings and a cap. Both domes are hollow
+    shells one cube thick - you can see through their open door cells into the
+    empty inside. A straight horizontal corridor of pale blue glass cubes, 2
+    cubes tall and 2 cubes deep, runs between them at the height of the brick
+    rings, resting at each end on the brick and carried in the middle by one
+    short brick post standing on the ground. Never a smooth curve anywhere - all
+    steps. Warm sandy brick and pale blue glass only. No plants, no soil, no
+    ground plane, no sky."
+
+JSON PROMPT
+    Build map_m3_005_biodome_pair, grid 15 x 8 x 8.
+    Big dome, prefix "big_": brick ring x0-6, z1-7, y0-y1, one cell thick, four
+    walls. Glass rings at y2 (full ring), y3 (one cell in), y4 (one in again),
+    cap of 4 at y5. One wall per ring.
+    Small dome, prefix "small_": brick ring x10-14, z2-6, y0-y1, four walls.
+    Glass rings y2, y3, cap at y4.
+    Corridor, prefix "tube_": x7-9, z3-4, rows y1-y2, glass. Split into two
+    walls, "tube_left" and "tube_right", so it breaks in the middle rather than
+    vanishing whole. Its ends rest ON the brick rings - overlap them by one
+    cell in x. Its middle needs a brick post at x8, z3-4, y0, its own wall of
+    two entries, standing on the ground. Without that post the corridor is a
+    body held only from its ends and the cascade will never release it.
+    Separation: "big_", "small_" and "tube_" never share a wall.
+    Shot arithmetic: glass is 1 HP a cell and takes full damage coated or not.
+    The big dome's brick ring is the expensive part - about 24 brick cells,
+    72 HP across four walls, so 18 HP a wall, roughly 4 Cannon Lv1 shots for
+    one quarter. State how many quarters must go before the dome drops.
+
+--------------------------------------------------------------------------------
+LV6  CONTROL TOWER                     grid 9 x 13 x 7   ~200 entries   ammo 20
+--------------------------------------------------------------------------------
+MATERIALS  brick stem and deck, glass cab, loose antenna blocks.
+COATING    all coated. Antennas are loose blocks and carry no coating.
+LESSON     the definitive stem-cut. The glass cab rides the deck down and
+           detonates on the pad.
+
+IMAGE PROMPT
+    "Isometric voxel airport-style control tower built from chunky cubes,
+    three-quarter view slightly from above, plain white background.
+    A slim sandy brick stem 3 cubes wide, 3 cubes deep and 8 cubes tall, hollow,
+    with two narrow slit windows offset up one side. On top of the stem, a
+    square deck 5 cubes across - one cube proud of the stem on every side, no
+    more - resting flat on the stem's top. Standing on the deck, a wrap-around
+    cab of pale blue glass cubes 5 cubes across and 2 cubes tall, glazed all the
+    way round with no brick corners. A flat brick roof caps the cab, one cube
+    proud of it. Two or three small separate brick cubes sit loose on the roof
+    as antennas, clearly not attached to each other. The whole thing is a
+    mushroom: a thin stalk with a wide head, but the head steps out by exactly
+    one cube per side, never a sudden flare. Warm sandy brick and pale blue
+    glass. No ground plane, no sky, no aircraft."
+
+JSON PROMPT
+    Build map_m3_006_control_tower, grid 9 x 13 x 7.
+    Stem: x3-5, z2-4, rows y0-y7, hollow ring one cell thick, 8 cells a row.
+    Group as FOUR walls of 16 cells - one per face, running the full height.
+    That is the cut the level is about, so make each face a slab, not a stack of
+    rings.
+    Slit windows: remove one cell at y2 and one at y5 from the same side face,
+    offset from each other. One cell wide.
+    Deck: y8, solid 5x5 at x2-6, z1-5. One wall. It overhangs the stem by
+    exactly one cell all round - measure it, this is the exact fault that ruined
+    Mission 2's lighthouse.
+    Cab: y9-y10, glass ring on the deck footprint, one cell thick, one wall per
+    two rows. Glazed all the way round - no brick corners.
+    Roof: y11, solid 5x5, brick, one wall.
+    Antennas: 3 brick_1x1 at y12 with NO wall_id, offset, not adjacent.
+    Shot arithmetic: a stem face of 16 brick cells is 48 HP, Cannon Lv1 5 per
+    shot = 10 shots for one face. Too many. Split each face into an upper and a
+    lower wall of 8 cells (24 HP, 5 shots), and cutting two lower faces at 10
+    shots drops the tower inside 20 ammunition. Verify that the fall alone
+    carries the map past 50 per cent.
+
+--------------------------------------------------------------------------------
+LV7  LANDED SHUTTLE                    grid 14 x 9 x 8   ~260 entries   ammo 20
+--------------------------------------------------------------------------------
+MATERIALS  concrete fuselage, glass cockpit band, brick cargo pods and legs.
+COATING    all coated.
+LESSON     cut the legs and the ship belly-flops, wings snap at the root,
+           cockpit glass sprays. The mission's poster moment.
+
+IMAGE PROMPT
+    "Isometric voxel landed spaceship built from chunky cubes, three-quarter
+    view slightly from above, plain white background.
+    A long low grey concrete fuselage lying horizontally, 12 cubes long, 4 cubes
+    wide and 3 cubes tall, with a STEPPED nose - the front two columns dropping
+    one cube each - and a squared tail. A continuous band of pale blue glass
+    cubes runs along the fuselage's upper front as the cockpit, one cube tall,
+    unbroken. Two stub wings of grey cubes project from the sides, each
+    overhanging the fuselage by exactly one cube. The ship stands on FOUR slim
+    sandy brick landing legs, each 1 cube wide and 3 cubes tall, splayed at the
+    four corners, with the fuselage resting flat on their tops and a clear gap
+    of daylight underneath. Slung beneath each wing, a small sandy brick cargo
+    pod 2 cubes long, resting on a short brick strut that reaches the ground.
+    The ship is much longer than it is tall. Flat mid-grey hull, pale blue
+    glass, warm sandy brick legs and pods. No thrusters, no flame, no ground
+    plane, no sky."
+
+JSON PROMPT
+    Build map_m3_007_landed_shuttle, grid 14 x 9 x 8.
+    Legs: four brick columns at (1,2), (1,5), (10,2), (10,5), rows y0-y2, three
+    brick_1x1 each, one wall each. Three entries - never one brick_2x1 plus one.
+    Fuselage: y3-y5, concrete_1x1, x1-12, z2-5, hollow shell one cell thick.
+    Nose step: x1 only occupies y3-y4, x2 only y3-y5.
+    Group the fuselage as SIX walls: floor, roof, two sides, nose, tail - each
+    12 to 24 cells. The floor at y3 must cover all four leg tops.
+    Cockpit: y5, glass, running x3-x9 along z2 unbroken, its own wall.
+    Wings: y4, concrete, x4-x8 at z1 and at z6 - one cell outside the fuselage,
+    no more. One wall each.
+    Cargo pods: under each wing, brick, y2 at x5-x6 - and each pod needs a strut
+    of two brick cells from y0 to y1 directly beneath it. A pod hanging off a
+    wing with nothing below is the exact body the cascade never releases.
+    Concrete warning: the fuselage is concrete, so this level cannot be started
+    with the Rock at all. That is intended, but the LEGS are brick - the player
+    must be able to fell the ship without touching concrete. Verify that felling
+    it clears 50 per cent on its own.
+    Shot arithmetic: a leg is 3 brick cells = 9 HP; Cannon Lv1 5 per shot = 2
+    shots. Two legs on one side = 4 shots and the ship drops. State what per
+    cent that fall clears.
+
+--------------------------------------------------------------------------------
+LV8  STATION SEGMENT YARD              grid 15 x 10 x 8  ~300 entries   ammo 22
+--------------------------------------------------------------------------------
+MATERIALS  concrete core and cradles, brick side modules, glass solar panels.
+COATING    all coated.
+LESSON     anatomy plus cantilever. Pop the solar wings for cheap glass rain,
+           then break a cradle and the core rolls apart.
+
+IMAGE PROMPT
+    "Isometric voxel space station module in a ground assembly yard, chunky
+    cubes, three-quarter view slightly from above, plain white background.
+    A long grey concrete cylinder core lying horizontally, drawn as a stepped
+    octagonal stack of cubes 11 cubes long and 5 cubes across, hollow, with a
+    ring of pale blue glass viewport cubes around its middle. It rests on TWO
+    grey concrete cradle stands, each a stepped saddle 3 cubes wide and 3 cubes
+    tall, placed a third of the way in from each end, with the core sitting
+    visibly on their tops and daylight under the core between them. Two sandy
+    brick service modules are docked to the core's near side, each a small box 3
+    cubes wide and 3 cubes tall, standing on their own short brick legs on the
+    ground rather than hanging off the core. Two thin brick arms reach up and
+    outward from the core's top, each 3 cubes long, and each carries a FLAT
+    panel of pale blue glass cubes 4 by 2, held one cube proud of the arm's end.
+    Flat mid-grey, warm sandy brick, pale blue glass. No stars, no earth, no
+    ground plane, no sky."
+
+JSON PROMPT
+    Build map_m3_008_station_yard, grid 15 x 10 x 8.
+    Cradles, prefix "cradle_": two concrete saddles at x2-4 and x10-12, z2-4,
+    rows y0-y2. One wall each of about 12 cells. These are what the level is
+    about - concrete, so Cannon only.
+    Core, prefix "core_": y3-y6, x2-12, z2-6, a hollow stepped octagon one cell
+    thick. Group as six walls of 16-24 cells: floor, crown, two sides, two ends.
+    Its floor at y3 must overlap both cradle tops.
+    Viewports: y5, glass ring around the middle three columns, own wall.
+    Modules, prefix "mod_a_" and "mod_b_": brick boxes at x4-6 and x9-11, z0-1,
+    y0-y3, each on two brick legs of two cells reaching the ground. They stand
+    BESIDE the core, not on it, and share no wall with it.
+    Solar arms, prefix "solar_": brick arms at y7, x5-7 and x8-10, three cells
+    each, one wall each, rising from the core crown. Panels: glass, y8, 4x2 at
+    the end of each arm, one wall each, overhanging the arm end by ONE cell.
+    Any more and the panel is a body held only from the side.
+    Shot arithmetic: the panels are glass, 8 cells at 1 HP - one Cannon shot
+    each for cheap early per cent. A cradle of 12 concrete cells is 72 HP;
+    Cannon Lv1 does 2 wall damage to concrete, so 36 shots. THAT IS BROKEN. Fix
+    it by splitting each cradle into three walls of 4 cells (24 HP, 12 shots) -
+    still heavy - or by making the cradle SADDLES brick and only their base
+    plates concrete. Choose one, state which, and prove the level closes inside
+    22 ammunition.
+
+--------------------------------------------------------------------------------
+LV9  THE SPACEPORT (BOSS)              grid 16 x 13 x 10 ~380 entries   ammo 24
+--------------------------------------------------------------------------------
+MATERIALS  all three.
+COATING    all coated.
+LESSON     the final exam. Three leg-cuts and a domino on one pad, and the
+           gantry can be dropped across the shuttle's tail.
+
+IMAGE PROMPT
+    "Isometric voxel spaceport scene, chunky cubes, three-quarter view slightly
+    from above, plain white background.
+    Three structures sharing one pad with clear gaps of empty ground between
+    them. On the left, a landed blocky spaceship: a grey concrete fuselage 8
+    cubes long lying on four slim sandy brick legs, with a pale blue glass
+    cockpit band. In the middle, a mushroom control tower: a slim brick stem 3
+    cubes wide and 7 cubes tall carrying a deck one cube proud on each side and
+    a wrap-around pale blue glass cab. On the right, a tall open sandy brick
+    scaffold gantry, ladder-like with visible gaps, standing beside a small
+    stacked rocket 3 cubes wide, with one short arm bridging between them.
+    Draw them CLOSE - close enough that the gantry would fall onto the rocket
+    and the tower onto the ship - but with clear ground between. Everything is
+    one size smaller than in its own level: three structures must fit where one
+    usually goes. Flat grey, warm sandy brick, pale blue glass. No flame, no
+    stars, no ground plane, no sky."
+
+JSON PROMPT
+    Build map_m3_009_the_spaceport, grid 16 x 13 x 10.
+    Three prefixes and nothing bridges them: "ship_" at x0-5, "tower_" at x7-9,
+    "gantry_" and "rocket_" at x11-15.
+    Ship: shrink LV7 - fuselage 6 long, four legs of 3 cells, cockpit band.
+    Tower: shrink LV6 - stem 3x3 and 7 rows, deck one cell proud, glass cab.
+    Gantry and rocket: shrink LV2 - frame 10 rows, rocket 7 rows, ONE arm.
+    MEASURE THE FALL LINES and say so in the delivery note: the tower at 10 rows
+    total must be able to reach the ship's tail; the gantry at 10 rows must
+    reach the rocket. If either cannot, move the structures closer - do not make
+    them taller.
+    Difficulty comes from shot economy, NOT hit points. A wall of 400 concrete
+    cells is not difficult, it is long. Give this level exactly one of each:
+      - a load-bearing element that must be found: put the tower's cut face
+        behind the ship, reachable only over the fuselage
+      - a collapse that only completes in the right order: the gantry leans on
+        the rocket, so felling the rocket first leaves the gantry standing
+      - a cheap target that tempts and wastes ammunition: the glass cab is 20
+        easy points that does nothing structural
+    Entries 340-420. Loose blocks under 30.
+    Shot arithmetic for all three structures, stated separately, and a stated
+    solution path that reaches 100 per cent inside 24 ammunition.
+
+
+================================================================================
+6. DELIVERY
+================================================================================
+
+IMAGE AI     nine images plus the three lines from 2.10 each. Nothing else.
+
+JSON AI      nine .json files, plus per level:
+                 entries, wall count, smallest and largest wall
+                 the six self-checks of 3.9, each answered
+                 the shot arithmetic of 3.7 with the bullet assumed
+                 a rendered picture of the map
+             A delivery without renders will be sent back unread. Four of
+             Mission 2's nine maps passed every automated check and were still
+             wrong, and every one of those faults was visible in one glance at a
+             render.
+
+================================================================================
+END
+================================================================================
