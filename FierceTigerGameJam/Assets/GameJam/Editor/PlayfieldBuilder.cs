@@ -1,4 +1,5 @@
 #if UNITY_EDITOR
+using GameJam.Gameplay.Cameras;
 using GameJam.Gameplay.Playfield;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -21,6 +22,10 @@ namespace GameJam.EditorTools
         private const string BackdropRootName = "Backdrop";
         private const string GroundName = "Ground";
         private const string FallZoneName = "FallZone";
+        private const string OrbitPivotName = "OrbitPivot";
+        private const string CameraRigName = "CameraController";
+        private const string CannonName = "Slingshot";
+        private const string AimPlaneName = "AimPlaneAnchor";
         private const string BackdropSpritePath = "Assets/GameJam/Textures/BG_New_02.png";
         private const string BackdropMaterialPath = "Assets/GameJam/Materials/M_Backdrop.mat";
         private const string GroundMaterialPath = "Assets/GameJam/Materials/M_Ground.mat";
@@ -68,11 +73,12 @@ namespace GameJam.EditorTools
             BuildBackdrop();
             BuildGround(groundY);
             BuildFallZone(groundY);
+            BuildOrbitRig(scene);
 
             EditorSceneManager.MarkSceneDirty(scene);
             Debug.Log(
-                $"{nameof(PlayfieldBuilder)} set up the backdrop, a ground at y {groundY:0.###}, and a fall zone. "
-                + "Run Organize Scene Hierarchy to file them into their sections.");
+                $"{nameof(PlayfieldBuilder)} set up the backdrop, a ground at y {groundY:0.###}, a fall zone, and "
+                + "the camera orbit rig. Run Organize Scene Hierarchy to file them into their sections.");
         }
 
         /// <summary>
@@ -307,6 +313,212 @@ namespace GameJam.EditorTools
             serialized.FindProperty("action").enumValueIndex = (int)FallBreakZone.Action.Despawn;
             serialized.FindProperty("affectDebris").boolValue = true;
             serialized.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        /// <summary>
+        /// Builds the rig the drag turns: a pivot standing at the structure's centre, carrying
+        /// everything that should swing around the structure while the structure itself stays
+        /// exactly where physics left it.
+        ///
+        /// The camera rig, the cannon and the aim plane ride it because they are the player's
+        /// point of view and have to stay in the same relationship to each other - the ballistic
+        /// solver works in world space, so a cannon that stayed put while the camera moved would
+        /// fire off to the side of wherever the player tapped.
+        ///
+        /// The backdrop rides it too, which is the non-obvious one. It is not scenery that
+        /// happens to be behind the structure: it is four flat sprite tiles all facing -z, so a
+        /// camera that swung around a fixed backdrop would see it edge-on at 90 degrees and from
+        /// behind at 180. Carrying it costs nothing - it has no colliders and no bodies - and it
+        /// then sits behind the structure at every angle.
+        ///
+        /// The ground deliberately stays behind. It is the surface the blocks are resting on, so
+        /// moving it is exactly the kind of physics disturbance this whole change exists to
+        /// avoid, and it does not need to move: the 100 x 100 plane reaches at least 40 units past
+        /// the pivot in every direction, which is far enough that the camera stays well inside it
+        /// and the backdrop - which does ride - covers whatever lies beyond the structure.
+        /// </summary>
+        private static void BuildOrbitRig(Scene scene)
+        {
+            if (!TryResolveOrbitPivotPosition(out Vector3 pivotPosition))
+            {
+                Debug.LogWarning(
+                    $"{nameof(PlayfieldBuilder)} found no structure to orbit, so no {OrbitPivotName} was built. "
+                    + "Build the map first.");
+                return;
+            }
+
+            CameraOrbit orbit = EnsureOrbitRig(
+                pivotPosition,
+                FindSection(scene, SceneHierarchyOrganizer.GameplayHeader),
+                FindRider(CameraRigName),
+                FindRider(CannonName),
+                FindRider(AimPlaneName),
+                FindRider(BackdropRootName));
+
+            WireOrbit(orbit);
+        }
+
+        /// <summary>
+        /// The pivot goes where the structure's own centre object is, read from the scene rather
+        /// than written down here: it is the point SpinOnAxis used to turn the map about, so
+        /// orbiting it is what makes the new gesture look like the old one. The structure root is
+        /// the fallback, since a scene whose map has not been built yet has no centre object.
+        /// </summary>
+        private static bool TryResolveOrbitPivotPosition(out Vector3 position)
+        {
+            GameJam.Gameplay.Wall.KnockdownLayoutMapAuthoring builder =
+                Object.FindFirstObjectByType<GameJam.Gameplay.Wall.KnockdownLayoutMapAuthoring>(FindObjectsInactive.Include);
+            Transform structureRoot = builder != null ? builder.StructureRoot : null;
+            if (structureRoot == null)
+            {
+                position = Vector3.zero;
+                return false;
+            }
+
+            Transform center = structureRoot.Find(GameJam.Gameplay.Wall.StructureLayout.CenterObjectName);
+            position = center != null ? center.position : structureRoot.position;
+            return true;
+        }
+
+        /// <summary>
+        /// Creates the pivot if it is missing, puts it where it belongs, and adopts the riders,
+        /// preserving every world pose. Shared with the demo level builder so both scenes get the
+        /// same rig.
+        ///
+        /// Written so that running it twice - or running it over a rig an earlier version of the
+        /// builder made - changes nothing. Two hazards are guarded rather than assumed away: a
+        /// rider that is already an ancestor of the pivot would make the pivot its own descendant,
+        /// and moving a pivot that already has riders would drag the camera off its authored
+        /// framing, so the riders' world poses are restored across the move.
+        /// </summary>
+        internal static CameraOrbit EnsureOrbitRig(
+            Vector3 pivotWorldPosition,
+            Transform pivotParent,
+            params Transform[] riders)
+        {
+            GameObject pivotObject = GameObject.Find(OrbitPivotName);
+            if (pivotObject == null)
+            {
+                pivotObject = new GameObject(OrbitPivotName);
+                Undo.RegisterCreatedObjectUndo(pivotObject, $"Create {OrbitPivotName}");
+            }
+
+            Transform pivot = pivotObject.transform;
+
+            if (pivotParent != null && pivot.parent != pivotParent && !pivotParent.IsChildOf(pivot))
+            {
+                Undo.SetTransformParent(pivot, pivotParent, $"Parent {OrbitPivotName}");
+            }
+
+            // Captured before the pivot is squared up and released afterwards. The riders belong
+            // where the scene put them; only the point they turn about is being set here.
+            int riderCount = pivot.childCount;
+            Vector3[] riderPositions = new Vector3[riderCount];
+            Quaternion[] riderRotations = new Quaternion[riderCount];
+            for (int i = 0; i < riderCount; i++)
+            {
+                pivot.GetChild(i).GetPositionAndRotation(out riderPositions[i], out riderRotations[i]);
+            }
+
+            pivot.localScale = Vector3.one;
+
+            // Identity rotation every run: the scene file is what "the authored viewpoint" means,
+            // and CameraOrbit.ResetRotation returns to whatever it finds here.
+            pivot.SetPositionAndRotation(pivotWorldPosition, Quaternion.identity);
+
+            for (int i = 0; i < riderCount; i++)
+            {
+                pivot.GetChild(i).SetPositionAndRotation(riderPositions[i], riderRotations[i]);
+            }
+
+            for (int i = 0; i < riders.Length; i++)
+            {
+                Transform rider = riders[i];
+                if (rider == null || rider.parent == pivot)
+                {
+                    continue;
+                }
+
+                // True when the rider is the pivot itself or one of its ancestors. Parenting
+                // either under the pivot would detach the whole branch from the scene.
+                if (pivot.IsChildOf(rider))
+                {
+                    Debug.LogWarning(
+                        $"{nameof(PlayfieldBuilder)} left \"{rider.name}\" where it is: the {OrbitPivotName} "
+                        + "sits inside it, so it cannot ride it.",
+                        rider);
+                    continue;
+                }
+
+                // Undo.SetTransformParent keeps the world pose, and the pose is written back
+                // afterwards anyway so that a prefab instance - the Slingshot is one - lands
+                // exactly where it stood rather than a rounding step away from it.
+                rider.GetPositionAndRotation(out Vector3 position, out Quaternion rotation);
+                Undo.SetTransformParent(rider, pivot, $"Parent {rider.name} to {OrbitPivotName}");
+                rider.SetPositionAndRotation(position, rotation);
+            }
+
+            CameraOrbit orbit = pivotObject.GetComponent<CameraOrbit>();
+            if (orbit == null)
+            {
+                orbit = Undo.AddComponent<CameraOrbit>(pivotObject);
+            }
+
+            return orbit;
+        }
+
+        /// <summary>
+        /// Fills the two references that drive and reset the orbit, without overwriting anything
+        /// already pointed somewhere on purpose.
+        /// </summary>
+        private static void WireOrbit(CameraOrbit orbit)
+        {
+            GameJam.Gameplay.Wall.StructureRotateController rotateController =
+                Object.FindFirstObjectByType<GameJam.Gameplay.Wall.StructureRotateController>(FindObjectsInactive.Include);
+            if (rotateController != null)
+            {
+                SerializedObject serialized = new SerializedObject(rotateController);
+                UiBuilder.SetIfEmpty(serialized, "cameraOrbit", orbit);
+                serialized.ApplyModifiedPropertiesWithoutUndo();
+            }
+
+            GameJam.Gameplay.Flow.GameFlowController flow =
+                Object.FindFirstObjectByType<GameJam.Gameplay.Flow.GameFlowController>(FindObjectsInactive.Include);
+            if (flow != null)
+            {
+                SerializedObject serialized = new SerializedObject(flow);
+                UiBuilder.SetIfEmpty(serialized, "cameraOrbit", orbit);
+                serialized.ApplyModifiedPropertiesWithoutUndo();
+            }
+        }
+
+        /// <summary>
+        /// Find-by-name, and a warning rather than silence when a rider is missing: a rig that
+        /// quietly left the cannon behind would only show up as shots flying sideways.
+        /// </summary>
+        private static Transform FindRider(string name)
+        {
+            GameObject found = GameObject.Find(name);
+            if (found == null)
+            {
+                Debug.LogWarning($"{nameof(PlayfieldBuilder)} found no \"{name}\" to put under the {OrbitPivotName}.");
+                return null;
+            }
+
+            return found.transform;
+        }
+
+        private static Transform FindSection(Scene scene, string sectionName)
+        {
+            foreach (GameObject root in scene.GetRootGameObjects())
+            {
+                if (root.name == sectionName)
+                {
+                    return root.transform;
+                }
+            }
+
+            return null;
         }
 
         private static GameObject EnsureObject(string name, Transform parent)

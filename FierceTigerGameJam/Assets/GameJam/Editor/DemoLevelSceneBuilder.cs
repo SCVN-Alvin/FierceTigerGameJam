@@ -1,5 +1,6 @@
 #if UNITY_EDITOR
 using System;
+using GameJam.Gameplay.Cameras;
 using GameJam.Gameplay.Cannon;
 using GameJam.Gameplay.Wall;
 using UnityEditor;
@@ -76,7 +77,7 @@ namespace GameJam.EditorTools
             builderObject.FindProperty("blocksPerFrame").intValue = 0;
             builderObject.ApplyModifiedPropertiesWithoutUndo();
 
-            ConfigureAimAndCamera(modelBounds, spinner);
+            ConfigureAimAndCamera(modelBounds, rotationCenter.transform);
             EditorSceneManager.MarkSceneDirty(scene);
             EditorSceneManager.SaveScene(scene, ScenePath);
             Selection.activeGameObject = wall;
@@ -102,7 +103,17 @@ namespace GameJam.EditorTools
             }
         }
 
-        private static void ConfigureAimAndCamera(Bounds bounds, SpinOnAxis spinner)
+        /// <summary>
+        /// Frames the demo and gives it the same camera orbit rig the gameplay scene has.
+        ///
+        /// It used to hand the drag controller the structure's <see cref="SpinOnAxis"/>, which is
+        /// how the demo turned its model. The drag drives a <see cref="CameraOrbit"/> now, so the
+        /// demo builds one too rather than being left with a dead drag - the demo exists to
+        /// rehearse the real scene, and a demo that turned its structure while the game turned
+        /// its camera would stop being a rehearsal. The spinner is still added and still honours
+        /// an authored speed, which is the other way these scenes are used.
+        /// </summary>
+        private static void ConfigureAimAndCamera(Bounds bounds, Transform rotationCenter)
         {
             CannonAimPlaneAnchor aimPlane = UnityEngine.Object.FindFirstObjectByType<CannonAimPlaneAnchor>();
             if (aimPlane != null)
@@ -128,14 +139,6 @@ namespace GameJam.EditorTools
                 }
             }
 
-            StructureRotateController rotateController = UnityEngine.Object.FindFirstObjectByType<StructureRotateController>();
-            if (rotateController != null)
-            {
-                SerializedObject rotateObject = new SerializedObject(rotateController);
-                rotateObject.FindProperty("structureSpinner").objectReferenceValue = spinner;
-                rotateObject.ApplyModifiedPropertiesWithoutUndo();
-            }
-
             Camera camera = Camera.main;
             if (camera != null)
             {
@@ -154,6 +157,32 @@ namespace GameJam.EditorTools
                 camera.transform.position = new Vector3(bounds.center.x, bounds.center.y + bounds.extents.y * 0.03f, bounds.min.z - distance);
                 camera.transform.rotation = Quaternion.LookRotation(bounds.center - camera.transform.position, Vector3.up);
             }
+
+            // Built last, once everything it carries is standing where it belongs: the rig keeps
+            // world poses, so it adopts the framing above rather than replacing it. The demo has
+            // no section headers to file it under and no backdrop to carry.
+            CameraOrbit orbit = PlayfieldBuilder.EnsureOrbitRig(
+                rotationCenter != null ? rotationCenter.position : bounds.center,
+                null,
+                // The camera rig if the demo scene has one, and otherwise the camera itself: a
+                // rig that left the camera behind would orbit the cannon around a still view.
+                FindDemoRider("CameraController") ?? (camera != null ? camera.transform : null),
+                FindDemoRider("Slingshot"),
+                aimPlane != null ? aimPlane.transform : null);
+
+            StructureRotateController rotateController = UnityEngine.Object.FindFirstObjectByType<StructureRotateController>();
+            if (rotateController != null)
+            {
+                SerializedObject rotateObject = new SerializedObject(rotateController);
+                rotateObject.FindProperty("cameraOrbit").objectReferenceValue = orbit;
+                rotateObject.ApplyModifiedPropertiesWithoutUndo();
+            }
+        }
+
+        private static Transform FindDemoRider(string name)
+        {
+            GameObject found = GameObject.Find(name);
+            return found != null ? found.transform : null;
         }
 
         private static Bounds CalculateRendererBounds(GameObject root)
