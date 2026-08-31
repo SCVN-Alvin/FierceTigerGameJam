@@ -225,6 +225,17 @@ namespace GameJam.EditorTools
                 label.fontSize = size;
                 label.alignment = alignment;
                 label.color = Color.white;
+
+                // Assigned here as well as in the TMP project settings: a new label picks up the
+                // project default, but only if the settings asset happens to be right at the moment
+                // the builder runs. Saying it explicitly means a freshly built screen never needs
+                // the font sweep run over it afterwards. Every builder in this folder makes its
+                // labels through this one method, so this is the only place it has to be said.
+                if (GameFonts.Default != null)
+                {
+                    label.font = GameFonts.Default;
+                    label.fontSharedMaterial = GameFonts.DefaultMaterial;
+                }
             }
 
             return label;
