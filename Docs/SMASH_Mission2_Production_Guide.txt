@@ -1,0 +1,308 @@
+================================================================================
+SMASH - MISSION 2 PRODUCTION GUIDE
+Beach / seaside. What the mission is for, how to build it, what will break.
+Supersedes section 3 of SMASH_Mission2_3_Level_Blueprint.txt, which was written
+before the coating system, the panel/weld rule and the Level 8 build.
+Reads with: SMASH_MapJSON_Spec_and_Review, SMASH_JSON_Cloning_Handbook,
+            SMASH_WallCoating_Spec
+Project: Demolition Contracts (FierceTigerGameJam)     Revision 1 - 2026-08-30
+================================================================================
+
+WHO THIS IS FOR
+    Whoever produces the nine Mission 2 maps - concept images and JSON. Section
+    1 is the argument for what the mission is; skipping it produces nine
+    good-looking buildings that play exactly like Mission 1.
+
+
+================================================================================
+1. WHAT MISSION 2 IS FOR - THE ONE IDEA
+================================================================================
+
+MISSION 1 TAUGHT ATTRITION.
+    Nine closed boxes. Hollow shells with windows, but closed: the mass sits on
+    the ground and the way through it is to grind it down. The player learns
+    hit points, materials, and that bricks are cheaper alone than in a wall.
+
+MISSION 2 MUST TEACH LEVERAGE.
+    Beach architecture is naturally OPEN, RAISED AND LIGHT: huts on stilts,
+    piers on pile bents, bars with no front wall, slides cantilevered off a
+    tower, a lighthouse that is a tall thin shaft. Not one of those is solved by
+    attrition. Every one of them is solved by finding the SUPPORT and taking it
+    out. That is the mission's lesson, and the theme hands it over for free.
+
+THE NUMBERS ALREADY PUSH THE PLAYER THERE - use it.
+    Per SMASH_WallCoating_Spec, Mission 2 has BRICK COATED on every level. On
+    Rock Lv1 a coated brick wall takes 1 damage per shot where a loose brick
+    takes 3. Grinding a Mission 2 wall is three times as slow as grinding a
+    Mission 1 wall. Meanwhile a leg is 4-6 cells: cheap to cut, and the mass it
+    carries costs nothing to destroy because gravity does it.
+    Design and tuning agree. Attrition is expensive; leverage is free. The
+    player will find that out whether or not anyone tells them.
+
+WHAT THIS MEANS PER LEVEL
+    Every Mission 2 map must have an answer to: WHICH 4-8 CELLS, IF REMOVED,
+    BRING DOWN MORE THAN THEIR OWN WEIGHT? If a map has no such answer it is a
+    Mission 1 map wearing a beach hat - send it back.
+
+THE ONE THING NOT TO REPEAT
+    No more four-walled closed boxes. Mission 1 has nine. At most two Mission 2
+    levels may be closed volumes (LV7 lighthouse shaft, LV8 fort casemate) and
+    both must earn it by being tall or by hiding an interior worth reaching.
+
+
+================================================================================
+2. THEME WITHOUT NEW ART - PAINTING THREE BLOCKS AS A BEACH
+================================================================================
+
+There are four block types and no more, ever: brick_1x1, brick_2x1, glass_1x1,
+concrete_1x1. The beach is carried by SHAPE and by how the concept image paints
+the same three materials.
+
+    brick     sand-brick, bleached timber, decking. The mission's body.
+    glass     sea-view glazing, wind screens, slide tubes, lantern rooms.
+    concrete  stone piers, breakwater, rock plinths, the lighthouse base.
+
+SILHOUETTE IS THE WHOLE THEME. What makes a beach read is: things standing on
+legs above a flat ground plane, long horizontal decks, open fronts, and one
+tall slim thing on the horizon. Get those and the palette follows.
+
+COLOUR NOTE FOR THE IMAGE GENERATOR: render at 1 brick = 1 cell of the grid you
+intend to emit (spec section 0.1). A concept drawn at finer resolution than the
+grid is a promise the JSON cannot keep - this has already cost one rejected
+Lifeguard Tower.
+
+
+================================================================================
+3. THE STILT TRAP - READ THIS BEFORE AUTHORING ANY RAISED STRUCTURE
+================================================================================
+
+The engine releases a body when the thing DIRECTLY BELOW ITS FOOTPRINT is
+destroyed. KnockdownBlock.IsSupportedAbove tests overlap in x AND z, then
+releases whatever sits over that footprint.
+
+    A body held only from the SIDE is never released by anything.
+
+Nothing below it will ever fall, so nothing will ever tell it to fall. It hangs
+in the air forever and blocks the 100% clear. Mission 2 is the mission where
+this bites, because half its buildings are raised.
+
+    R1  EVERY RAISED MASS MUST HAVE AT LEAST ONE CELL SITTING DIRECTLY ON A LEG.
+        A cabin on four legs: the cabin floor must include the four cells
+        directly above the leg tops. A pier deck: every bent must have deck
+        cells directly over its posts.
+    R2  A CANTILEVER MUST BE ANCHORED THROUGH A CELL ABOVE ITS PROP, not merely
+        touching the tower beside it. The waterslide ribbon (LV6) is the risky
+        one: give it real props at intervals, not a lateral attachment.
+    R3  RUN THE VALIDATOR AND READ THE FOOTING LINES. Zero unfooted walls and
+        zero floating loose blocks, every time. All nine Mission 1 maps pass;
+        so must these.
+    R4  A LEG IS ITS OWN WALL. One wall per leg, 4-6 cells. Then one shot fells
+        exactly one leg, which is the whole point. A leg merged into the floor
+        slab cannot be cut.
+
+
+================================================================================
+4. WHAT LEVEL 8 TAUGHT - CARRY THESE OVER
+================================================================================
+
+The Village Gatehouse went through four rebuilds. The lessons are cheap to
+inherit and expensive to rediscover.
+
+4.1  VERTICAL RUNS MAKE COLUMNS, AND COLUMNS ARE THE PRETTIEST THING WE HAVE
+    A 1-cell-wide vertical stack of concrete authored as its own wall welds
+    into one continuous stanchion. It reads as a structural column, not a pile
+    of cubes. Use it for every stilt, post, pile and pier leg in this mission -
+    it is the theme's signature AND the R4 rule above, for free.
+
+4.2  ONE-CELL OPENINGS, NOT TWO
+    A tower face four cells wide with concrete columns at both ends has two
+    cells of brick between them. Punch a two-wide hole and the entire face
+    above it is stranded. One-wide slits keep a continuous strip running to the
+    ground. In beach terms: tall narrow shutters, not picture windows - except
+    where the whole storey is glass, which is a different move.
+
+4.3  NEVER MERGE A TWO-CELL WALL INTO ONE brick_2x1
+    The merge leaves the wall holding a single entry, and the engine treats a
+    one-block wall as an ordinary loose block - quietly undoing the grouping.
+    Guard the merge on wall size > 2.
+
+4.4  MIND WHAT THE FOOTING REPAIR CANNOT FIX
+    The repair pass merges an unfooted wall into a touching neighbour OF THE
+    SAME MATERIAL. A brick row sitting between two concrete columns with a hole
+    underneath has no same-material neighbour and stays broken. Fix the
+    geometry, do not relax the pass.
+
+4.5  A HEAVY LID ON A GLASS BELT IS THE BEST SET PIECE IN THE GAME
+    Level 8's concrete crown sits on a 1 HP glass band. One shot into the glass
+    drops the entire ring beam onto the brick below. Beach equivalents: the bar
+    roof on glass wind-screens (LV4), the restaurant roof deck on the glass
+    dining storey (LV5). Use it, but once or twice, not nine times.
+
+
+================================================================================
+5. CONTROLLING HOW A WALL LOOKS - PANEL vs WELDED
+================================================================================
+
+A wall is drawn one of two ways, and the map decides which without meaning to.
+
+    PANEL (smooth, poured, one stretched slab) is used when ALL of:
+        one material, all cells 1x1, the wall lies in ONE layer (size.z == 1),
+        and it fills a solid rectangle with no holes.
+    WELDED (individual blocks visible) in every other case.
+
+    Neither is better. They just have to be chosen on purpose:
+        smooth suits columns, stone plinths, glass curtains, slide tubes
+        blocky suits masonry, decks, parapets, anything meant to read as laid
+
+    TO FORCE BLOCKY: give the wall a hole, or group it so it spans more than
+    one layer. Level 8's crown was two flat 10x1x1 runs (smooth); grouping the
+    whole ring together made it span every layer and it welds.
+    TO FORCE SMOOTH: author a solid single-layer rectangle - which is exactly
+    what a 1xN column is.
+
+    There is also a global useWallPanels switch on the authoring component, but
+    it is all-or-nothing; prefer shaping the group.
+
+
+================================================================================
+6. THE BUILD SHEET - NINE LEVELS
+================================================================================
+
+Grid, entries and the collapse story stay as the Blueprint set them. Added here:
+the coating per level, the support target, and what must not go wrong.
+Coating follows SMASH_WallCoating_Spec section 3 - Mission 2 has BRICK COATED
+on every level, CONCRETE COATED from LV7, glass never counted.
+
+ LV1  BEACH HUT ROW              brick        14x6x5    ~110 entries
+      Three tiny huts, different roofs, each on short stilts.
+      SUPPORT TARGET: a hut's two stilts - it slides into its neighbour.
+      COATING: brick armoured. No concrete, no glass.
+      WATCH: each hut is its own set of walls; do not let the optimizer weld
+      two huts into one body across the gap between them.
+
+ LV2  LIFEGUARD TOWER            brick        8x11x6    ~130 entries
+      Cabin with peaked roof on four tall legs, ramp leaning against it.
+      SUPPORT TARGET: two legs and the cabin belly-flops.
+      COATING: brick armoured.
+      WATCH: the cabin floor MUST include the four cells over the leg tops
+      (R1). The ramp is one cell deep and is a separate body. Concept image
+      already reviewed - v2 approved, with the legs honest at 6 rows.
+
+ LV3  THE PIER                   brick        10x7x11   ~160 entries
+      Boardwalk running away from the player on four pile bents, kiosk at the
+      end. The mission's depth level.
+      SUPPORT TARGET: the front bent - the deck pancakes bent by bent.
+      COATING: brick armoured.
+      WATCH: deck cells must sit directly over each bent's posts (R1), or the
+      far half of the pier hangs after the near half falls. This level is the
+      single most likely place in the mission to produce a floating deck.
+
+ LV4  BEACH BAR                  brick+glass  12x7x7    ~170 entries
+      Open front, heavy flat roof on two posts, glass wind-screens at the
+      sides, loose bottle blocks on the counter.
+      SUPPORT TARGET: one front post - the roof slaps down on the counter.
+      COATING: brick armoured, glass loose-grouped per screen.
+      WATCH: first use of 4.5 - the roof drops through the glass. The two posts
+      are separate 1xN walls (4.1). Bottles are loose 1x1s, 6-10 of them.
+
+ LV5  SEAVIEW RESTAURANT         brick+glass  12x9x7    ~200 entries
+      Solid brick ground floor, one FULL GLASS STOREY, brick roof deck with
+      loose parasol stubs.
+      SUPPORT TARGET: the glass storey itself - the classic waist.
+      COATING: brick armoured; the glass storey is one or two big walls so the
+      whole dining room goes at once.
+      WATCH: do not put a brick pier through the glass storey "to be safe" - it
+      kills the move. The roof deck is allowed to be held only by glass.
+
+ LV6  WATERSLIDE TOWER           brick+glass  14x11x7   ~220 entries
+      Stair tower, stepped diagonal glass tube descending to a pool rim,
+      separate ticket kiosk.
+      SUPPORT TARGET: the slide's props.
+      COATING: brick armoured.
+      WATCH: the highest-risk level in the mission for R2. The tube is a
+      diagonal run; every 2-3 cells of it needs a prop underneath, and each
+      prop is its own 1xN wall. A tube attached only to the tower's flank will
+      hang forever. Consider proving this one in the Smash Builder gameplay tab
+      before delivering.
+
+ LV7  LIGHTHOUSE                 all three    9x14x6    ~230 entries
+      Concrete rock base, tapering brick shaft stepping in twice, glass lantern
+      room, keeper's cottage at the foot.
+      SUPPORT TARGET: one side of the shaft - the whole tower rides down onto
+      the cottage.
+      COATING: brick AND CONCRETE armoured from here on.
+      WATCH: FIRST CANNON-GATED LEVEL. Rock does 0 damage to concrete at every
+      level, so the concrete base cannot be cleared with the starting
+      ammunition at all. Either the base is small enough to be knocked down by
+      the collapsing shaft rather than shot, or the level is explicitly a
+      Cannon wall. Decide deliberately and write it in the manifest.
+
+ LV8  SEA FORT                   all three    12x10x8   ~270 entries
+      Squat concrete casemate on a stone plinth, brick barracks in the open
+      court, glass observation slit band, loose battlement caps.
+      SUPPORT TARGET: none - this is the mission's one anatomy level. The
+      player shoots through the slit band and guts the brick interior.
+      COATING: brick and concrete armoured.
+      WATCH: the concrete shell must not enclose the brick so completely that
+      a Rock player can do nothing. The slit band is the way in and must be
+      wide enough to shoot through at a shallow angle.
+
+ LV9  BOARDWALK RESORT (BOSS)    all three    16x12x10  ~340 entries
+      Lifeguard tower + beach bar + short pier stub sharing one beach.
+      SUPPORT TARGET: three of them, and the pier deck can be dropped onto the
+      bar's roof.
+      COATING: brick and concrete armoured.
+      WATCH: entries and loose bodies both near the ceiling. Keep loose under
+      150 and total under 400. Three structures means three separate wall
+      families - nothing may weld across the gaps between them.
+
+BUDGET REMINDERS
+    entries by band: tutorial 50-120, mid 120-220, hard 220-350, boss 280-400
+    loose bodies <= 150 on the opening frame, always
+    wall size 4-24 cells, hard bounds 2 and 30
+    grid <= 16 wide, 14 tall, 12 layers
+
+
+================================================================================
+7. ORDER OF WORK
+================================================================================
+
+    1. Concept image at true cell resolution, one level at a time.
+    2. Review against section 3 and 6 - is there a support target? does every
+       raised mass sit over a leg? is it within grid and budget?
+    3. Build the JSON. Legs and posts as 1xN single-material walls; masses by
+       face and storey; brick_2x1 merge only where the wall is larger than 2.
+    4. Coating: set nothing on brick (armoured is the default); set
+       "bare": true on glass everywhere, and on concrete for LV1-6 - there is
+       no concrete before LV7, so in practice only glass carries the flag until
+       the lighthouse.
+    5. Validate. Zero errors, and read the footing lines specifically.
+    6. Voxel-render the JSON and put it beside the concept. The JSON ships.
+    7. Play it in the Smash Builder "Review gameplay" tab. Confirm the support
+       target actually works and that nothing is left hanging at the end.
+    8. Deliver .json + render + manifest line: id, grid, entries, walls, loose,
+       materials, coating, support target, Cannon-gated yes/no.
+
+
+================================================================================
+8. CHECKLIST PER LEVEL
+================================================================================
+
+    [ ] there is a named support target of 4-8 cells that brings down more than
+        its own weight
+    [ ] every raised mass has a cell directly over a leg (R1); no body is held
+        only from the side (R2)
+    [ ] each leg / post / pile is its own 1xN wall (R4, 4.1)
+    [ ] no two-wide holes stranding a face (4.2); no 2-cell wall merged to one
+        entry (4.3)
+    [ ] closed four-walled box? only LV7 and LV8 are allowed one
+    [ ] panel/weld chosen on purpose per wall (section 5)
+    [ ] brick armoured; glass bare; concrete armoured from LV7, bare before
+    [ ] validator 0 errors, 0 unfooted, 0 floating
+    [ ] entries in band, loose <= 150, walls 4-24 cells
+    [ ] Cannon-gating decided and written down (LV7-9)
+    [ ] played once in Review gameplay, ends at 100%
+
+================================================================================
+END
+================================================================================

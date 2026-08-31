@@ -127,11 +127,18 @@ namespace GameJam.EditorTools
 
                 generated.gameObject.name = $"Map_{Sanitize(id)}";
 
-                // BEFORE the prefab is saved, not after: SaveAsPrefabAsset nulls out any
-                // reference to a scene-only object, so a runtime mesh still on a wall at save
-                // time is silently dropped and the wall bakes invisible. Making the meshes
-                // assets first is what lets the save keep them.
-                PersistRuntimeMeshes(generated, meshPath);
+                // Only the welded-mesh path needs this. Those meshes are created at build time
+                // and belong to the scene, and SaveAsPrefabAsset nulls any scene-only reference,
+                // so they have to become assets first or the wall bakes invisible.
+                //
+                // The default path draws walls with instances of the block prefabs instead, which
+                // reference meshes that already exist in the FBX. Nothing is generated, so there
+                // is nothing to persist - and the bake stops writing the mesh assets that were
+                // costing 122 MB across the campaign against 1.4 MB of source JSON.
+                if (authoring.WallVisual == KnockdownLayoutMapAuthoring.WallVisualMode.WeldedMesh)
+                {
+                    PersistRuntimeMeshes(generated, meshPath);
+                }
 
                 return PrefabUtility.SaveAsPrefabAsset(generated.gameObject, path);
             }

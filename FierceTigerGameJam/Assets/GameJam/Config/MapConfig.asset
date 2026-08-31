@@ -17,59 +17,104 @@ MonoBehaviour:
     displayName: Lv1_BrickHut
     mapJson: {fileID: 4900000, guid: 33de7f9f8207449eac9787a252ad1239, type: 3}
     clearedImage: {fileID: 0}
-    mapPrefab: {fileID: 3947291602998460191, guid: c67d673f2d2df4a219bee1f4f990fa56, type: 3}
+    mapPrefab: {fileID: 3984841179330146161, guid: c67d673f2d2df4a219bee1f4f990fa56, type: 3}
   - id: map_002_brick_courtyard_tower
     displayName: Lv2_CourtyardTower
     mapJson: {fileID: 4900000, guid: 4d5abc70557a46659f959b7e25a3d11a, type: 3}
     clearedImage: {fileID: 0}
-    mapPrefab: {fileID: 3773937330691510066, guid: 3f77c95ad32be4025a3f440e4945ce40, type: 3}
+    mapPrefab: {fileID: 6694967462046983419, guid: 3f77c95ad32be4025a3f440e4945ce40, type: 3}
   - id: map_003_three_storey_brick_house
     displayName: Lv3_BrickHouse
     mapJson: {fileID: 4900000, guid: 4a990d22cedc46558e25362891108363, type: 3}
     clearedImage: {fileID: 0}
-    mapPrefab: {fileID: 8592458664444637852, guid: 1637ba7f15b774f1c85d710ea51f24b1, type: 3}
+    mapPrefab: {fileID: 7490426196595993831, guid: 1637ba7f15b774f1c85d710ea51f24b1, type: 3}
   - id: map_004_glass_belt_warehouse
     displayName: Lv4_GlassWarehouse
     mapJson: {fileID: 4900000, guid: f17336afdd0240e7af3f4691a3984b1f, type: 3}
     clearedImage: {fileID: 0}
-    mapPrefab: {fileID: 2541684423160722876, guid: e6114b4066df8482191f59ef67d5df70, type: 3}
+    mapPrefab: {fileID: 6259731212544218258, guid: e6114b4066df8482191f59ef67d5df70, type: 3}
   - id: map_005_two_storey_glass_house
     displayName: Lv5_GlassHouse
     mapJson: {fileID: 4900000, guid: 0d5970e111dd4ad8902cce8f741f4e85, type: 3}
     clearedImage: {fileID: 0}
-    mapPrefab: {fileID: 3850646149118786727, guid: 317d464abe00b4a7a9506647374bb3df, type: 3}
+    mapPrefab: {fileID: 1324923507142011710, guid: 317d464abe00b4a7a9506647374bb3df, type: 3}
   - id: map_006_large_glass_school
     displayName: Lv6_GlassSchool
     mapJson: {fileID: 4900000, guid: d9f60dc5268e4b8982fb5cbd149a6641, type: 3}
     clearedImage: {fileID: 0}
-    mapPrefab: {fileID: 7683209888388990013, guid: fa61f52a7f81745ad9cbdf7d03d204d9, type: 3}
+    mapPrefab: {fileID: 2111717708905385307, guid: fa61f52a7f81745ad9cbdf7d03d204d9, type: 3}
   - id: map_007_concrete_frame_school
     displayName: Lv7_ConcreteSchool
     mapJson: {fileID: 4900000, guid: 82524444ebce41b28987dd2f2bf7ebc1, type: 3}
     clearedImage: {fileID: 0}
-    mapPrefab: {fileID: 5655548943175937034, guid: 9ef5134852e0e441286ffc203ac6beb7, type: 3}
+    mapPrefab: {fileID: 4455631235757065902, guid: 9ef5134852e0e441286ffc203ac6beb7, type: 3}
   - id: 2
     displayName: Lv8_Test03
     mapJson: {fileID: 4900000, guid: a13cb7943dcef4bdea76152dc42f5be7, type: 3}
     clearedImage: {fileID: 0}
-    mapPrefab: {fileID: 160327637877616183, guid: ce5f22eb667534e4c852cd9e4e937237, type: 3}
+    mapPrefab: {fileID: 4466548137685234167, guid: ce5f22eb667534e4c852cd9e4e937237, type: 3}
   - id: map_009_hollow_concrete_tower
     displayName: Lv9_ConcreteTower
     mapJson: {fileID: 4900000, guid: f6847a4a8bb7494ca0f8184e536c8d5f, type: 3}
     clearedImage: {fileID: 0}
-    mapPrefab: {fileID: 613725957815480922, guid: 8f6d905c432fe4991850fe3a606c2f11, type: 3}
+    mapPrefab: {fileID: 2575303339951593569, guid: 8f6d905c432fe4991850fe3a606c2f11, type: 3}
   - id: map_004_level_01
     displayName: Dev_Map4
     mapJson: {fileID: 4900000, guid: 2b284764977d49c4838b89abadb49883, type: 3}
     clearedImage: {fileID: 0}
-    mapPrefab: {fileID: 3377731265729325315, guid: c532ab0cc47114c448761e418615a7bd, type: 3}
+    mapPrefab: {fileID: 1335597902753117549, guid: c532ab0cc47114c448761e418615a7bd, type: 3}
   - id: map_005_level_02
     displayName: Dev_Map5
     mapJson: {fileID: 4900000, guid: a7291f514ac74c38bcea95dea72d25c4, type: 3}
     clearedImage: {fileID: 0}
-    mapPrefab: {fileID: 7822960996675688769, guid: 2f29f25d81462443ca535b7349814b69, type: 3}
+    mapPrefab: {fileID: 3247727268652105832, guid: 2f29f25d81462443ca535b7349814b69, type: 3}
   - id: map_005_two_storey_hollow_courtyard
     displayName: Dev_Courtyard
     mapJson: {fileID: 4900000, guid: edb0a418312e45a2aebf63dc6e636809, type: 3}
     clearedImage: {fileID: 0}
-    mapPrefab: {fileID: 7800221713251106459, guid: 5a1baf4b2470e4e38ab7acdf2b19b74d, type: 3}
+    mapPrefab: {fileID: 3757198326760958647, guid: 5a1baf4b2470e4e38ab7acdf2b19b74d, type: 3}
+  - id: map_m2_001_beach_hut_row
+    displayName: M2_1_BeachHuts
+    mapJson: {fileID: 4900000, guid: d261c0c5b1ab5431dbc8bd893d439cba, type: 3}
+    clearedImage: {fileID: 0}
+    mapPrefab: {fileID: 4030335373680409476, guid: 85f5ab82330f8437a84454ffda379a5f, type: 3}
+  - id: map_m2_002_lifeguard_tower
+    displayName: M2_2_Lifeguard
+    mapJson: {fileID: 4900000, guid: 69e99277fd22b41c88836993588e958b, type: 3}
+    clearedImage: {fileID: 0}
+    mapPrefab: {fileID: 2585229056095844082, guid: 3507d8461b20b41619fbc9bd6b52ef2b, type: 3}
+  - id: map_m2_003_the_pier
+    displayName: M2_3_Pier
+    mapJson: {fileID: 4900000, guid: a4fec39b831cf47c6854922a67878634, type: 3}
+    clearedImage: {fileID: 0}
+    mapPrefab: {fileID: 3412339097695245796, guid: acffc9725259445adb3a4ff1beb788c7, type: 3}
+  - id: map_m2_004_beach_bar
+    displayName: M2_4_BeachBar
+    mapJson: {fileID: 4900000, guid: c7c4d98b663bb452bb79ca756e08dab0, type: 3}
+    clearedImage: {fileID: 0}
+    mapPrefab: {fileID: 5144640921258097416, guid: 68e3bfb72d0304de080d7ab91f2a0e52, type: 3}
+  - id: map_m2_005_seaview_restaurant
+    displayName: M2_5_Restaurant
+    mapJson: {fileID: 4900000, guid: 350a3f34f87ca440397142ff96fa57cd, type: 3}
+    clearedImage: {fileID: 0}
+    mapPrefab: {fileID: 4447044266368150955, guid: 1bcc981da8db34591b26131aadecd850, type: 3}
+  - id: map_m2_006_waterslide_tower
+    displayName: M2_6_Waterslide
+    mapJson: {fileID: 4900000, guid: 5aa07ad91b99749f4b4ba4aaac33a798, type: 3}
+    clearedImage: {fileID: 0}
+    mapPrefab: {fileID: 3952144792002088229, guid: 1161d89fcc46847cda12ebbd25380965, type: 3}
+  - id: map_m2_007_lighthouse
+    displayName: M2_7_Lighthouse
+    mapJson: {fileID: 4900000, guid: 8c678424535d441ad9395777d894f50a, type: 3}
+    clearedImage: {fileID: 0}
+    mapPrefab: {fileID: 1334669215169695057, guid: 4e29c088ac76c4a8c98c8347f4f5dae6, type: 3}
+  - id: map_m2_008_sea_fort
+    displayName: M2_8_SeaFort
+    mapJson: {fileID: 4900000, guid: c20c5363847ec41a298ae40b899c2e42, type: 3}
+    clearedImage: {fileID: 0}
+    mapPrefab: {fileID: 1900368047030794874, guid: d06184d5ee22f406a90b1cc172749cf0, type: 3}
+  - id: map_m2_009_boardwalk_resort
+    displayName: M2_9_Boardwalk
+    mapJson: {fileID: 4900000, guid: 7be3fdb1947e24713b715bbfe27f0084, type: 3}
+    clearedImage: {fileID: 0}
+    mapPrefab: {fileID: 3613028386299283939, guid: fbff59cd5b6c64bdb914f595dddec35d, type: 3}

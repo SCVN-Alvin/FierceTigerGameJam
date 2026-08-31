@@ -73,3 +73,48 @@ MonoBehaviour:
     passMapRewardId: pass_map_6
     clearMapRewardId: clear_map_6
     bulletPickLimit: 25
+  - mapId: map_m2_001_beach_hut_row
+    requiredClearPercent: 0.8
+    passMapRewardId: pass_map_10
+    clearMapRewardId: clear_map_10
+    bulletPickLimit: 12
+  - mapId: map_m2_002_lifeguard_tower
+    requiredClearPercent: 0.8
+    passMapRewardId: pass_map_11
+    clearMapRewardId: clear_map_11
+    bulletPickLimit: 12
+  - mapId: map_m2_003_the_pier
+    requiredClearPercent: 0.8
+    passMapRewardId: pass_map_12
+    clearMapRewardId: clear_map_12
+    bulletPickLimit: 14
+  - mapId: map_m2_004_beach_bar
+    requiredClearPercent: 0.8
+    passMapRewardId: pass_map_13
+    clearMapRewardId: clear_map_13
+    bulletPickLimit: 16
+  - mapId: map_m2_005_seaview_restaurant
+    requiredClearPercent: 0.8
+    passMapRewardId: pass_map_14
+    clearMapRewardId: clear_map_14
+    bulletPickLimit: 16
+  - mapId: map_m2_006_waterslide_tower
+    requiredClearPercent: 0.8
+    passMapRewardId: pass_map_15
+    clearMapRewardId: clear_map_15
+    bulletPickLimit: 18
+  - mapId: map_m2_007_lighthouse
+    requiredClearPercent: 0.8
+    passMapRewardId: pass_map_16
+    clearMapRewardId: clear_map_16
+    bulletPickLimit: 18
+  - mapId: map_m2_008_sea_fort
+    requiredClearPercent: 0.8
+    passMapRewardId: pass_map_17
+    clearMapRewardId: clear_map_17
+    bulletPickLimit: 20
+  - mapId: map_m2_009_boardwalk_resort
+    requiredClearPercent: 0.8
+    passMapRewardId: pass_map_18
+    clearMapRewardId: clear_map_18
+    bulletPickLimit: 22

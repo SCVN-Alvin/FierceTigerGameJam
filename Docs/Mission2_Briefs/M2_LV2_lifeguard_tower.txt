@@ -1,0 +1,75 @@
+================================================================================
+SMASH - MISSION 2 - LEVEL 2 BRIEF
+LIFEGUARD TOWER
+================================================================================
+Read first: SMASH_Mission2_Production_Guide (the mission's rules)
+Also binding: SMASH_MapJSON_Spec_and_Review · SMASH_JSON_Cloning_Handbook
+              SMASH_WallCoating_Spec
+Deliver: m2_02_lifeguard_tower.json + voxel render + manifest line
+================================================================================
+
+THE PITCH
+    A small cabin with a peaked roof standing on four tall thin legs, with a long
+    ramp leaning up to its door. The mission's first pure leg-cut, and the level
+    that teaches the whole Mission 2 lesson in one shot.
+
+HARD CONSTRAINTS
+    map id        m2_02_lifeguard_tower
+    grid          8 wide x 11 tall x 6 layers
+    entries       ~130
+    materials     brick only
+    band          mid (120-220)
+    loose bodies  <= 30
+
+THE SUPPORT TARGET   <-- the reason this level exists
+    Two legs on the same side. The cabin belly-flops off its remaining legs and
+    lands flat. The ramp is a separate body and comes down on its own a beat
+    later - a free second thud.
+
+BUILD RECIPE
+    - Legs: four columns at the corners of the cabin footprint, rows y0-y5, one
+      cell wide, each its OWN wall (6 cells). They will render as smooth
+      stanchions, which is exactly the look wanted.
+    - Cabin floor: row y6. MUST include the four cells directly on top of the leg
+      tops. This is the level's one non-negotiable geometry rule.
+    - Cabin body: rows y7-y9, one cell thick, hollow, with a doorway 1 wide x 2
+      tall facing the ramp and a 1-wide window on the seaward side.
+    - Peaked roof: row y10, a ridge narrower than the body so the silhouette
+      comes to a point.
+    - Ramp: ONE CELL DEEP in z. A stepped diagonal run from the ground up to the
+      doorway, authored as 2-3 short walls, each footed on the ground or on the
+      step below it. It leans against the tower but must not depend on it.
+    - Loose: 3-5 single bricks - a flag block on the roof, a buoy at the foot.
+
+COATING FLAGS
+    brick    armoured - leave the flag out entirely
+
+PANEL / WELD INTENT
+    The four legs are 1x6 solid rectangles - they render smooth, and should.
+    The cabin has openings so it welds. Leave both alone.
+
+WATCH OUT
+    - The concept image is already reviewed and approved at v2. Two orders carry
+      over from that review: the legs are honestly 6 rows tall in the grid, and
+      the ramp is one cell deep, not a solid wedge.
+    - The ramp must not be a floating diagonal. Every ramp segment needs a cell
+      under it - either the ground or the previous step. A ramp hanging off the
+      cabin will never fall and will block the 100% clear.
+    - Do not thicken the legs to two cells "for stability". Thin legs are the
+      point; the physics does not need them.
+
+IMAGE PROMPT (render at 1 brick = 1 cell of the grid above)
+    "isometric voxel lifeguard tower, small cube-block hut with a peaked roof
+    standing on four tall thin single-block legs, a stepped ramp leaning up to the
+    door, sandy brick cubes, chunky blocks, plain white background"
+
+ACCEPTANCE
+    [ ] validator: 0 errors, 0 unfooted walls, 0 floating loose blocks
+    [ ] every raised mass has a cell directly over a leg
+    [ ] support target verified in Smash Builder "Review gameplay": cutting it
+        brings down more than its own weight, and the map ends at 100%
+    [ ] voxel render matches the concept; if they differ the JSON ships
+    [ ] entries in band, walls 4-24 cells, loose within cap
+    [ ] manifest: id, grid, entries, walls, loose, materials, coating,
+        support target, Cannon-gated yes/no
+================================================================================

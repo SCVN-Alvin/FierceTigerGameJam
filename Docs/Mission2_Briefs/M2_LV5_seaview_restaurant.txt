@@ -1,0 +1,75 @@
+================================================================================
+SMASH - MISSION 2 - LEVEL 5 BRIEF
+SEAVIEW RESTAURANT
+================================================================================
+Read first: SMASH_Mission2_Production_Guide (the mission's rules)
+Also binding: SMASH_MapJSON_Spec_and_Review · SMASH_JSON_Cloning_Handbook
+              SMASH_WallCoating_Spec
+Deliver: m2_05_seaview_restaurant.json + voxel render + manifest line
+================================================================================
+
+THE PITCH
+    A two-storey block: solid brick ground floor, an entire storey of glass above
+    it as the panorama dining room, and a brick roof terrace on top. The glass
+    waist - the building visibly sits on its own weakest floor.
+
+HARD CONSTRAINTS
+    map id        m2_05_seaview_restaurant
+    grid          12 wide x 9 tall x 7 layers
+    entries       ~200
+    materials     brick + glass
+    band          mid (120-220)
+    loose bodies  <= 40
+
+THE SUPPORT TARGET   <-- the reason this level exists
+    The glass storey itself. Break the dining room and the whole roof terrace drops
+    straight through it onto the ground floor. Glass is 1 HP; this is the cheapest
+    big collapse in the mission and the player should feel clever for seeing it.
+
+BUILD RECIPE
+    - Ground floor: rows y0-y3, full perimeter x0-x11 by z0-z6, one cell thick,
+      hollow, with a wide entrance 3 wide x 3 tall.
+    - Glass storey: rows y4-y6, THE ENTIRE PERIMETER IN GLASS. No brick corner
+      piers, no brick mullions. Group it as 4-6 walls (one per face, split by
+      size) so a hit anywhere in a face releases that whole face.
+    - Roof terrace: rows y7-y8, brick, with a low parapet and loose parasol stubs
+      on top. Heavy enough to fall convincingly.
+    - Interior: one row of floor slab at y4 inside the glass storey, so the drop
+      pancakes in two stages instead of one.
+    - Loose: 6-10 parasol stubs and table blocks on the terrace.
+
+COATING FLAGS
+    brick    armoured - leave the flag out entirely
+    glass    "bare": true on every glass wall
+
+PANEL / WELD INTENT
+    The glass faces are single-layer rectangles and render smooth - that is the
+    right look for a panorama window, keep it.
+    The brick floors weld. Nothing to force.
+
+WATCH OUT
+    - DO NOT put a brick pier through the glass storey to "hold the roof up". The
+      roof being held only by glass IS the level. The engine is fine with it: the
+      roof is footed on the glass, and when the glass goes the roof is released
+      because the glass sat directly under it.
+    - Keep the glass storey exactly three rows. Two reads as a window band, four
+      makes the building look like an aquarium.
+    - Watch the entry count: a full-perimeter glass storey is 3 rows x ~34
+      perimeter cells = ~100 cells on its own. Hollow the ground floor hard.
+
+IMAGE PROMPT (render at 1 brick = 1 cell of the grid above)
+    "isometric voxel seaside restaurant, solid sandy brick ground floor, the
+    entire middle storey made of pale blue glass with no columns, brick rooftop
+    terrace with small blocks and parasols on it, chunky cube blocks, plain white
+    background"
+
+ACCEPTANCE
+    [ ] validator: 0 errors, 0 unfooted walls, 0 floating loose blocks
+    [ ] every raised mass has a cell directly over a leg
+    [ ] support target verified in Smash Builder "Review gameplay": cutting it
+        brings down more than its own weight, and the map ends at 100%
+    [ ] voxel render matches the concept; if they differ the JSON ships
+    [ ] entries in band, walls 4-24 cells, loose within cap
+    [ ] manifest: id, grid, entries, walls, loose, materials, coating,
+        support target, Cannon-gated yes/no
+================================================================================

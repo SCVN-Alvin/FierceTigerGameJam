@@ -1,0 +1,251 @@
+================================================================================
+SMASH - MISSION 2 - LAYOUT RECIPES
+Eight remaining levels, laid out the way LV2 is laid out
+Reads with: SMASH_Mission2_Production_Guide
+Project: Demolition Contracts (FierceTigerGameJam)     Revision 1 - 2026-08-30
+================================================================================
+
+THE PATTERN, LOCKED
+    Taken from map_m2_002_lifeguard_tower, the approved layout. Every level
+    below follows it.
+
+    8 x 11 x 6 · 102 entries · 15 walls · 0 loose
+
+      leg_front_left      6   x1     y0-5   z1      one cell wide, its own wall
+      leg_front_right     6   x5     y0-5   z1
+      leg_back_left       6   x1     y0-5   z4
+      leg_back_right      6   x5     y0-5   z4
+      deck_left          10   x1-3   y6     z1-5    slab split in two halves
+      deck_right         10   x4-6   y6     z1-5
+      cabin_front_left    2   x1     y7-8   z1      shell in small named pieces
+      cabin_front_right   2   x4-5   y7-8   z1
+      cabin_left          3   x1     y7-8   z2-3
+      cabin_right         4   x5     y7-8   z2-3
+      cabin_back          6   x1-5   y7-8   z4
+      roof_eave_left      8   x0-2   y9     z1-4    eave row, overhangs
+      roof_eave_right     8   x3-5   y9     z1-4
+      roof_ridge          3   x1-5   y10    z2      one ridge row on top
+      stair_ramp         22   x7     y0-6   z0-5    one wall, runs in depth
+
+    WHAT MAKES IT WORK - carry all six into every level below
+      1. LEAN. ~100 entries, small grid. Nothing is thickened "to be safe".
+      2. Every leg / post / pile is ONE cell wide and ITS OWN wall.
+      3. Horizontal slabs split LEFT / RIGHT, so half can drop while half stands.
+      4. The shell is many small named pieces, not one box.
+      5. Roof = an eave row that overhangs + a ridge row on top. Two rows, and
+         that is what makes a hut read as a hut.
+      6. ZERO loose blocks. No scattered debris.
+
+    NAMING: <part>_<position>. leg_, post_, pile_, deck_, floor_, wall_,
+    cabin_, roof_eave_, roof_ridge_, stair_, kiosk_. Readable in the hierarchy.
+
+    COATING: Mission 2 has brick armoured everywhere - just leave the flag out.
+    Glass gets "bare": true. Concrete is armoured from LV7, so also no flag.
+
+
+================================================================================
+LV1  BEACH HUT ROW                      14 x 6 x 5      ~100 entries
+================================================================================
+Three tiny huts side by side on short stilts, three different roofs. Three
+separate toys - the level teaches choosing a target.
+
+    Hut A x0-2 · Hut B x5-7 · Hut C x10-12 · all at z1-3 · gaps at x3-4, x8-9
+
+    per hut (repeat with the hut's own prefix a_ / b_ / c_):
+      <h>_stilt_fl        2   x(left)   y0-1   z1
+      <h>_stilt_fr        2   x(right)  y0-1   z1
+      <h>_stilt_bl        2   x(left)   y0-1   z3
+      <h>_stilt_br        2   x(right)  y0-1   z3
+      <h>_floor           9   3x3       y2     z1-3      covers all four stilts
+      <h>_shell_front     ~7  ring half y3-4             L-shape, wraps a corner
+      <h>_shell_back      ~7  ring half y3-4             the other L
+      <h>_roof            9   3x3       y5     z1-3
+
+    roofs differ: A flat 3x3 · B stepped (3x3 at y5 plus a 1x1 at the centre)
+    · C peaked (a single ridge line x(mid) at y5)
+
+    CUT: two stilts on one side of any hut. It tips into its neighbour.
+    WATCH: no wall may contain cells from two huts. Check the wall list.
+
+
+================================================================================
+LV3  THE PIER                           10 x 7 x 11     ~150 entries
+================================================================================
+A boardwalk running away from the player on four pile bents, kiosk at the far
+end. The depth level - the only one that uses z as its subject.
+
+      pile_a_left / a_right    4 ea   x3 / x6   y0-3   z0     bent A, nearest
+      beam_a                   4      x3-6      y4     z0
+      pile_b_left / b_right    4 ea   x3 / x6   y0-3   z3
+      beam_b                   4      x3-6      y4     z3
+      pile_c_left / c_right    4 ea   x3 / x6   y0-3   z6
+      beam_c                   4      x3-6      y4     z6
+      pile_d_left / d_right    4 ea   x3 / x6   y0-3   z9
+      beam_d                   4      x3-6      y4     z9
+      deck_near               ~20     x2-7      y5     z0-4
+      deck_far                ~24     x2-7      y5     z5-10
+      rail_left / rail_right  ~11 ea  x2 / x7   y6     z0-10  broken into 3-cell runs
+      kiosk_shell_a / _b      ~10 ea  3x3 ring  y6-8   z9-10
+      kiosk_roof               9      3x3       y9     z9-10
+
+    CUT: bent A. The near deck drops, and each bent behind it follows.
+    WATCH: THE MOST LIKELY LEVEL TO PRODUCE A FLOATING DECK. deck_near must
+    contain the cells directly above piles a and b; deck_far above c and d.
+    Never put the deck and a beam in the same wall - then a cut pile does
+    nothing until the whole pier dies at once and the pancake never happens.
+
+
+================================================================================
+LV4  BEACH BAR                          12 x 7 x 7      ~140 entries
+================================================================================
+Open front, heavy flat roof on two slim posts, glass wind-screens at the sides,
+bottles on the counter.
+
+      post_left                5     x2      y0-4   z0     the only front support
+      post_right               5     x9      y0-4   z0
+      backwall_left           ~15    x0-5    y0-4   z6
+      backwall_right          ~15    x6-11   y0-4   z6
+      counter                 ~6     x3-8    y2     z4
+      screen_left             12     x0      y1-4   z1-5   GLASS, "bare": true
+      screen_right            12     x11     y1-4   z1-5   GLASS, "bare": true
+      roof_eave_left          ~21    x0-5    y5     z0-6
+      roof_eave_right         ~21    x6-11   y5     z0-6
+      roof_ridge              ~6     x4-9    y6     z3
+
+    CUT: one front post. The roof loses a corner and slaps down on the counter,
+    popping the glass on the way.
+    WATCH: the roof must NOT share a wall with the back wall, or it cannot tip.
+    Roof cells must sit directly above both posts.
+
+
+================================================================================
+LV5  SEAVIEW RESTAURANT                 12 x 9 x 7      ~170 entries
+================================================================================
+Solid brick ground floor, one entire glass storey, brick roof terrace. The
+glass waist - the building sits on its own weakest floor.
+
+      ground_front / _back    ~18 ea  x0-11   y0-3   z0 / z6
+      ground_left / _right    ~10 ea  x0 / x11 y0-3  z1-5
+      (entrance: 3 wide x 3 tall hole in ground_front, x4-6, y0-2)
+      glass_front             ~12     x0-11   y4-6   z0     GLASS, "bare": true
+      glass_back              ~12     x0-11   y4-6   z6     GLASS, "bare": true
+      glass_left / _right     ~7 ea   x0 / x11 y4-6  z1-5   GLASS, "bare": true
+      terrace_left            ~21     x0-5    y7     z0-6
+      terrace_right           ~21     x6-11   y7     z0-6
+      parapet_a / _b          ~9 ea   perimeter y8          broken in two runs
+
+    CUT: any glass face. That face releases, the terrace above it drops through.
+    WATCH: DO NOT put a brick pier through the glass storey. The terrace being
+    carried only by glass IS the level. Keep the glass exactly three rows.
+
+
+================================================================================
+LV6  WATERSLIDE TOWER                   14 x 11 x 7     ~190 entries
+================================================================================
+Brick stair tower, glass tube descending in a stepped diagonal to a pool rim,
+ticket kiosk beside it.
+
+      tower_front / _back     ~24 ea  x0-4    y0-10  z0 / z6   1-wide slits only
+      tower_left / _right     ~24 ea  x0 / x4 y0-10  z1-5
+      stair_inner             ~12     x1-3    stepped inside the tower
+      prop_1                  ~8      x6      y0-7   z3        each prop 1 cell,
+      prop_2                  ~6      x8      y0-5   z3        its own wall,
+      prop_3                  ~4      x10     y0-3   z3        standing on ground
+      prop_4                  ~2      x12     y0-1   z3
+      slide_hi                ~6      x5-7    y8 down to y6  z3  GLASS, bare
+      slide_mid               ~6      x8-10   y6 down to y4  z3  GLASS, bare
+      slide_low               ~6      x11-13  y4 down to y2  z3  GLASS, bare
+      pool_rim                ~12     x10-13  y0-1   z2-4
+      kiosk_shell / _roof     ~14     3x3     y0-3   z5-6
+
+    CUT: two props. The tube lets go and rains down the tower's flank in
+    sections. The tower survives - that is the point.
+    WATCH: HIGHEST RISK IN THE MISSION. Every slide_* wall must contain at
+    least one cell sitting DIRECTLY on a prop. A tube attached only to the
+    tower's flank is held sideways, is never released, and hangs forever.
+    Play this one in the Review gameplay tab before delivering.
+
+
+================================================================================
+LV7  LIGHTHOUSE                         9 x 14 x 6      ~180 entries
+================================================================================
+Concrete rock base, tapering brick shaft stepping in twice, glass lantern room,
+keeper's cottage at the foot. First concrete of the mission.
+
+      base_left / _right      ~14 ea  x0-8    y0-2   z0-5   CONCRETE, armoured
+      shaft_a_front / _back   ~12 ea  x1-7    y3-5   z1 / z4   storey band 1
+      shaft_a_left / _right   ~6 ea   x1 / x7 y3-5   z2-3
+      shaft_b_*               ~28     x2-6    y6-8          band 2, steps in 1
+      shaft_c_*               ~22     x3-5    y9-11         band 3, steps in 1
+      lantern_ring            ~10     x2-6    y12-13  GLASS, "bare": true
+      gallery_cap             ~6      x2-6    y13           concrete, small
+      cottage_shell_a / _b    ~10 ea  3x3     y0-2   z0-2   separate body
+      cottage_roof             9      3x3     y3     z0-2
+
+    CUT: one side of shaft band 1. The whole tower rides over onto the cottage.
+    WATCH: FIRST CANNON-GATED LEVEL. Rock does 0 to concrete at every level.
+    Keep the base to 2-3 rows so the falling shaft smashes it, OR accept that
+    the level cannot be 100%-ed on Rock. Decide and write it in the manifest.
+    The cottage must not share a wall with the base.
+
+
+================================================================================
+LV8  SEA FORT                           12 x 10 x 8     ~220 entries
+================================================================================
+Squat concrete casemate on a stone plinth with a continuous glass observation
+slit, brick barracks in the open court. The mission's anatomy level.
+
+      plinth_left / _right    ~22 ea  x0-11   y0-1   z0-7   CONCRETE
+      shell_front_a / _b      ~12 ea  x0-11   y2-3   z0     split left/right
+      shell_back_a / _b       ~12 ea  x0-11   y2-3   z7
+      shell_left / _right     ~12 ea  x0 / x11 y2-3  z1-6
+      slit_front / _back      ~12 ea  x0-11   y4-5   z0 / z7  GLASS, bare
+      slit_left / _right      ~12 ea  x0 / x11 y4-5  z1-6     GLASS, bare
+      shell_upper_a / _b      ~20 ea  perimeter y6-7
+      barrack_1_shell / _roof ~14     3x3     y2-5   z2-3   separate body
+      barrack_2_shell / _roof ~14     3x3     y2-5   z5-6   separate body
+      battlement_a / _b       ~10 ea  perimeter y8-9  alternating caps
+
+    CUT: none. The way in is the slit. Shoot through it, gut the barracks, the
+    shell is left standing over nothing.
+    WATCH: the slit must be continuous - no concrete mullions - and wide enough
+    to shoot through at a shallow angle. Barracks separate from the shell and
+    from each other. Keep the shell one cell thick or the level is a grind.
+
+
+================================================================================
+LV9  BOARDWALK RESORT  (BOSS)           16 x 12 x 10    ~300 entries
+================================================================================
+Lifeguard tower + beach bar + pier stub sharing one beach. Graduation.
+
+      TOWER at x0-5   - LV2's recipe exactly, one row shorter
+      BAR   at x7-11  - LV4's recipe, roof one row lower
+      PIER  at x12-15 - LV3's recipe, two bents instead of four
+      breakwater_a / _b   ~16 ea   x0-15   y0   z9   CONCRETE, armoured
+
+    Place them so the tower's fall line crosses the pier, and the pier deck
+    overhangs the bar's roof. Measure it - that is the level's whole design.
+
+    CUT: three of them, in order. Tower onto pier, pier onto bar.
+    WATCH: budget is the enemy - 300 entries and three structures on a grid
+    that is at its ceiling on every axis. Build each structure one size smaller
+    than its own level. Nothing may weld across the gaps between them.
+
+
+================================================================================
+CHECKLIST PER LEVEL
+================================================================================
+    [ ] every leg / post / pile is one cell wide and its own wall
+    [ ] horizontal slabs split left / right
+    [ ] roof is an eave row plus a ridge row
+    [ ] shell in small named pieces, lintels carried around a corner
+    [ ] zero loose blocks
+    [ ] every raised mass has a cell directly over a leg
+    [ ] separate structures share no wall
+    [ ] glass "bare": true; brick and concrete no flag
+    [ ] validator 0 errors, 0 unfooted, 0 floating
+    [ ] entries within the level's target, walls 4-24 cells
+
+================================================================================
+END
+================================================================================

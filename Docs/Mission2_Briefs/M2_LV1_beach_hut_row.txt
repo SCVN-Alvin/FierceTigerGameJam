@@ -1,0 +1,73 @@
+================================================================================
+SMASH - MISSION 2 - LEVEL 1 BRIEF
+BEACH HUT ROW
+================================================================================
+Read first: SMASH_Mission2_Production_Guide (the mission's rules)
+Also binding: SMASH_MapJSON_Spec_and_Review · SMASH_JSON_Cloning_Handbook
+              SMASH_WallCoating_Spec
+Deliver: m2_01_beach_hut_row.json + voxel render + manifest line
+================================================================================
+
+THE PITCH
+    Three tiny huts standing side by side on short stilts, each with a different
+    roof - flat, stepped, peaked. The mission's opening statement: these are not
+    one building, they are three toys, and you choose which one to knock over.
+
+HARD CONSTRAINTS
+    map id        m2_01_beach_hut_row
+    grid          14 wide x 6 tall x 5 layers
+    entries       ~110
+    materials     brick only
+    band          tutorial (50-120)
+    loose bodies  <= 30
+
+THE SUPPORT TARGET   <-- the reason this level exists
+    Any single hut's two stilts on one side. The hut tips off its legs and slides
+    into its neighbour, which starts the neighbour going. Two shots should be able
+    to start a three-hut chain if aimed in the right order.
+
+BUILD RECIPE
+    - Hut A occupies x0-x3, hut B x5-x8, hut C x10-x13. Leave x4 and x9 EMPTY -
+      the gaps are what make them three targets instead of one wall.
+    - Stilts: rows y0-y1. Four short posts per hut, one at each corner of its
+      footprint, each post authored as its OWN wall (2 cells, 1 wide).
+    - Floor: row y2, and it MUST include the four cells sitting directly on the
+      post tops. Without those the hut is held only from the side and will hang.
+    - Body: rows y3-y4, one cell thick, hollow. One doorway 1 wide x 2 tall per
+      hut, on different faces so the three read differently.
+    - Roofs at y5, one per hut: flat slab / stepped (two cells then one) / peaked
+      (a single ridge cell). This is the whole visual variety of the level.
+    - Loose: 4-8 single bricks as crates and buoys on the sand between the huts.
+
+COATING FLAGS
+    brick    armoured - leave the flag out entirely
+    (no glass, no concrete on this level)
+
+PANEL / WELD INTENT
+    Stilts are 1x2 solid rectangles and will render smooth - correct, they read as
+    timber posts. Hut bodies have doorways so they weld and show blocks - correct.
+    Nothing to force either way.
+
+WATCH OUT
+    - The optimizer must NOT weld two huts into one body across the x4 / x9 gaps.
+      Check the wall list: no wall may contain cells from two different huts.
+    - A 2-cell stilt wall must not have its two bricks merged into one brick_2x1;
+      that leaves a one-block wall, which the engine demotes to a loose block.
+    - Keep it small. This is the tutorial band; 110 entries, not 160.
+
+IMAGE PROMPT (render at 1 brick = 1 cell of the grid above)
+    "isometric voxel beach huts, three small cube-block cabins side by side with
+    different roofs - one flat, one stepped, one peaked - each raised on four
+    short stilts above flat sand, sandy brick tones, chunky cube blocks, plain
+    white background, no ground texture"
+
+ACCEPTANCE
+    [ ] validator: 0 errors, 0 unfooted walls, 0 floating loose blocks
+    [ ] every raised mass has a cell directly over a leg
+    [ ] support target verified in Smash Builder "Review gameplay": cutting it
+        brings down more than its own weight, and the map ends at 100%
+    [ ] voxel render matches the concept; if they differ the JSON ships
+    [ ] entries in band, walls 4-24 cells, loose within cap
+    [ ] manifest: id, grid, entries, walls, loose, materials, coating,
+        support target, Cannon-gated yes/no
+================================================================================

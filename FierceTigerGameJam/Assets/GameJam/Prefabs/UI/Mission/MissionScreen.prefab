@@ -67,17 +67,22 @@ MonoBehaviour:
     - map_007_concrete_frame_school
     - 2
     - map_009_hollow_concrete_tower
+  - locked: 0
+    slotMapIds:
+    - map_m2_001_beach_hut_row
+    - map_m2_002_lifeguard_tower
+    - map_m2_003_the_pier
+    - map_m2_004_beach_bar
+    - map_m2_005_seaview_restaurant
+    - map_m2_006_waterslide_tower
+    - map_m2_007_lighthouse
+    - map_m2_008_sea_fort
+    - map_m2_009_boardwalk_resort
   - locked: 1
     slotMapIds:
     - map_004_level_01
     - map_005_level_02
     - map_005_two_storey_hollow_courtyard
-    - 
-    - 
-    - 
-    - 
-    - 
-    - 
   missionTitle: {fileID: 7690073280359268874}
   previousMissionButton: {fileID: 5119333212499603365}
   nextMissionButton: {fileID: 5830249466207725138}

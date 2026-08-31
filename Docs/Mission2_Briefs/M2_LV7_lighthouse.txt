@@ -1,0 +1,83 @@
+================================================================================
+SMASH - MISSION 2 - LEVEL 7 BRIEF
+LIGHTHOUSE
+================================================================================
+Read first: SMASH_Mission2_Production_Guide (the mission's rules)
+Also binding: SMASH_MapJSON_Spec_and_Review · SMASH_JSON_Cloning_Handbook
+              SMASH_WallCoating_Spec
+Deliver: m2_07_lighthouse.json + voxel render + manifest line
+================================================================================
+
+THE PITCH
+    A concrete rock base, a tapering brick shaft that steps in twice as it climbs,
+    a glass lantern room at the top, and a keeper's cottage at the foot. The
+    tallest topple in the game, and the mission's first concrete.
+
+HARD CONSTRAINTS
+    map id        m2_07_lighthouse
+    grid          9 wide x 14 tall x 6 layers
+    entries       ~230
+    materials     brick + glass + concrete
+    band          hard (220-350)
+    loose bodies  <= 50
+
+THE SUPPORT TARGET   <-- the reason this level exists
+    One side of the shaft, low down. Weaken it and the entire tower rides over,
+    lantern and all, and lands on the cottage. The cottage is destroyed by the
+    tower, not by the player.
+
+BUILD RECIPE
+    - Base: rows y0-y2, concrete, a squat plinth wider than the shaft. Read the
+      Cannon-gating note below before deciding its size.
+    - Shaft: rows y3-y11, brick, hollow, one cell thick. Footprint steps in by one
+      cell at y6 and again at y9 - each ledge is a debris shelf on the way down.
+      Band the shaft into storeys of 3 rows so it fails floor by floor.
+    - Lantern room: rows y12-y13, glass all round, with a loose concrete gallery
+      cap ring at y13 that rains down separately.
+    - Cottage: a 3x3x3 brick hut at the foot on the side the tower will fall
+      towards. Do not connect it to the base - it must be a separate body so it is
+      crushed rather than co-destroyed.
+    - Loose: 6-10 gallery caps and rocks around the base.
+
+COATING FLAGS
+    brick     armoured - leave the flag out entirely
+    concrete  armoured FROM THIS LEVEL ON - leave the flag out
+    glass     "bare": true on every glass wall
+
+PANEL / WELD INTENT
+    The concrete plinth faces are likely to be solid single-layer rectangles and
+    will render smooth - correct, it reads as poured stone.
+    The tapering shaft has openings and steps, so it welds. Correct.
+
+WATCH OUT
+    FIRST CANNON-GATED LEVEL - DECIDE THIS DELIBERATELY AND WRITE IT DOWN.
+    Rock does 0 damage to concrete at every level, not slow damage - zero. A
+    player on the starting ammunition cannot remove one concrete cell by shooting.
+    Two honest options:
+      a) Keep the base small (2-3 rows, tight footprint) and rely on the falling
+         shaft to smash it. The level is then clearable on Rock, hard but fair.
+      b) Make the base substantial and accept that the level cannot be 100%-ed
+         until the Cannon is bought. That is a legitimate paywall-free unlock, but
+         it must be a decision, not an accident.
+    State which one in the manifest.
+    - The shaft must actually topple, not crumble in place. Storey banding plus a
+      hollow core is what makes it fall as a tower.
+    - 14 rows is the tallest grid in the mission. Keep the footprint small (9
+      wide) or the entry count runs away.
+
+IMAGE PROMPT (render at 1 brick = 1 cell of the grid above)
+    "isometric voxel lighthouse, grey concrete rock base, tapering sandy brick
+    tower stepping inward twice as it rises, pale blue glass lantern room at the
+    top with a grey gallery rail, small brick keeper's cottage at the foot,
+    chunky cube blocks, plain white background"
+
+ACCEPTANCE
+    [ ] validator: 0 errors, 0 unfooted walls, 0 floating loose blocks
+    [ ] every raised mass has a cell directly over a leg
+    [ ] support target verified in Smash Builder "Review gameplay": cutting it
+        brings down more than its own weight, and the map ends at 100%
+    [ ] voxel render matches the concept; if they differ the JSON ships
+    [ ] entries in band, walls 4-24 cells, loose within cap
+    [ ] manifest: id, grid, entries, walls, loose, materials, coating,
+        support target, Cannon-gated yes/no
+================================================================================

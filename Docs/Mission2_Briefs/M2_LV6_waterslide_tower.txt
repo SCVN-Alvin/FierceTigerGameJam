@@ -1,0 +1,80 @@
+================================================================================
+SMASH - MISSION 2 - LEVEL 6 BRIEF
+WATERSLIDE TOWER
+================================================================================
+Read first: SMASH_Mission2_Production_Guide (the mission's rules)
+Also binding: SMASH_MapJSON_Spec_and_Review · SMASH_JSON_Cloning_Handbook
+              SMASH_WallCoating_Spec
+Deliver: m2_06_waterslide_tower.json + voxel render + manifest line
+================================================================================
+
+THE PITCH
+    A stair tower with a glass tube slide spiralling down from the top to a splash
+    pool rim, with a ticket kiosk beside it. The most sculptural silhouette in the
+    mission and the one with the most ways to go wrong.
+
+HARD CONSTRAINTS
+    map id        m2_06_waterslide_tower
+    grid          14 wide x 11 tall x 7 layers
+    entries       ~220
+    materials     brick + glass
+    band          hard (220-350)
+    loose bodies  <= 50
+
+THE SUPPORT TARGET   <-- the reason this level exists
+    The slide's props. Cut two of them and the whole glass ribbon lets go and rains
+    down the tower's flank in sequence. The tower itself survives, which is the
+    point - this level rewards attacking the thing hanging off the building rather
+    than the building.
+
+BUILD RECIPE
+    - Tower: x0-x4, rows y0-y10, hollow shell one cell thick, with 1-wide window
+      slits (NOT 2-wide, see the guide 4.2) and an internal stair of stepped brick
+      cells.
+    - Slide: a stepped diagonal run of glass cells from (x5,y9) descending to
+      (x13,y1). One cell wide, one cell deep. Group it into 3-4 walls of 4-8 cells
+      so it comes apart in sections rather than all at once.
+    - PROPS: a brick column under the slide every 2-3 cells of its run, rows from
+      the ground up to the slide. Each prop is its OWN 1xN wall. There must be a
+      slide cell sitting DIRECTLY on top of each prop.
+    - Pool rim: a low brick ring at y0-y1 around x10-x13, catching the slide's end.
+    - Kiosk: a separate 3x3x3 hut at the far side, unconnected to the tower.
+    - Loose: 5-8 single bricks - signage, buckets on the pool rim.
+
+COATING FLAGS
+    brick    armoured - leave the flag out entirely
+    glass    "bare": true on every glass wall
+
+PANEL / WELD INTENT
+    Props are 1xN rectangles - smooth, correct.
+    The slide is a diagonal so it can never be a rectangle; it welds and shows
+    individual glass segments, which reads as a tube. Correct.
+
+WATCH OUT
+    THIS IS THE HIGHEST-RISK LEVEL IN THE MISSION FOR HANGING BODIES.
+    - A slide attached only to the tower's flank is held laterally and will NEVER
+      be released. It will hang in the air for the rest of the run and make the
+      100% clear impossible. Props are not decoration; they are the mechanism.
+    - Every slide wall must contain at least one cell directly above a prop.
+      Verify per wall, not per level.
+    - Prove this level in the Smash Builder "Review gameplay" tab before
+      delivering. Cut the props, watch the tube come down, confirm the map can
+      reach 100%. Do not ship it unplayed.
+    - 14 x 11 x 7 with a tower and a kiosk runs hot on entries. Hollow everything.
+
+IMAGE PROMPT (render at 1 brick = 1 cell of the grid above)
+    "isometric voxel water slide tower, tall brick stair tower with narrow slit
+    windows, a stepped diagonal pale blue glass tube descending from the top down
+    to a low pool rim, thin brick props holding the tube up along its run, small
+    ticket kiosk to the side, chunky cube blocks, plain white background"
+
+ACCEPTANCE
+    [ ] validator: 0 errors, 0 unfooted walls, 0 floating loose blocks
+    [ ] every raised mass has a cell directly over a leg
+    [ ] support target verified in Smash Builder "Review gameplay": cutting it
+        brings down more than its own weight, and the map ends at 100%
+    [ ] voxel render matches the concept; if they differ the JSON ships
+    [ ] entries in band, walls 4-24 cells, loose within cap
+    [ ] manifest: id, grid, entries, walls, loose, materials, coating,
+        support target, Cannon-gated yes/no
+================================================================================

@@ -1,0 +1,77 @@
+================================================================================
+SMASH - MISSION 2 - LEVEL 8 BRIEF
+SEA FORT
+================================================================================
+Read first: SMASH_Mission2_Production_Guide (the mission's rules)
+Also binding: SMASH_MapJSON_Spec_and_Review · SMASH_JSON_Cloning_Handbook
+              SMASH_WallCoating_Spec
+Deliver: m2_08_sea_fort.json + voxel render + manifest line
+================================================================================
+
+THE PITCH
+    A squat concrete casemate on a stone plinth with a horizontal glass observation
+    slit, brick barracks standing in the open court inside. The mission's one
+    anatomy level: there is no leg to cut, so the player has to learn where the
+    building is soft.
+
+HARD CONSTRAINTS
+    map id        m2_08_sea_fort
+    grid          12 wide x 10 tall x 8 layers
+    entries       ~270
+    materials     brick + glass + concrete
+    band          hard (220-350)
+    loose bodies  <= 60
+
+THE SUPPORT TARGET   <-- the reason this level exists
+    None - deliberately. The way in is the glass slit band. Shoot through it at a
+    shallow angle, gut the brick barracks inside, and the concrete shell is left
+    standing over nothing. This is the level that teaches "look for the opening".
+
+BUILD RECIPE
+    - Plinth: rows y0-y1, concrete, the full footprint.
+    - Casemate shell: rows y2-y7, concrete, perimeter only, one cell thick,
+      enclosing an open court. No roof over the court.
+    - Slit band: rows y4-y5 on the front and side faces, glass, continuous. This
+      is the only way into the interior and it must be wide enough to shoot
+      through at an angle - do not break it up with concrete mullions.
+    - Barracks: two brick huts inside the court, 3x3x3 each, standing free on the
+      plinth, not touching the shell.
+    - Battlements: row y8-y9, loose concrete caps alternating along the top.
+    - Loose: 8-12 caps and rubble blocks.
+
+COATING FLAGS
+    brick     armoured - leave the flag out entirely
+    concrete  armoured - leave the flag out entirely
+    glass     "bare": true on every glass wall
+
+PANEL / WELD INTENT
+    The concrete faces are large single-layer rectangles and will render smooth -
+    correct, a casemate should look poured, and it contrasts with the blocky
+    brick barracks inside. This is the one level where the panel/weld difference
+    is doing narrative work: hard smooth shell, soft blocky interior.
+
+WATCH OUT
+    - The shell must not seal the interior. If a Rock player can see no path to
+      the barracks, the level is unwinnable on starting gear AND unreadable. Test
+      the slit's sightlines.
+    - Barracks must be separate bodies from the shell and from each other.
+    - Concrete armoured plus concrete's 6 HP makes this the tankiest level so far.
+      Keep the shell one cell thick and hollow the plinth's interior.
+    - Verify the ammunition budget against Cannon Lv1, not Rock - see LV7's note.
+
+IMAGE PROMPT (render at 1 brick = 1 cell of the grid above)
+    "isometric voxel coastal fort, low grey concrete bastion on a stone plinth
+    with a continuous horizontal pale blue glass slit around it, open courtyard
+    inside containing two small sandy brick huts, alternating grey caps along the
+    top edge, chunky cube blocks, plain white background"
+
+ACCEPTANCE
+    [ ] validator: 0 errors, 0 unfooted walls, 0 floating loose blocks
+    [ ] every raised mass has a cell directly over a leg
+    [ ] support target verified in Smash Builder "Review gameplay": cutting it
+        brings down more than its own weight, and the map ends at 100%
+    [ ] voxel render matches the concept; if they differ the JSON ships
+    [ ] entries in band, walls 4-24 cells, loose within cap
+    [ ] manifest: id, grid, entries, walls, loose, materials, coating,
+        support target, Cannon-gated yes/no
+================================================================================

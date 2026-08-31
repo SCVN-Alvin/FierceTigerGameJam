@@ -1,0 +1,260 @@
+================================================================================
+SMASH - MISSION 2 - CONCEPT ART BRIEF
+Nine beach buildings, drawn so they can actually be built
+For the AI producing concept images. Self-contained - you need no other document.
+Project: Demolition Contracts (FierceTigerGameJam)     Revision 1 - 2026-08-30
+================================================================================
+
+YOUR JOB
+    Draw nine buildings. One image per level, to the cell dimensions given in
+    section 5. That is the whole deliverable.
+
+NOT YOUR JOB
+    The map JSON. Someone else writes it from your image. Do not produce JSON,
+    wall groupings, manifests or entry counts - they will be discarded.
+
+WHY THE SPLIT
+    Your images are good. The two JSONs delivered for Level 2 were not: one had
+    the wrong id, the other had a stair six cells deep when the order said one.
+    Meanwhile the concept image you drew for that level was better than either
+    render. Play to that. Draw; the geometry is handled downstream.
+
+
+================================================================================
+1. THE ONE RULE THAT MATTERS MOST
+================================================================================
+
+    ONE BRICK IN YOUR IMAGE = ONE CELL OF THE GRID.
+
+Every building is made of cubes 0.25 m on a side. There are no smaller pieces,
+ever. If you draw a wall as a hundred little bricks and the grid says the wall
+is six cells wide, you have promised something the game cannot build, and the
+image gets rejected. This has already happened once.
+
+    Before drawing, read the grid line for that level: "12 wide x 12 tall x 6
+    deep" means exactly 12 cubes across, 12 up, 6 back. Count them in the image.
+
+    A useful self-check: can you count the cubes along the top edge and get the
+    stated width? If not, redraw.
+
+
+================================================================================
+2. THE PALETTE - THREE MATERIALS, NOTHING ELSE
+================================================================================
+
+    BRICK      warm sandy red-brown. Sand-brick, bleached timber, decking.
+               The body of almost everything in this mission.
+    GLASS      pale blue, slightly transparent. Sea-view glazing, wind screens,
+               slide tubes, lantern rooms.
+    CONCRETE   flat mid grey. Stone piers, breakwater, rock plinths, the
+               lighthouse base. Appears from Level 7 only.
+
+    No wood grain, no thatch, no fabric, no metal, no water, no sand texture.
+    The beach is carried by SHAPE, not by inventing materials.
+
+    Background: plain white or very light grey. No ground plane, no sky, no
+    scenery. The building alone.
+
+    View: isometric, three-quarter, slightly from above - the same angle for all
+    nine, so the set reads as one family.
+
+
+================================================================================
+3. WHAT MAKES A DRAWING BUILDABLE
+================================================================================
+
+3.1  EVERYTHING RAISED STANDS ON A VISIBLE LEG
+    Beach buildings sit on stilts, piles and posts, and that is the point of the
+    whole mission - the player wins by cutting the support, not by grinding the
+    mass. So every raised thing in your image must be VISIBLY carried:
+
+        a hut on stilts    -> draw the stilts, and draw the floor resting on
+                              their tops, not floating a cell above them
+        a pier deck        -> draw a post under the deck at every bent
+        a cantilever, a
+        slide, a balcony   -> draw a prop under it every few cells
+
+    Anything that appears to hang off the side of a building with nothing
+    underneath cannot be built: in the engine it would hang in the air forever
+    and make the level impossible to finish. If you draw it, it gets cut.
+
+3.2  HOLLOW, NOT SOLID
+    These are shells one cell thick with real openings. Draw doors and windows
+    as actual holes you can see through, not as painted rectangles.
+
+3.3  OPENINGS ARE NARROW
+    A hole two cells wide in a face only four cells wide removes everything
+    holding the wall above it. Prefer tall narrow slits, or one full storey of
+    glass - those are the two shapes that work.
+
+3.4  ONE AXIS OF SYMMETRY AT MOST
+    A building symmetric on both axes reads as a box whatever else it does.
+    Offset the stair, the window, the roof box.
+
+3.5  KEEP THE SILHOUETTE SIMPLE AND DISTINCT
+    Nine buildings that share a palette need to differ in OUTLINE: legs, decks,
+    a tall thin shaft, a low wide fort, a diagonal slide. If two levels have the
+    same profile, one of them is wrong.
+
+
+================================================================================
+4. THE STANDARD TO MATCH - LEVEL 2, APPROVED
+================================================================================
+
+The Lifeguard Tower image is the reference for the whole mission. What it gets
+right, and what every other image should copy:
+
+    - four thin legs, clearly one cell each, clearly carrying the deck
+    - the deck overhangs the legs by one cell, so the tower reads as built
+      rather than extruded
+    - the cabin sits inset on the deck, smaller than it
+    - the flat roof overhangs the cabin again - two clean overhangs stacked
+    - a raised box on the roof so the top is not a bare slab
+    - a long stair with real treads on a solid stepped body, OFFSET to one side
+    - two windows with a mullion between them, not one hole
+
+The rendered game version of that image is attached as the style anchor. Your
+images should look like buildings that would render like that.
+
+
+================================================================================
+5. THE NINE LEVELS
+================================================================================
+
+Format: grid in cells (wide x tall x deep), what to draw, and the support that
+must be visible in the image.
+
+LV1  BEACH HUT ROW                                    14 x 6 x 5
+    Three tiny huts side by side, each on four short stilts, each with a
+    DIFFERENT roof: one flat, one stepped, one peaked. Clear gaps of empty sand
+    between them - they are three separate targets, not a terrace.
+    VISIBLE SUPPORT: four short stilts per hut, floors resting on their tops.
+    PROMPT: "isometric voxel beach huts, three small cube-block cabins side by
+    side with different roofs - one flat, one stepped, one peaked - each raised
+    on four short stilts, sandy brick tones, chunky cube blocks, plain white
+    background"
+
+LV2  LIFEGUARD TOWER                                  12 x 12 x 6     DONE
+    Approved. Use it as the reference for the rest.
+
+LV3  THE PIER                                         10 x 7 x 11
+    A boardwalk running AWAY from the viewer into the distance: four post-and-
+    beam frames one behind another carrying a plank deck, low railings, a small
+    kiosk at the far end. The only level that uses depth as its subject - the
+    image must show the recession clearly.
+    VISIBLE SUPPORT: two posts per frame, with deck planks sitting on the beam
+    above each pair. Four frames, evenly spaced.
+    PROMPT: "isometric voxel wooden pier running away into the distance, four
+    post-and-beam frames carrying a plank deck, low railings, small kiosk at the
+    far end, brick-brown cubes, chunky blocks, plain white background"
+
+LV4  BEACH BAR                                        12 x 7 x 7
+    Open front - no front wall at all. A heavy flat roof carried by the back
+    wall and just two slim posts at the front corners. Pale blue glass panels
+    closing the two sides. A counter with small blocks lined up on it.
+    VISIBLE SUPPORT: the two front posts, roof resting directly on their tops.
+    They should look barely adequate - that is the level's joke.
+    PROMPT: "isometric voxel beach bar, open front with a heavy flat roof
+    carried on two thin posts, pale blue glass panels closing the two sides, a
+    counter with small blocks on it, sandy brick and blue glass cubes, chunky
+    blocks, plain white background"
+
+LV5  SEAVIEW RESTAURANT                               12 x 9 x 7
+    Two storeys plus a terrace. Solid brick ground floor with a wide entrance.
+    The ENTIRE middle storey is glass - no brick corners, no mullions, a clean
+    glass band all the way round. Brick roof terrace on top with small blocks
+    and parasols.
+    VISIBLE SUPPORT: none needed - the glass storey IS the weak point and it
+    must look like it. Do not draw columns through it.
+    PROMPT: "isometric voxel seaside restaurant, solid sandy brick ground floor,
+    the entire middle storey made of pale blue glass with no columns, brick
+    rooftop terrace with small blocks and parasols, chunky cube blocks, plain
+    white background"
+
+LV6  WATERSLIDE TOWER                                 14 x 11 x 7
+    A brick stair tower with narrow slit windows, and a pale blue glass tube
+    descending from the top in a stepped diagonal to a low pool rim. A small
+    ticket kiosk stands separately beside it.
+    VISIBLE SUPPORT: THIS IS THE CRITICAL ONE. Thin brick props under the slide
+    every two or three cells of its run, each standing on the ground, with the
+    tube resting on top of them. A slide attached only to the tower's flank
+    cannot be built.
+    PROMPT: "isometric voxel water slide tower, tall brick stair tower with
+    narrow slit windows, a stepped diagonal pale blue glass tube descending from
+    the top to a low pool rim, thin brick props standing on the ground holding
+    the tube up along its whole run, small ticket kiosk to the side, chunky cube
+    blocks, plain white background"
+
+LV7  LIGHTHOUSE                                       9 x 14 x 6
+    Grey concrete rock base. A tapering brick shaft that steps inward twice as
+    it rises. Pale blue glass lantern room at the top with a grey gallery rail.
+    A small brick keeper's cottage at the foot, standing separately.
+    First appearance of concrete. Tallest thing in the mission.
+    VISIBLE SUPPORT: the shaft on its base. Keep the base SMALL - two or three
+    rows - it is meant to be smashed by the falling tower, not shot.
+    PROMPT: "isometric voxel lighthouse, small grey concrete rock base, tapering
+    sandy brick tower stepping inward twice as it rises, pale blue glass lantern
+    room at the top with a grey gallery rail, small brick keeper's cottage at
+    the foot, chunky cube blocks, plain white background"
+
+LV8  SEA FORT                                         12 x 10 x 8
+    A low grey concrete bastion on a stone plinth, with a CONTINUOUS horizontal
+    pale blue glass slit running right around it. Inside the open courtyard,
+    two small brick huts. Alternating grey caps along the top edge.
+    The slit is the way in and must be unbroken - no concrete mullions.
+    VISIBLE SUPPORT: none - this is the one level solved by shooting through the
+    opening rather than by cutting a leg.
+    PROMPT: "isometric voxel coastal fort, low grey concrete bastion on a stone
+    plinth with a continuous horizontal pale blue glass slit running around it,
+    open courtyard inside containing two small sandy brick huts, alternating
+    grey caps along the top edge, chunky cube blocks, plain white background"
+
+LV9  BOARDWALK RESORT  (BOSS)                         16 x 12 x 10
+    Three buildings sharing one beach: the lifeguard tower on legs, the open
+    beach bar, and a short pier stub on piles. A low grey breakwater along the
+    front ties them together. Draw them CLOSE - close enough that the tower
+    would fall onto the pier and the pier onto the bar - but with clear gaps of
+    empty sand between them.
+    VISIBLE SUPPORT: legs, posts and piles on all three, as in their own levels.
+    Draw everything one size smaller than its own level - three buildings have
+    to fit where one usually goes.
+    PROMPT: "isometric voxel beach resort scene, a lifeguard tower on four thin
+    legs, an open beach bar with a flat roof on posts and blue glass side
+    panels, a short wooden pier on piles, a low grey breakwater along the front,
+    sandy brick and blue glass and grey stone cubes, chunky blocks, plain white
+    background"
+
+
+================================================================================
+6. WHAT TO SEND BACK
+================================================================================
+
+Per level, two things and nothing else:
+
+    1. The image.
+    2. Three lines of text:
+         dimensions used:   e.g. "12 wide x 12 tall x 6 deep"
+         visible support:   e.g. "four legs, deck resting on their tops"
+         anything you were unsure fits the grid
+
+If a building will not fit its grid, SAY SO instead of shrinking the bricks.
+The grid can be argued about; the cell size cannot.
+
+
+================================================================================
+7. CHECKLIST BEFORE SENDING
+================================================================================
+
+    [ ] one brick = one cell; count the cubes along the top edge
+    [ ] dimensions match the level's grid line in section 5
+    [ ] only brick, glass and concrete; concrete only on LV7-9
+    [ ] plain white background, isometric, same angle as the others
+    [ ] every raised mass stands on a leg that is visible in the image
+    [ ] nothing hangs off a side with nothing underneath
+    [ ] openings are real holes, narrow, and you can see through them
+    [ ] at most one axis of symmetry
+    [ ] the silhouette is different from the other eight
+
+================================================================================
+END
+================================================================================

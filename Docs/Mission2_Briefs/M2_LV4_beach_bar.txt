@@ -1,0 +1,76 @@
+================================================================================
+SMASH - MISSION 2 - LEVEL 4 BRIEF
+BEACH BAR
+================================================================================
+Read first: SMASH_Mission2_Production_Guide (the mission's rules)
+Also binding: SMASH_MapJSON_Spec_and_Review · SMASH_JSON_Cloning_Handbook
+              SMASH_WallCoating_Spec
+Deliver: m2_04_beach_bar.json + voxel render + manifest line
+================================================================================
+
+THE PITCH
+    An open-fronted bar: a heavy flat roof carried by the back wall and just two
+    slim front posts, glass wind-screens closing the sides, bottles lined up on
+    the counter. The first appearance of glass in the mission, and the first
+    heavy-lid drop.
+
+HARD CONSTRAINTS
+    map id        m2_04_beach_bar
+    grid          12 wide x 7 tall x 7 layers
+    entries       ~170
+    materials     brick + glass
+    band          mid (120-220)
+    loose bodies  <= 40
+
+THE SUPPORT TARGET   <-- the reason this level exists
+    One front post. The roof loses a corner, tips forward, and slaps down onto the
+    counter - taking the glass screens with it on the way. A single shot for the
+    whole front half of the building.
+
+BUILD RECIPE
+    - Back wall: x0-x11 at z6, rows y0-y4, one cell thick, with a 2x2 opening as a
+      back door.
+    - Front posts: two columns at (x2,z0) and (x9,z0), rows y0-y4, one cell wide,
+      each its OWN wall. Nothing else holds the front.
+    - Roof: rows y5-y6 spanning x0-x11 and z0-z6. Heavy on purpose - it is the
+      thing that falls.
+    - Glass wind-screens: at x0 and x11, z1-z5, rows y1-y4. Group each screen as
+      one wall so it releases in one go.
+    - Counter: row y2, a run of brick from x3 to x8 at z4, with the bottles on it.
+    - Loose: 6-10 single bricks as bottles on the counter row y3, plus 2-3 stools.
+
+COATING FLAGS
+    brick    armoured - leave the flag out entirely
+    glass    "bare": true on every glass wall
+
+PANEL / WELD INTENT
+    The two front posts are 1x5 rectangles - smooth, correct.
+    The glass screens are single-layer rectangles and will render smooth - correct
+    for glazing, leave them.
+    The roof spans seven layers so it welds and shows planks - correct.
+
+WATCH OUT
+    - The roof must NOT be welded into the same wall as the back wall. If it is,
+      cutting a front post cannot tip it. Roof and back wall are separate bodies
+      that merely touch.
+    - The roof needs cells directly over both front posts, or it is held laterally
+      and will hang when the posts go.
+    - Bottles are loose 1x1 bricks, not a wall. They are the crown debris of this
+      level and should scatter individually.
+
+IMAGE PROMPT (render at 1 brick = 1 cell of the grid above)
+    "isometric voxel beach bar, open front with a heavy flat roof carried on two
+    thin posts, pale blue glass panels closing the two sides, a counter with small
+    blocks lined up on it, sandy brick and blue glass cubes, chunky blocks, plain
+    white background"
+
+ACCEPTANCE
+    [ ] validator: 0 errors, 0 unfooted walls, 0 floating loose blocks
+    [ ] every raised mass has a cell directly over a leg
+    [ ] support target verified in Smash Builder "Review gameplay": cutting it
+        brings down more than its own weight, and the map ends at 100%
+    [ ] voxel render matches the concept; if they differ the JSON ships
+    [ ] entries in band, walls 4-24 cells, loose within cap
+    [ ] manifest: id, grid, entries, walls, loose, materials, coating,
+        support target, Cannon-gated yes/no
+================================================================================

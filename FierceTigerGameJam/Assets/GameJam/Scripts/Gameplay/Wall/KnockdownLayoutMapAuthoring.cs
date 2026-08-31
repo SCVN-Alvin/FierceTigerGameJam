@@ -80,6 +80,24 @@ namespace GameJam.Gameplay.Wall
         [Tooltip("Draw walls with the wall art from the block database instead of welding the "
                  + "block meshes. A panel is a couple of hundred vertices whatever the run's "
                  + "length; welding costs the same vertices as the blocks it replaced.")]
+        public enum WallVisualMode
+        {
+            /// <summary>One generated mesh per wall. Looks seamless, but the mesh has to be
+            /// baked into an asset, and it duplicates the sculpted block geometry per cell -
+            /// which is what made the baked mesh assets 87x larger than the source JSON.</summary>
+            WeldedMesh,
+
+            /// <summary>The wall is drawn by instances of the block prefabs, which reference the
+            /// shared meshes already in the FBX. Nothing new is generated, so a baked prefab
+            /// carries no mesh data at all. Physics is unchanged: the wall is still one body with
+            /// one collider and its manifest.</summary>
+            BlockInstances,
+        }
+
+        [Tooltip("How a wall is drawn. BlockInstances costs no baked mesh data; enable GPU "
+                 + "instancing on the block materials so the extra renderers batch away.")]
+        [SerializeField] private WallVisualMode wallVisual = WallVisualMode.BlockInstances;
+
         [SerializeField] private bool useWallPanels = true;
 
         [Tooltip("How many times the wall texture repeats across one cell. This is the dial for "
@@ -162,6 +180,7 @@ namespace GameJam.Gameplay.Wall
         public BlockDatabase BlockDatabase => blockDatabase;
         public WallGroupingMode WallGrouping => wallGrouping;
         public int MinimumWallCells => minimumWallCells;
+        public WallVisualMode WallVisual => wallVisual;
         public TextAsset MapJson => ResolveMapJson();
         public Transform StructureRoot => ResolveStructureRoot();
         public SpinOnAxis StructureSpinner => ResolveSpinner();
@@ -943,6 +962,89 @@ namespace GameJam.Gameplay.Wall
         /// Builds one wall: its blocks drawn as a single mesh, with a single collider and a
         /// single body, plus the manifest it needs to put those blocks back when it is knocked.
         /// </summary>
+        /// <summary>
+        /// Builds a wall whose visual is instances of the block prefabs rather than one welded
+        /// mesh. The wall keeps exactly the physics it had - one body, one collider, one
+        /// manifest - so nothing about how it breaks changes. What changes is that the prefab
+        /// this bakes into references meshes that already exist in the FBX, instead of carrying
+        /// a copy of the sculpted brick for every cell it covers.
+        ///
+        /// The visual children are stripped of colliders, bodies and behaviours: they are
+        /// scenery. When the wall breaks it destroys itself, taking them with it, and the
+        /// manifest spawns the real blocks in their place.
+        /// </summary>
+        private bool BuildWallFromBlocks(
+            WallBuild build,
+            Transform generatedRoot,
+            Vector3 center,
+            Vector3 span,
+            List<BreakableWall.Cell> manifest)
+        {
+            GameObject wall = new GameObject(build.Name);
+            wall.transform.SetParent(generatedRoot, false);
+            wall.transform.SetLocalPositionAndRotation(center, Quaternion.identity);
+            wall.transform.localScale = Vector3.one;
+
+            GameObject visualRoot = new GameObject("Visual");
+            visualRoot.transform.SetParent(wall.transform, false);
+
+            for (int i = 0; i < build.Blocks.Count; i++)
+            {
+                PlacedBlock cell = build.Blocks[i];
+                if (cell.Prefab == null)
+                {
+                    continue;
+                }
+
+                GameObject visual = Instantiate(cell.Prefab, visualRoot.transform);
+                visual.name = cell.Name;
+                visual.transform.SetLocalPositionAndRotation(cell.LocalPosition - center, cell.LocalRotation);
+                StripToVisual(visual);
+            }
+
+            BoxCollider wallCollider = wall.AddComponent<BoxCollider>();
+            wallCollider.center = Vector3.zero;
+            wallCollider.size = span;
+
+            KnockdownBlockAuthoring wallAuthoring = wall.AddComponent<KnockdownBlockAuthoring>();
+            if (build.Blocks[0].Prefab != null
+                && build.Blocks[0].Prefab.TryGetComponent(out KnockdownBlockAuthoring source))
+            {
+                wallAuthoring.CopyTuningFrom(source, source.Mass * build.Blocks.Count);
+            }
+
+            wallAuthoring.SetGridPosition(build.GridPosition);
+            wallAuthoring.SetLogicalSize(build.LogicalSize);
+
+            ResolveWallDurability(build.Blocks, out string wallMaterialId, out float wallHitPoints);
+            BreakableWall breakableWall = wall.AddComponent<BreakableWall>();
+            breakableWall.Initialize(manifest, physicsSetup, wallMaterialId, wallHitPoints, build.Armored);
+            builtWalls.Add(breakableWall);
+            return true;
+        }
+
+        /// <summary>
+        /// Leaves a block instance as pure scenery: mesh and transform only. Anything that
+        /// simulates, collides or takes damage belongs to the wall, not to its picture of itself.
+        /// </summary>
+        private static void StripToVisual(GameObject instance)
+        {
+            Component[] all = instance.GetComponentsInChildren<Component>(true);
+            for (int i = all.Length - 1; i >= 0; i--)
+            {
+                Component component = all[i];
+                if (component == null
+                    || component is Transform
+                    || component is MeshFilter
+                    || component is MeshRenderer)
+                {
+                    continue;
+                }
+
+                DestroyImmediate(component, true);
+            }
+        }
+
         private bool TryBuildWall(WallBuild build, Transform generatedRoot, out bool usedPanel)
         {
             usedPanel = false;
@@ -961,6 +1063,11 @@ namespace GameJam.Gameplay.Wall
                     GridPosition = cell.GridPosition,
                     LogicalSize = cell.Footprint,
                 });
+            }
+
+            if (wallVisual == WallVisualMode.BlockInstances)
+            {
+                return BuildWallFromBlocks(build, generatedRoot, center, span, manifest);
             }
 
             Mesh wallMesh = null;

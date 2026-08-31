@@ -1,0 +1,77 @@
+================================================================================
+SMASH - MISSION 2 - LEVEL 9 BRIEF
+BOARDWALK RESORT  (BOSS)
+================================================================================
+Read first: SMASH_Mission2_Production_Guide (the mission's rules)
+Also binding: SMASH_MapJSON_Spec_and_Review · SMASH_JSON_Cloning_Handbook
+              SMASH_WallCoating_Spec
+Deliver: m2_09_boardwalk_resort.json + voxel render + manifest line
+================================================================================
+
+THE PITCH
+    The whole strip in one map: a lifeguard tower on legs, an open beach bar, and
+    a short pier stub, sharing one beach. Graduation - three structures, three of
+    the mission's styles, and they can be made to hit each other.
+
+HARD CONSTRAINTS
+    map id        m2_09_boardwalk_resort
+    grid          16 wide x 12 tall x 10 layers
+    entries       ~340
+    materials     brick + glass + concrete
+    band          boss (280-400)
+    loose bodies  <= 80
+
+THE SUPPORT TARGET   <-- the reason this level exists
+    Three of them, and they interact. The pier deck can be dropped onto the bar's
+    roof; the lifeguard tower can be felled across the pier. The intended solve is
+    an ORDER, not a total: fell the tower onto the pier, the pier onto the bar,
+    and one shot's worth of damage cascades across the whole beach.
+
+BUILD RECIPE
+    - Lifeguard tower at x0-x4: four 1xN legs, cabin, peaked roof. Same recipe as
+      LV2, shrunk one row.
+    - Beach bar at x6-x11: back wall, two front posts, heavy roof, glass screens.
+      Same recipe as LV4, shrunk.
+    - Pier stub at x12-x15 running into z: two bents and a short deck. Same recipe
+      as LV3, two bents instead of four.
+    - Concrete: a low breakwater ring at y0 along the seaward edge, tying the
+      scene together and giving the boss its third material.
+    - Position them so the tower's fall line crosses the pier and the pier's deck
+      overhangs the bar's roof. Measure this - it is the level's whole design.
+    - Loose: 12-20 across the three structures.
+
+COATING FLAGS
+    brick     armoured - leave the flag out entirely
+    concrete  armoured - leave the flag out entirely
+    glass     "bare": true on every glass wall
+
+PANEL / WELD INTENT
+    Legs, posts and piles smooth; decks, walls and roofs welded. Nothing new.
+
+WATCH OUT
+    - BUDGET IS THE REAL ENEMY HERE. 340 entries and 80 loose across three
+      structures, on a 16x12x10 grid - that is the ceiling on every axis at once.
+      Build the three structures at Mission-2-minus-one-size, not full size.
+    - Three structures means three wall families. NOTHING may weld across the gaps
+      between them, or the cascade becomes one dead slab.
+    - Verify the fall lines in Smash Builder before delivering. If the tower does
+      not actually reach the pier, the boss is just three small levels in a row.
+    - This is the last Mission 2 map. It should feel like a summary, not like a
+      new idea.
+
+IMAGE PROMPT (render at 1 brick = 1 cell of the grid above)
+    "isometric voxel beach resort scene, a lifeguard tower on four thin legs, an
+    open beach bar with a flat roof on posts and blue glass side panels, a short
+    wooden pier on piles, a low grey breakwater along the front, sandy brick and
+    blue glass and grey stone cubes, chunky blocks, plain white background"
+
+ACCEPTANCE
+    [ ] validator: 0 errors, 0 unfooted walls, 0 floating loose blocks
+    [ ] every raised mass has a cell directly over a leg
+    [ ] support target verified in Smash Builder "Review gameplay": cutting it
+        brings down more than its own weight, and the map ends at 100%
+    [ ] voxel render matches the concept; if they differ the JSON ships
+    [ ] entries in band, walls 4-24 cells, loose within cap
+    [ ] manifest: id, grid, entries, walls, loose, materials, coating,
+        support target, Cannon-gated yes/no
+================================================================================

@@ -1,0 +1,73 @@
+================================================================================
+SMASH - MISSION 2 - LEVEL 3 BRIEF
+THE PIER
+================================================================================
+Read first: SMASH_Mission2_Production_Guide (the mission's rules)
+Also binding: SMASH_MapJSON_Spec_and_Review · SMASH_JSON_Cloning_Handbook
+              SMASH_WallCoating_Spec
+Deliver: m2_03_the_pier.json + voxel render + manifest line
+================================================================================
+
+THE PITCH
+    A boardwalk running away from the player into the sea: four pile bents one
+    behind another carrying a plank deck, with a small kiosk at the far end. The
+    depth level - the only one in the mission that uses the z axis as its subject.
+
+HARD CONSTRAINTS
+    map id        m2_03_the_pier
+    grid          10 wide x 7 tall x 11 layers
+    entries       ~160
+    materials     brick only
+    band          mid (120-220)
+    loose bodies  <= 40
+
+THE SUPPORT TARGET   <-- the reason this level exists
+    The front bent. With it gone the deck's near end drops, and the deck pancakes
+    bent by bent all the way to the kiosk. One shot, four collapses.
+
+BUILD RECIPE
+    - Bents at z0, z3, z6, z9. Each bent = two posts (rows y0-y3, one cell wide,
+      at x3 and x6) plus a crossbeam at y4 joining them. Each post is its OWN
+      wall; the crossbeam belongs to the bent, not to the deck.
+    - Deck: row y5, spanning x2-x7 across every layer z0-z10. The deck cells at
+      z0, z3, z6 and z9 sit directly over the posts - that is what lets each bent
+      release its share when it goes.
+    - Railings: row y6 at x2 and x7, broken into 2-3 cell segments so they rain
+      down separately.
+    - Kiosk: a 3x3 hut at the far end, z9-z10, rows y6-y8, hollow, with a serving
+      hatch. It rides the last bent down.
+    - Loose: 5-8 single bricks - crates and mooring blocks along the deck.
+
+COATING FLAGS
+    brick    armoured - leave the flag out entirely
+
+PANEL / WELD INTENT
+    Posts are 1x4 rectangles and render smooth - correct for piles.
+    The deck spans eleven layers so it welds and shows planks - correct.
+
+WATCH OUT
+    THIS IS THE MOST LIKELY LEVEL IN THE MISSION TO PRODUCE A FLOATING DECK.
+    - Every deck segment must have a cell directly over a post. A deck grouped as
+      one 11-layer wall is fine; a deck split into per-bay walls is fine only if
+      each bay contains a cell over a post. Check this cell by cell.
+    - Do not group the deck and the crossbeams into one wall. If the deck is the
+      same body as the bents, cutting a post does nothing until the whole thing
+      dies at once, and the pancake never happens.
+    - Depth 11 layers is close to the 12 ceiling. Keep the deck narrow (6 cells)
+      so the entry count stays in band.
+
+IMAGE PROMPT (render at 1 brick = 1 cell of the grid above)
+    "isometric voxel wooden pier running away into the distance, four post-and-
+    beam frames carrying a plank deck, low railings, small kiosk at the far end,
+    brick-brown cubes, chunky blocks, plain white background"
+
+ACCEPTANCE
+    [ ] validator: 0 errors, 0 unfooted walls, 0 floating loose blocks
+    [ ] every raised mass has a cell directly over a leg
+    [ ] support target verified in Smash Builder "Review gameplay": cutting it
+        brings down more than its own weight, and the map ends at 100%
+    [ ] voxel render matches the concept; if they differ the JSON ships
+    [ ] entries in band, walls 4-24 cells, loose within cap
+    [ ] manifest: id, grid, entries, walls, loose, materials, coating,
+        support target, Cannon-gated yes/no
+================================================================================

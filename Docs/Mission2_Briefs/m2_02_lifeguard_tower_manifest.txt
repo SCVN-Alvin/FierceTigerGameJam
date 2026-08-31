@@ -1,0 +1,15 @@
+m2_02_lifeguard_tower | grid 12w x 12h x 6z | entries 132 | walls 16 | loose 4 | materials brick
+coating: brick armoured (no bare flag) | Cannon-gated: no
+support target: cut one front leg -> that half of the deck releases and the cabin tips off it;
+                both legs on a side -> full belly-flop. The stair is five independent bodies
+                and comes down separately, tread by tread.
+anatomy: y0-y5  four 1-cell legs, one wall each (6 cells)
+         y6     deck, overhangs the legs on all four sides
+         y7-y9  hollow cabin ring, two 1x2 windows with a mullion on the stair face,
+                one 1x2 window seaward
+         y10    flat roof, overhangs the cabin
+         y11    raised ridge box on the roof
+         z4     stair, one cell deep, five stepped columns rising to the deck
+raised-mass check: deck cells sit directly over all four leg tops (1,6,1) (5,6,1) (1,6,4) (5,6,4)
+separation: the stair never welds to the tower - deck ends at x6, stair starts at x7
+validator: 0 errors, 0 unfooted walls, 0 floating loose blocks
