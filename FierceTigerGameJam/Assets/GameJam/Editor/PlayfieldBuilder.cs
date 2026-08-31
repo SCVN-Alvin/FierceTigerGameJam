@@ -24,6 +24,7 @@ namespace GameJam.EditorTools
         private const string BackdropSpritePath = "Assets/GameJam/Textures/BG_New_02.png";
         private const string BackdropMaterialPath = "Assets/GameJam/Materials/M_Backdrop.mat";
         private const string GroundMaterialPath = "Assets/GameJam/Materials/M_Ground.mat";
+        private const string GroundPhysicsMaterialPath = "Assets/GameJam/Materials/PM_Ground.physicMaterial";
         private const string SpriteShaderName = "Sprites/Default";
         private const string UrpLitShaderName = "Universal Render Pipeline/Lit";
 
@@ -169,13 +170,36 @@ namespace GameJam.EditorTools
                 Undo.RegisterCreatedObjectUndo(ground, "Create Ground");
             }
 
-            ground.transform.SetPositionAndRotation(new Vector3(0f, groundY, 0f), Quaternion.identity);
-            ground.transform.localScale = new Vector3(4f, 1f, 4f);
+            // A Unity plane is 10 x 10 at scale 1, so this is 100 x 100 centred on z 20: x +/-50,
+            // z -30 to 70. Sized to the arc rather than to the structure - the structure stands at
+            // z 10, and the old 40 x 40 plane centred on the origin ended ten units behind it, so
+            // an overshot ball or a block knocked backwards left the floor and fell forever.
+            ground.transform.SetPositionAndRotation(new Vector3(0f, groundY, 20f), Quaternion.identity);
+            ground.transform.localScale = new Vector3(10f, 1f, 10f);
 
             if (ground.TryGetComponent(out MeshRenderer renderer))
             {
                 renderer.sharedMaterial = ResolveGroundMaterial();
             }
+
+            // Friction, so a ball that lands rolls a short way and stops rather than skating on.
+            // Unity's implicit default is 0.6 either way, which is not nothing, but it is well
+            // short of the reference project's floor and a ball landing on it keeps going.
+            //
+            // sharedMaterial rather than material: reading `material` from an editor script clones
+            // the asset into a scene-only "(Instance)" that is never saved, which would leave the
+            // built scene back on the default and leak a material on every run of the menu item.
+            //
+            // Added rather than merely found, in the same spirit as the break zone below: a Ground
+            // that has lost its collider is a scene with no floor at all, and the menu item is
+            // meant to be able to put that right.
+            MeshCollider groundCollider = ground.GetComponent<MeshCollider>();
+            if (groundCollider == null)
+            {
+                groundCollider = ground.AddComponent<MeshCollider>();
+            }
+
+            groundCollider.sharedMaterial = ResolveGroundPhysicsMaterial();
 
             FallBreakZone zone = ground.GetComponent<FallBreakZone>();
             if (zone == null)
@@ -212,14 +236,56 @@ namespace GameJam.EditorTools
         }
 
         /// <summary>
+        /// The floor's friction, ported from the reference project's CannonKnockdownFloor: static
+        /// 0.9, dynamic 0.68, no bounce. High on purpose - it is what makes a landed ball roll a
+        /// short way and settle rather than slide off the edge of the world, which is most of what
+        /// "the floor feels real" means here.
+        ///
+        /// Created if missing so a fresh clone of the repo builds a working playfield, but not
+        /// rewritten if present: the numbers are a feel setting and someone tuning them in the
+        /// inspector should not have them stamped back on the next run of the menu item.
+        /// </summary>
+        private static PhysicsMaterial ResolveGroundPhysicsMaterial()
+        {
+            PhysicsMaterial existing = AssetDatabase.LoadAssetAtPath<PhysicsMaterial>(GroundPhysicsMaterialPath);
+            if (existing != null)
+            {
+                return existing;
+            }
+
+            PhysicsMaterial material = new PhysicsMaterial("PM_Ground")
+            {
+                staticFriction = 0.9f,
+                dynamicFriction = 0.68f,
+                bounciness = 0f,
+                frictionCombine = PhysicsMaterialCombine.Average,
+                bounceCombine = PhysicsMaterialCombine.Minimum,
+            };
+
+            AssetDatabase.CreateAsset(material, GroundPhysicsMaterialPath);
+            return material;
+        }
+
+        /// <summary>
         /// A trigger slab under the ground catching whatever falls off the edge or through it.
         /// Deliberately much wider than the playfield: it is a safety net, and a piece escaping it
         /// lives forever.
+        ///
+        /// Brief 20 asked for a second volume named OutOfBounds with this geometry, on the reading
+        /// that no out-of-bounds catch existed. One does - this - and building the other alongside
+        /// it would have left the scene with two overlapping despawn volumes racing for the same
+        /// colliders. So this one is grown to the geometry the brief wanted instead, keeping its
+        /// name so nothing already in the scene is orphaned.
         /// </summary>
         private static void BuildFallZone(float groundY)
         {
             GameObject fallZone = EnsureObject(FallZoneName, null);
-            fallZone.transform.SetPositionAndRotation(new Vector3(0f, groundY - 3f, 0f), Quaternion.identity);
+
+            // Centred under the enlarged floor rather than under the origin, and dropped further
+            // below it: a catch that sits just under the ground can be clipped by a block resting
+            // on the surface, and one that only covers the old 40 x 40 plane misses everything
+            // that leaves the new 100 x 100 one. 220 square is margin, not a measurement.
+            fallZone.transform.SetPositionAndRotation(new Vector3(0f, groundY - 12f, 20f), Quaternion.identity);
             fallZone.transform.localScale = Vector3.one;
 
             if (!fallZone.TryGetComponent(out BoxCollider box))
@@ -229,7 +295,7 @@ namespace GameJam.EditorTools
 
             box.isTrigger = true;
             box.center = Vector3.zero;
-            box.size = new Vector3(120f, 4f, 120f);
+            box.size = new Vector3(220f, 10f, 220f);
 
             FallBreakZone zone = fallZone.GetComponent<FallBreakZone>();
             if (zone == null)

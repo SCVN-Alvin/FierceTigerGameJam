@@ -1,4 +1,5 @@
 using GameJam.Gameplay;
+using GameJam.Gameplay.Cannon;
 using GameJam.Gameplay.Wall;
 using UnityEngine;
 
@@ -92,6 +93,18 @@ namespace GameJam.Gameplay.Playfield
 
         private static void Despawn(Collider hit)
         {
+            // A cannon ball is borrowed, not owned: destroying one takes a pooled instance out of
+            // circulation for the rest of the run, so the pool quietly shrinks every time a shot
+            // goes wide and has to instantiate a replacement mid-tap. It goes home instead.
+            // This is a live bug, not a precaution - the out-of-bounds zone already exists in the
+            // scene and balls already fall through the world into it.
+            GridKnockdownCannonProjectile projectile = hit.GetComponentInParent<GridKnockdownCannonProjectile>();
+            if (projectile != null)
+            {
+                projectile.ReturnToPool();
+                return;
+            }
+
             ShatteredBlock debris = hit.GetComponentInParent<ShatteredBlock>();
             if (debris != null)
             {
