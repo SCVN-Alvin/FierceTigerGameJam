@@ -43,6 +43,13 @@ namespace GameJam.Gameplay.Cannon
                  + "it, and the base and the wheels are outside the armature and stay still.")]
         [SerializeField] private string barrelNodeName = "Cannon.A";
 
+        [Tooltip("How far the barrel stands up when nothing is aimed, in degrees, positive being "
+                 + "nose-up. 31.44 is what the old cannon rested at: the whole vehicle used to "
+                 + "inherit that tilt, which swung its rear wheels through the floor, so the "
+                 + "barrel carries it alone now and the chassis stays level. Zero leaves the "
+                 + "barrel wherever the model authored it.")]
+        [SerializeField] private float barrelRestPitchDegrees = 31.44f;
+
         [Tooltip("Replaces the pack's own controller on every spawned model. Theirs holds one "
                  + "looping state, so an unmounted-over model fires its shot animation forever; "
                  + "ours idles and plays the shot on a trigger.")]
@@ -259,8 +266,15 @@ namespace GameJam.Gameplay.Cannon
                 return;
             }
 
-            // The rotation the aim added, measured in the reference's parent space.
+            // The rotation the aim added, measured in the reference's parent space, plus the
+            // barrel's own standing elevation. Both are rotations about the same axis in this
+            // space, so they simply compose: the barrel sits at the rest pitch when nothing is
+            // aimed and swings from there.
             Quaternion aimDelta = barrelReference.localRotation * Quaternion.Inverse(referenceRestLocalRotation);
+            if (barrelRestPitchDegrees != 0f)
+            {
+                aimDelta *= Quaternion.AngleAxis(-barrelRestPitchDegrees, Vector3.right);
+            }
 
             // Deviation from the brief, which replays the delta straight onto the barrel's own
             // rest pose on the grounds that both parents share an orientation. They do not: the
