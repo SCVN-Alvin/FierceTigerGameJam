@@ -1,4 +1,5 @@
 using System;
+using GameJam.Audio;
 using GameJam.Config;
 using GameJam.Data;
 using GameJam.Gameplay.Combat;
@@ -48,6 +49,24 @@ namespace GameJam.Economy
         /// outlives a scene, so subscribers must unsubscribe when they are disabled.
         /// </summary>
         public event Action GoldChanged;
+
+        /// <summary>
+        /// Announces that gold moved, and makes the sound of it.
+        ///
+        /// Deviation from Brief 21, which asks for the coin sound written in beside each
+        /// GoldChanged?.Invoke(). There are seven of those - two purchases, two upgrades, a
+        /// reward, a plain grant and a plain spend - and pairing the two calls by hand seven times
+        /// is seven chances for the eighth transaction to be added silently. Every successful
+        /// spend or grant already funnels through this one line, so it is the honest seam.
+        ///
+        /// This is a ScriptableObject and has no scene of its own, so the sound is routed through
+        /// the service's static helper, which does nothing when no AudioService is in the scene.
+        /// </summary>
+        private void RaiseGoldChanged()
+        {
+            GoldChanged?.Invoke();
+            AudioService.Play(AudioSlot.Coin);
+        }
 
         /// <summary>The catalogue this service works against, for UI that wants to list it.</summary>
         public BulletLoadout Loadout => loadout;
@@ -139,7 +158,7 @@ namespace GameJam.Economy
             // saves on its own: the whole transaction should commit exactly once, at the end.
             UserData.Bullets.Unlock(bullet.Id);
             UserData.Save();
-            GoldChanged?.Invoke();
+            RaiseGoldChanged();
             return true;
         }
 
@@ -238,7 +257,7 @@ namespace GameJam.Economy
             // write a level the ammunition does not define.
             UserData.Bullets.SetLevel(bullet.Id, targetLevel);
             UserData.Save();
-            GoldChanged?.Invoke();
+            RaiseGoldChanged();
             return true;
         }
 
@@ -314,7 +333,7 @@ namespace GameJam.Economy
                 UserData.Save();
             }
 
-            GoldChanged?.Invoke();
+            RaiseGoldChanged();
             return true;
         }
 
@@ -425,7 +444,7 @@ namespace GameJam.Economy
                 UserData.Save();
             }
 
-            GoldChanged?.Invoke();
+            RaiseGoldChanged();
             return true;
         }
 
@@ -464,7 +483,7 @@ namespace GameJam.Economy
 
             UserData.Inventory.Add(gold);
             UserData.Save();
-            GoldChanged?.Invoke();
+            RaiseGoldChanged();
             return true;
         }
 
@@ -478,7 +497,7 @@ namespace GameJam.Economy
 
             UserData.Inventory.Add(amount);
             UserData.Save();
-            GoldChanged?.Invoke();
+            RaiseGoldChanged();
         }
 
         /// <summary>
@@ -504,7 +523,7 @@ namespace GameJam.Economy
             }
 
             UserData.Save();
-            GoldChanged?.Invoke();
+            RaiseGoldChanged();
             return true;
         }
 

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using GameJam.Audio;
 using GameJam.Gameplay.Combat;
 using GameJam.Gameplay.Flow;
 using UnityEngine;
@@ -282,6 +283,11 @@ namespace GameJam.Gameplay.Cannon
             {
                 shotPresenter.PlayShot();
             }
+
+            // Beside the muzzle flash rather than inside the presenter: the presenter is optional
+            // and a scene without one should still be heard firing. Past every early return above,
+            // so a shot that was refused for want of ammunition stays silent.
+            AudioService.Play(AudioSlot.Fire);
 
             // Last, so a listener that tears something down cannot run before the shot it is
             // answering has actually been launched and presented.

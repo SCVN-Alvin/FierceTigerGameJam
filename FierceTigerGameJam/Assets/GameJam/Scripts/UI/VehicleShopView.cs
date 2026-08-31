@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using GameJam.Audio;
 using GameJam.Data;
 using GameJam.Economy;
 using GameJam.Gameplay.Combat;
@@ -442,13 +443,16 @@ namespace GameJam.UI
                 return;
             }
 
-            if (catalogue.IsUnlocked(vehicle))
+            // Read rather than discarded, for the same reason the ammunition shop reads it: a
+            // refusal is the one outcome with nothing to show for it, so it is the one that has
+            // to say so out loud.
+            bool bought = catalogue.IsUnlocked(vehicle)
+                ? economy.TryUpgradeVehicle(vehicle)
+                : economy.TryPurchaseVehicle(vehicle);
+
+            if (!bought)
             {
-                economy.TryUpgradeVehicle(vehicle);
-            }
-            else
-            {
-                economy.TryPurchaseVehicle(vehicle);
+                AudioService.Play(AudioSlot.Denied);
             }
 
             // A successful transaction already announced itself through GoldChanged, so this is

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using GameJam.Audio;
 using GameJam.Data;
 using GameJam.Economy;
 using GameJam.Gameplay.Combat;
@@ -426,13 +427,16 @@ namespace GameJam.UI
                 return;
             }
 
-            if (catalogue.IsUnlocked(bullet))
+            // The result was previously discarded. It is read now because a refusal is the one
+            // outcome with nothing to show for it: a success announces itself through GoldChanged
+            // and its coin, while a refusal would otherwise be a tap that did nothing at all.
+            bool bought = catalogue.IsUnlocked(bullet)
+                ? economy.TryUpgrade(bullet)
+                : economy.TryPurchase(bullet);
+
+            if (!bought)
             {
-                economy.TryUpgrade(bullet);
-            }
-            else
-            {
-                economy.TryPurchase(bullet);
+                AudioService.Play(AudioSlot.Denied);
             }
 
             // A successful transaction already announced itself through GoldChanged, so this is

@@ -1,4 +1,5 @@
 using System.Globalization;
+using GameJam.Audio;
 using GameJam.Economy;
 using TMPro;
 using UnityEngine;
@@ -32,6 +33,12 @@ namespace GameJam.UI
             {
                 economy.GoldChanged += Refresh;
             }
+
+            // Being enabled is the whole of "show" for this screen, as the class comment above
+            // explains, which makes OnEnable the moment the run is heard to have failed. A
+            // continue switches the root off, so picking a run up and failing it again is heard
+            // again - which is right: it failed again.
+            AudioService.Play(AudioSlot.StageFailed);
 
             Refresh();
         }

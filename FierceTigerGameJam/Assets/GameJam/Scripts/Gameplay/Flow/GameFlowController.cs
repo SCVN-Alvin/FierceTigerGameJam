@@ -1,4 +1,5 @@
 using System;
+using GameJam.Audio;
 using GameJam.Economy;
 using GameJam.Gameplay.Cannon;
 using GameJam.Gameplay.Combat;
@@ -512,6 +513,11 @@ namespace GameJam.Gameplay.Flow
             // GoldChanged fires in here, which is what makes the fail screen re-read its button.
             if (!economy.TryPayContinue())
             {
+                // The fail screen's refusal. It lives here rather than in FailScreenView because
+                // the view only draws the price - the flow is what a tap on CONTINUE reaches, and
+                // this is the Try* that can turn it down. The guards above are wiring and state
+                // problems rather than refusals, so they stay silent.
+                AudioService.Play(AudioSlot.Denied);
                 return;
             }
 

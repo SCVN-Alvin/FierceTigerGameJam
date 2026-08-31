@@ -332,6 +332,7 @@ namespace GameJam.EditorTools
                 button.targetGraphic = image;
             }
 
+            EnsureClickSound(button);
             return button;
         }
 

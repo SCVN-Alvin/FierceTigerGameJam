@@ -1,4 +1,5 @@
 using System;
+using GameJam.Audio;
 using GameJam.Gameplay;
 using UnityEngine;
 
@@ -108,8 +109,15 @@ namespace GameJam.Gameplay.Wall
             remainingHitPoints -= amount;
             if (remainingHitPoints <= 0f)
             {
+                // The shatter sound is raised inside Break rather than here, so a block broken by
+                // any other road - splash, a neighbour, the floor, BreakNow - is heard too.
                 Break(impactPoint, impactDirection);
+                return;
             }
+
+            // Survived. This is the only place that knows damage landed without killing the block,
+            // which is what makes it the one honest home for the hit sound.
+            AudioService.PlayHit(materialId);
         }
 
         [ContextMenu("Break")]
@@ -127,6 +135,11 @@ namespace GameJam.Gameplay.Wall
 
             isBroken = true;
             remainingHitPoints = 0f;
+
+            // Before the cascade below, which can break neighbours of its own: a collapse should
+            // be heard from the top down, and the per-frame cap in AudioService is what keeps a
+            // dozen of these in one physics step from becoming a single flat roar.
+            AudioService.PlayBreak(materialId);
 
             // A block can be broken by splash or by a neighbour while it is still frozen in the
             // wall, and it may be holding up a whole column. Activating it first runs the support
