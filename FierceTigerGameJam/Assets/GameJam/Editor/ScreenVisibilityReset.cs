@@ -22,8 +22,10 @@ namespace GameJam.EditorTools
 
         private static readonly string[] RootsToHide =
         {
-            "mapSelectionRoot", "ammoPickRoot", "iapShopRoot", "shopRoot",
-            "hudRoot", "failRoot", "clearedRoot", "settingsRoot", "backButton",
+            // No ammoPickRoot or backButton: the pick screen and the back button it belonged to
+            // are gone, and FindProperty would only answer null for them every run.
+            "mapSelectionRoot", "iapShopRoot", "shopRoot",
+            "hudRoot", "failRoot", "clearedRoot", "settingsRoot",
         };
 
         [MenuItem("Tools/Smashdown/Reset Screen Visibility")]

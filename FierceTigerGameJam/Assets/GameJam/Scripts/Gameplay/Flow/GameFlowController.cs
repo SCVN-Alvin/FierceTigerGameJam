@@ -11,8 +11,9 @@ using UnityEngine.UI;
 namespace GameJam.Gameplay.Flow
 {
     /// <summary>
-    /// Drives the whole loop: the menu, the shops, choosing a map, choosing ammunition, the run,
-    /// and the result that sends the player back to the menu.
+    /// Drives the whole loop: the menu, the shops, choosing a map, the run, and the result that
+    /// sends the player back to the menu. Ammunition is not one of its screens any more - the
+    /// garage is where a bullet is chosen, and choosing a map goes straight into play.
     ///
     /// The controller decides which screen is up and nothing else. It talks to screens through
     /// buttons it is handed and roots it switches on and off, never by referencing the view types,
@@ -34,7 +35,17 @@ namespace GameJam.Gameplay.Flow
 
             MapSelection,
 
-            /// <summary>Choosing what ammunition to take into the chosen map.</summary>
+            /// <summary>
+            /// Was the screen for choosing what ammunition to take into the chosen map. That
+            /// screen is gone - the garage chooses the bullet and the run fills the map's whole
+            /// budget with it - and nothing enters this state any more.
+            ///
+            /// Kept in the enum all the same, and kept in this position, because
+            /// <see cref="UI.BottomBarView.Slot.state"/> is serialized by value: deleting this
+            /// would shift Playing, Result and Loading down one and silently re-map every slot
+            /// already authored in the bar prefab. Same append-only rule the Loading state below
+            /// was added under.
+            /// </summary>
             AmmoPick,
 
             Playing,
@@ -58,6 +69,10 @@ namespace GameJam.Gameplay.Flow
         [Tooltip("Charges the continue; also where the loaded ammunition is read from.")]
         [SerializeField] private EconomyService economy;
 
+        [Tooltip("The run's rounds. Filled automatically on the way into a map now that there is "
+                 + "no pick screen to fill it by hand.")]
+        [SerializeField] private BulletInventory bulletInventory;
+
         [Header("Screens")]
         [Tooltip("The splash screen every launch opens on. Left empty - a test scene, or a scene "
                  + "Build Loading Screen has not been run over - the game opens on the main menu "
@@ -66,7 +81,6 @@ namespace GameJam.Gameplay.Flow
 
         [SerializeField] private GameObject mainMenuRoot;
         [SerializeField] private GameObject mapSelectionRoot;
-        [SerializeField] private GameObject ammoPickRoot;
         [SerializeField] private GameObject iapShopRoot;
         [Tooltip("The one shop screen, with a tab per thing sold.")]
         [FormerlySerializedAs("bulletShopRoot")]
@@ -110,8 +124,6 @@ namespace GameJam.Gameplay.Flow
         [Tooltip("The X on the mission screen. The same second way out as the garage's, for the "
                  + "same reason: the bottom bar's Home is not always under a thumb.")]
         [SerializeField] private Button closeMissionButton;
-        [SerializeField] private Button startRunButton;
-        [SerializeField] private Button backButton;
 
         [Header("Settings Buttons")]
         [SerializeField] private Button openSettingsButton;
@@ -201,8 +213,6 @@ namespace GameJam.Gameplay.Flow
 
             // GoBack sends MapSelection to the main menu too, so this needs no state of its own.
             Wire(closeMissionButton, GoBack);
-            Wire(startRunButton, ConfirmAmmoPick);
-            Wire(backButton, GoBack);
             Wire(openSettingsButton, OpenSettings);
             Wire(openSettingsInRunButton, OpenSettings);
             Wire(closeSettingsButton, CloseSettings);
@@ -232,8 +242,6 @@ namespace GameJam.Gameplay.Flow
             Unwire(shopButton, EnterShop);
             Unwire(closeShopButton, GoBack);
             Unwire(closeMissionButton, GoBack);
-            Unwire(startRunButton, ConfirmAmmoPick);
-            Unwire(backButton, GoBack);
             Unwire(openSettingsButton, OpenSettings);
             Unwire(openSettingsInRunButton, OpenSettings);
             Unwire(closeSettingsButton, CloseSettings);
@@ -337,16 +345,12 @@ namespace GameJam.Gameplay.Flow
             }
         }
 
-        /// <summary>
-        /// Choosing a map does not drop straight into play: the player picks ammunition first, and
-        /// the structure is not built until they commit, so the pick screen is never sitting on
-        /// top of a live physics scene.
-        /// </summary>
+        /// <summary>Choosing a map drops straight into play; there is no screen in between.</summary>
         private void HandleMapSelected(MapInfo map)
         {
-            // The tutorial selects its own map as one step of a scripted entry that goes on to
-            // confirm the pick itself. Answering that selection here would flash the ammunition
-            // pick, which is the one screen the tutorial exists to skip.
+            // The tutorial selects its own map as one step of a scripted entry that hands out its
+            // own three rounds and confirms the pick itself. Answering that selection here would
+            // start a second, full-budget run underneath it.
             if (tutorial != null && tutorial.IsStarting)
             {
                 return;
@@ -354,29 +358,75 @@ namespace GameJam.Gameplay.Flow
 
             if (map != null)
             {
-                EnterAmmoPick();
+                StartSelectedMap();
             }
         }
 
-        [ContextMenu("Ammo Pick")]
-        public void EnterAmmoPick()
+        /// <summary>
+        /// Straight from choosing a map to shooting it. The pick screen is gone: the garage is
+        /// where ammunition is chosen now, so the run takes the equipped type and fills the map's
+        /// whole budget with it. BeginPick still runs first - it is what reads the map's rules.
+        /// </summary>
+        [ContextMenu("Start Selected Map")]
+        public void StartSelectedMap()
         {
-            if (mapBuilder != null)
-            {
-                mapBuilder.ClearMap();
-            }
+            // Deviation from Brief 17, which starts this method at BeginPick. The old road in
+            // went through Enter(AmmoPick), and Enter tears a run down on the way into any state
+            // that is not a play state - returning debris to its pool, ending the fire controller's
+            // run and clearing the map. Enter(Playing) inside ConfirmAmmoPick does none of that,
+            // so without this line RETRY and the cleared screen's CONTINUE would build the next
+            // structure over the wreckage of the last one, with the pool still believing it owns
+            // debris that was about to be destroyed underneath it.
+            TearDownRun();
 
-            // Opened before the screen shows, so the budget and the pass bar are already read from
-            // the map by the time the pick UI draws itself.
+            // Before the auto-pick, because this is what reads the map's budget into
+            // BulletPickLimit and clears whatever the last run left in the inventory.
             if (runController != null)
             {
                 runController.BeginPick();
             }
 
-            Enter(GameState.AmmoPick);
+            AutoPickAmmunition();
+
+            // Keeps its name; it is the build-and-begin step, and the tutorial calls it too.
+            ConfirmAmmoPick();
         }
 
-        /// <summary>Commits the pick, builds the structure and starts the run.</summary>
+        /// <summary>
+        /// Fills the run with the bullet equipped in the garage, up to the map's whole budget.
+        /// One type fills the budget by design now that the player cannot mix by hand.
+        /// </summary>
+        private void AutoPickAmmunition()
+        {
+            BulletLoadout loadout = economy != null ? economy.Loadout : null;
+            BulletDefinition bullet = loadout != null ? loadout.Selected : null;
+
+            // No inventory or no catalogue is a scene wiring problem, not a case to invent a
+            // fallback for: BeginRun already judges a run that starts with nothing to fire.
+            if (bullet == null || bulletInventory == null)
+            {
+                return;
+            }
+
+            int budget = runController != null ? runController.BulletPickLimit : 0;
+
+            // Checked rather than discarded, the way the tutorial checks its own scripted pick:
+            // a refusal here means a budget of zero, and a run that cannot fire a shot is
+            // otherwise a mystery rather than a misconfiguration.
+            if (!bulletInventory.TryPick(bullet.Id, budget))
+            {
+                Debug.LogWarning(
+                    $"{name}: could not load {budget} of \"{bullet.Id}\", so the run starts with "
+                    + "nothing to fire. Check the map's bulletPickLimit in the progression config.",
+                    this);
+            }
+        }
+
+        /// <summary>
+        /// Commits whatever is in the inventory, builds the structure and starts the run. Keeps
+        /// its name now that no screen confirms anything: it is the shared build-and-begin step,
+        /// reached from <see cref="StartSelectedMap"/> and from the tutorial's scripted entry.
+        /// </summary>
         [ContextMenu("Start Run")]
         public void ConfirmAmmoPick()
         {
@@ -404,21 +454,21 @@ namespace GameJam.Gameplay.Flow
         }
 
         /// <summary>
-        /// Another attempt at the same map, back at the ammunition pick. The selection is left
-        /// alone, so the player keeps the map and only re-chooses what to bring; going straight
-        /// back into a run would hand them the same mix that just failed.
+        /// Another attempt at the same map, straight back into it. The selection is left alone, so
+        /// the map stays; the rounds are re-picked from scratch because BeginPick empties the
+        /// inventory before the auto-pick refills it to the map's budget.
         /// </summary>
         [ContextMenu("Retry Map")]
         public void RetryMap()
         {
-            EnterAmmoPick();
+            StartSelectedMap();
         }
 
         /// <summary>
-        /// The next map in the catalogue, straight into its ammunition pick. Selecting raises
-        /// SelectionChanged, and HandleMapSelected does the rest, which is the same road a tap on
-        /// the mission board takes; there is no second way into a run. Past the last map there is
-        /// nothing to continue to, so the menu it is.
+        /// The next map in the catalogue, straight into it. Selecting raises SelectionChanged, and
+        /// HandleMapSelected does the rest, which is the same road a tap on the mission board
+        /// takes; there is no second way into a run. Past the last map there is nothing to
+        /// continue to, so the menu it is.
         /// </summary>
         [ContextMenu("Next Map")]
         public void EnterNextMap()
@@ -510,9 +560,6 @@ namespace GameJam.Gameplay.Flow
         {
             switch (State)
             {
-                case GameState.AmmoPick:
-                    EnterMapSelection();
-                    break;
                 case GameState.MapSelection:
                 case GameState.IapShop:
                 case GameState.Shop:
@@ -565,7 +612,6 @@ namespace GameJam.Gameplay.Flow
             SetRootActive(loadingRoot, state == GameState.Loading);
             SetRootActive(mainMenuRoot, state == GameState.MainMenu);
             SetRootActive(selectionRoot, state == GameState.MapSelection);
-            SetRootActive(ammoPickRoot, state == GameState.AmmoPick);
             SetRootActive(iapShopRoot, state == GameState.IapShop);
             SetRootActive(shopRoot, state == GameState.Shop);
             SetRootActive(gameplayRoot, state == GameState.Playing);
@@ -577,11 +623,8 @@ namespace GameJam.Gameplay.Flow
             // want that; once they are heading into a run it is only clutter.
             SetRootActive(bottomBarRoot, IsMenuState(state));
 
-            // Back is for the screens the bar does not cover. The mission screen is no longer one
-            // of them: it carries its own X, and the bar is under it.
-            SetRootActive(
-                backButton != null ? backButton.gameObject : null,
-                state == GameState.AmmoPick);
+            // No back button any more. The pick screen was its last home; every screen that is
+            // left carries its own X, and the bottom bar's Home is under the rest.
 
             State = state;
             StateChanged?.Invoke(state);

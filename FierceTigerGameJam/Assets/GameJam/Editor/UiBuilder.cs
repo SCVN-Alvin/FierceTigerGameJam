@@ -14,9 +14,10 @@ using UnityEngine.UI;
 namespace GameJam.EditorTools
 {
     /// <summary>
-    /// Builds the screens the game loop needs and wires them to each other: the ammunition pick,
-    /// the in-run readouts and the gold readout. The two result screens are not among them: each
-    /// is authored from its own art by its own builder.
+    /// Builds the screens the game loop needs and wires them to each other: the in-run readouts
+    /// and the gold readout. The two result screens are not among them: each is authored from its
+    /// own art by its own builder. Neither is the ammunition pick, which no longer exists - the
+    /// garage chooses the bullet and the run fills the map's budget with it.
     ///
     /// The layout is deliberately plain. This exists so the loop is playable and testable without
     /// anyone hand-authoring four screens first, not to be the final art. Re-running it keeps
@@ -25,7 +26,6 @@ namespace GameJam.EditorTools
     /// </summary>
     public static partial class UiBuilder
     {
-        private const string AmmoPickName = "AmmoPickScreen";
         private const string HudName = "RunHud";
         private const string GoldName = "GoldPanel";
 
@@ -57,15 +57,14 @@ namespace GameJam.EditorTools
             BulletLoadout loadout = LoadAsset<BulletLoadout>();
             EconomyService economy = LoadAsset<EconomyService>();
 
-            GameObject ammoPick = BuildAmmoPick(canvas.transform, inventory, loadout, out Button startButton);
             GameObject hud = BuildHud(canvas.transform, run, tracker, inventory, loadout);
 
             // No result panel: both outcomes now have an authored screen of their own, built by
             // ClearedScreenBuilder and FailScreenBuilder. This builder made a plain one and found
-            // it with EnsurePanel, which meant re-running it appended its children into whichever
+            // it by name, which meant re-running it appended its children into whichever
             // instance was already in the scene - the same class of bug Brief 06 was written to
             // stop, latent only because nobody ran this menu item.
-            WireFlow(flow, run, ammoPick, hud, startButton);
+            WireFlow(flow, run, hud, inventory);
 
             // The sprite chrome comes last: it fills the readouts the plain screens left empty,
             // and it needs the roots above to already exist.
@@ -73,31 +72,8 @@ namespace GameJam.EditorTools
 
             EditorSceneManager.MarkSceneDirty(scene);
             Debug.Log(
-                $"{nameof(UiBuilder)} built the ammunition pick, the run HUD and the gold readout. "
+                $"{nameof(UiBuilder)} built the run HUD and the gold readout. "
                 + "Anything it could not find in the scene or the project is left unassigned on the components.");
-        }
-
-        private static GameObject BuildAmmoPick(Transform canvas, BulletInventory inventory, BulletLoadout loadout, out Button startButton)
-        {
-            RectTransform root = EnsurePanel(AmmoPickName, canvas);
-            CreateTitle(root, "CHOOSE YOUR AMMUNITION");
-
-            RectTransform rows = EnsureRect("Rows", root, new Vector2(0.1f, 0.28f), new Vector2(0.9f, 0.72f));
-            TMP_Text total = EnsureLabel("TotalLabel", root, "0 / 0", 42, TextAlignmentOptions.Center,
-                new Vector2(0.3f, 0.76f), new Vector2(0.7f, 0.84f));
-
-            startButton = EnsureButton("StartButton", root, "START", new Vector2(0.35f, 0.1f), new Vector2(0.65f, 0.2f));
-
-            AmmoPickView view = Ensure<AmmoPickView>(root.gameObject);
-            SerializedObject serialized = new SerializedObject(view);
-            SetIfEmpty(serialized, "inventory", inventory);
-            SetIfEmpty(serialized, "loadout", loadout);
-            SetIfEmpty(serialized, "container", rows);
-            SetIfEmpty(serialized, "totalLabel", total);
-            SetIfEmpty(serialized, "startButton", startButton);
-            serialized.ApplyModifiedPropertiesWithoutUndo();
-
-            return root.gameObject;
         }
 
         private static GameObject BuildHud(
@@ -126,9 +102,8 @@ namespace GameJam.EditorTools
         private static void WireFlow(
             GameFlowController flow,
             LevelRunController run,
-            GameObject ammoPick,
             GameObject hud,
-            Button startButton)
+            BulletInventory inventory)
         {
             if (flow == null)
             {
@@ -138,9 +113,11 @@ namespace GameJam.EditorTools
 
             SerializedObject serialized = new SerializedObject(flow);
             SetIfEmpty(serialized, "runController", run);
-            SetIfEmpty(serialized, "ammoPickRoot", ammoPick);
             SetIfEmpty(serialized, "hudRoot", hud);
-            SetIfEmpty(serialized, "startRunButton", startButton);
+
+            // The flow fills the run itself now that no pick screen does, so it needs the same
+            // inventory asset the run controller and the tutorial hold.
+            SetIfEmpty(serialized, "bulletInventory", inventory);
             serialized.ApplyModifiedPropertiesWithoutUndo();
         }
 
@@ -167,18 +144,6 @@ namespace GameJam.EditorTools
         {
             T existing = target.GetComponent<T>();
             return existing != null ? existing : Undo.AddComponent<T>(target);
-        }
-
-        private static RectTransform EnsurePanel(string name, Transform parent)
-        {
-            RectTransform root = EnsureRect(name, parent, Vector2.zero, Vector2.one);
-            if (root.GetComponent<Image>() == null)
-            {
-                Image background = Undo.AddComponent<Image>(root.gameObject);
-                background.color = PanelColor;
-            }
-
-            return root;
         }
 
         internal static RectTransform EnsureRect(string name, Transform parent, Vector2 anchorMin, Vector2 anchorMax)
@@ -225,6 +190,17 @@ namespace GameJam.EditorTools
                 label.fontSize = size;
                 label.alignment = alignment;
                 label.color = Color.white;
+
+                // Assigned here as well as in the TMP project settings: a new label picks up the
+                // project default, but only if the settings asset happens to be right at the moment
+                // the builder runs. Saying it explicitly means a freshly built screen never needs
+                // the font sweep run over it afterwards. Every builder in this folder makes its
+                // labels through this one method, so this is the only place it has to be said.
+                if (GameFonts.Default != null)
+                {
+                    label.font = GameFonts.Default;
+                    label.fontSharedMaterial = GameFonts.DefaultMaterial;
+                }
             }
 
             return label;
@@ -259,12 +235,6 @@ namespace GameJam.EditorTools
             }
 
             return button;
-        }
-
-        private static void CreateTitle(RectTransform root, string caption)
-        {
-            EnsureLabel("Title", root, caption, 44, TextAlignmentOptions.Center,
-                new Vector2(0.1f, 0.85f), new Vector2(0.9f, 0.95f));
         }
 
         /// <summary>The first asset of a type in the project, since there is only ever one of each.</summary>
