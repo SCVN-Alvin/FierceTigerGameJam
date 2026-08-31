@@ -1,4 +1,5 @@
 using UnityEngine;
+using GameJam.Audio;
 using GameJam.Gameplay;
 using GameJam.Gameplay.Combat;
 using GameJam.Gameplay.Playfield;
@@ -448,6 +449,11 @@ namespace GameJam.Gameplay.Cannon
                 hasHit = true;
                 sinceHit = 0f;
 
+                // The first floor contact of the flight, and only ever the first: the method has
+                // already returned above once hasHit is set, so a ball that rolls and touches the
+                // floor again is silent.
+                AudioService.Play(AudioSlot.BallFall);
+
                 // Same reason as the block branch below: nothing left to tunnel through.
                 projectileRigidbody.collisionDetectionMode = CollisionDetectionMode.Discrete;
 
@@ -470,6 +476,11 @@ namespace GameJam.Gameplay.Cannon
 
             hasHit = true;
             sinceHit = 0f;
+
+            // The hit is accepted here, so this is where the ball is heard landing on the block.
+            // Separate from the material hit/break sounds, which BreakableBlock raises from the
+            // damage it actually took: this one is the ball, those are the block.
+            AudioService.Play(AudioSlot.BallImpact);
 
             // Nothing left to tunnel through at the speed it is now going, and continuous
             // detection on a ball rattling around inside a collapsing structure is pure cost.

@@ -1,4 +1,5 @@
 using System.Collections;
+using GameJam.Audio;
 using GameJam.Gameplay.Flow;
 using GameJam.Gameplay.Wall;
 using TMPro;
@@ -66,6 +67,10 @@ namespace GameJam.UI
             {
                 return;
             }
+
+            // Past the guard above, so a failed run that reached this listener stays silent. The
+            // flow raises RunFinished exactly once per run, so this is heard exactly once.
+            AudioService.Play(AudioSlot.StageClear);
 
             ShowMapPicture(result.MapId);
             ShowReward(result.GoldAwarded);
