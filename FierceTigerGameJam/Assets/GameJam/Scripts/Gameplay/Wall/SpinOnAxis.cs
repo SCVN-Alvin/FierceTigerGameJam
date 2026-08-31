@@ -43,6 +43,26 @@ namespace GameJam.Gameplay.Wall
         private readonly List<Rigidbody> bodyQuery = new List<Rigidbody>();
         private readonly List<Rigidbody> sweptBodies = new List<Rigidbody>();
 
+        /// <summary>
+        /// Where each swept body stood when the drag began, as an offset from the pivot, and how
+        /// it was turned. Every step's target is computed from these and the total angle rather
+        /// than from the body's current pose.
+        ///
+        /// Stepping a body from where it currently is looks equivalent and is not: each of the
+        /// several hundred bodies then integrates its own rotation independently, and the
+        /// floating-point error in rotating a position vector accumulates at a different rate for
+        /// each one. The radius from the pivot drifts, blocks separate and interpenetrate, and a
+        /// structure that used to be rigid because a single parent transform carried it visibly
+        /// shears apart over a long drag. Absolute targets cannot drift: the pose is a pure
+        /// function of the start pose and one angle.
+        /// </summary>
+        private readonly List<Vector3> sweptOffsets = new List<Vector3>();
+
+        private readonly List<Quaternion> sweptRotations = new List<Quaternion>();
+
+        /// <summary>Total turn since the drag began. The one accumulating value, and it is a scalar.</summary>
+        private float sweptAngle;
+
         private bool sweeping;
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
@@ -141,7 +161,12 @@ namespace GameJam.Gameplay.Wall
                 return;
             }
 
-            Quaternion step = Quaternion.AngleAxis(angle, Vector3.up);
+            // The only thing that accumulates is this scalar. Each body's target is then a pure
+            // function of where it started and how far the drag has turned, so no per-body error
+            // can build up and the structure stays exactly as rigid as its parent used to make it.
+            sweptAngle += angle;
+
+            Quaternion turn = Quaternion.AngleAxis(sweptAngle, Vector3.up);
             Vector3 pivot = rotationCenter.position;
 
             for (int i = 0; i < sweptBodies.Count; i++)
@@ -166,8 +191,8 @@ namespace GameJam.Gameplay.Wall
                 // moves the body to this pose over the step, so contacts see a genuine surface
                 // velocity: a loose block resting on the structure is carried by friction, and
                 // the activation thresholds only ever see speeds that really happened.
-                body.MovePosition(pivot + (step * (body.position - pivot)));
-                body.MoveRotation(step * body.rotation);
+                body.MovePosition(pivot + (turn * sweptOffsets[i]));
+                body.MoveRotation(turn * sweptRotations[i]);
             }
         }
 
@@ -196,6 +221,14 @@ namespace GameJam.Gameplay.Wall
             GetComponentsInChildren(false, bodyQuery);
 
             sweptBodies.Clear();
+            sweptOffsets.Clear();
+            sweptRotations.Clear();
+            sweptAngle = 0f;
+
+            // Read once: every offset below is measured from this same point, so the structure
+            // keeps its shape even if the pivot object itself is later moved.
+            Vector3 pivot = rotationCenter != null ? rotationCenter.position : transform.position;
+
             for (int i = 0; i < bodyQuery.Count; i++)
             {
                 Rigidbody body = bodyQuery[i];
@@ -205,6 +238,8 @@ namespace GameJam.Gameplay.Wall
                 }
 
                 sweptBodies.Add(body);
+                sweptOffsets.Add(body.position - pivot);
+                sweptRotations.Add(body.rotation);
 
                 // A deliberate, drag-scoped exception to the rule in
                 // KnockdownBlock.ApplyRuntimeBodySettings that blocks never interpolate. That
@@ -250,6 +285,9 @@ namespace GameJam.Gameplay.Wall
             }
 
             sweptBodies.Clear();
+            sweptOffsets.Clear();
+            sweptRotations.Clear();
+            sweptAngle = 0f;
         }
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
