@@ -247,6 +247,7 @@ GameObject:
   - component: {fileID: 842654089302108629}
   - component: {fileID: 5373618879216828509}
   - component: {fileID: 6922467125802887610}
+  - component: {fileID: 1453616248433296972}
   m_Layer: 0
   m_Name: ContinueButton
   m_TagString: Untagged
@@ -355,6 +356,18 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &1453616248433296972
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4381868591364948773}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3eef747c6e75e4ba3ab551b42d134b52, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GameJam.UI.ButtonClickSound
 --- !u!1 &5266450808283391065
 GameObject:
   m_ObjectHideFlags: 0
@@ -504,6 +517,7 @@ GameObject:
   - component: {fileID: 3709538010592732294}
   - component: {fileID: 4547569718784124654}
   - component: {fileID: 5405689097156658213}
+  - component: {fileID: 6618537871515690845}
   m_Layer: 0
   m_Name: ReplayButton
   m_TagString: Untagged
@@ -612,6 +626,18 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &6618537871515690845
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5388317838370124815}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3eef747c6e75e4ba3ab551b42d134b52, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GameJam.UI.ButtonClickSound
 --- !u!1 &5759219745399207376
 GameObject:
   m_ObjectHideFlags: 0
@@ -624,6 +650,7 @@ GameObject:
   - component: {fileID: 8296846042165275589}
   - component: {fileID: 4185203368480872315}
   - component: {fileID: 5398634995827606711}
+  - component: {fileID: 3062276610612604167}
   m_Layer: 0
   m_Name: CloseButton
   m_TagString: Untagged
@@ -732,6 +759,18 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &3062276610612604167
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5759219745399207376}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3eef747c6e75e4ba3ab551b42d134b52, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GameJam.UI.ButtonClickSound
 --- !u!1 &7493913852424085799
 GameObject:
   m_ObjectHideFlags: 0

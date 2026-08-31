@@ -498,6 +498,7 @@ GameObject:
   - component: {fileID: 653592906614679238}
   - component: {fileID: 2046165560251144963}
   - component: {fileID: 8347757569823732835}
+  - component: {fileID: 426768546415203722}
   m_Layer: 0
   m_Name: MainMenuButton
   m_TagString: Untagged
@@ -607,6 +608,18 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &426768546415203722
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6567608767852091983}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3eef747c6e75e4ba3ab551b42d134b52, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GameJam.UI.ButtonClickSound
 --- !u!1 &7005817457513901982
 GameObject:
   m_ObjectHideFlags: 0
@@ -619,6 +632,7 @@ GameObject:
   - component: {fileID: 7730971577044212504}
   - component: {fileID: 2251016093007125129}
   - component: {fileID: 7737407052877269143}
+  - component: {fileID: 5905800103200885372}
   m_Layer: 0
   m_Name: CloseButton
   m_TagString: Untagged
@@ -728,6 +742,18 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &5905800103200885372
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7005817457513901982}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3eef747c6e75e4ba3ab551b42d134b52, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GameJam.UI.ButtonClickSound
 --- !u!1 &7149566548618141615
 GameObject:
   m_ObjectHideFlags: 0

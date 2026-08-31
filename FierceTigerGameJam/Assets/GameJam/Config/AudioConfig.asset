@@ -1,0 +1,48 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 714b07cb645064091b248576342e51d0, type: 3}
+  m_Name: AudioConfig
+  m_EditorClassIdentifier: Assembly-CSharp::GameJam.Audio.AudioConfig
+  fire:
+  - {fileID: 8300000, guid: f6535fd6eb89346d1b69a6812644189e, type: 3}
+  ballImpact:
+  - {fileID: 8300000, guid: 7dbc3a319c57b48c59a5f5911ab5a70b, type: 3}
+  ballFall:
+  - {fileID: 8300000, guid: e2ea7315c3e57442eb488334c1535bf6, type: 3}
+  hitBrick:
+  - {fileID: 8300000, guid: 25ccf14dc53564050aee690870a7bb66, type: 3}
+  hitConcrete:
+  - {fileID: 8300000, guid: 0ce615d7f713541cab9937d416fab966, type: 3}
+  hitGlass:
+  - {fileID: 8300000, guid: 4c74f50ced3cb41408ff74135bf4c032, type: 3}
+  breakBrick:
+  - {fileID: 8300000, guid: 3bc23c70c8fb648f89de46248d3b395a, type: 3}
+  breakConcrete:
+  - {fileID: 8300000, guid: d08e7baf1423e44a3b965c5e63505304, type: 3}
+  breakGlass:
+  - {fileID: 8300000, guid: 9e5857d926a99445c86a838b325740f7, type: 3}
+  uiClick:
+  - {fileID: 8300000, guid: 11d0ce02e2fed4fb8b081992d67392fc, type: 3}
+  denied:
+  - {fileID: 8300000, guid: f39dd546e1e9d4abcb56ae0aa0cfedde, type: 3}
+  coin:
+  - {fileID: 8300000, guid: 74f0ff539eca0410c9f908293a3182d5, type: 3}
+  stageClear:
+  - {fileID: 8300000, guid: e24f642ae5c114aa6b5d29bb87af01bd, type: 3}
+  stageFailed:
+  - {fileID: 8300000, guid: 5ba975150c1b4442b8e848a312a191df, type: 3}
+  musicTitle:
+  - {fileID: 8300000, guid: 72bcfa9b6df884deab9b0ed50f5e54c7, type: 3}
+  musicGame:
+  - {fileID: 8300000, guid: 890613b18d9d0492587a2e2edaa0c08f, type: 3}
+  musicVolume: 0.5
+  sfxVolume: 1

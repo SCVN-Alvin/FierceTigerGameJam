@@ -384,6 +384,7 @@ GameObject:
   - component: {fileID: 5233543425440360819}
   - component: {fileID: 1128562234928389609}
   - component: {fileID: 5580036351035396627}
+  - component: {fileID: 1151428580006584142}
   m_Layer: 0
   m_Name: Select
   m_TagString: Untagged
@@ -492,6 +493,18 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &1151428580006584142
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2889855741236754499}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3eef747c6e75e4ba3ab551b42d134b52, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GameJam.UI.ButtonClickSound
 --- !u!1 &4365109066699481083
 GameObject:
   m_ObjectHideFlags: 0
@@ -856,6 +869,7 @@ GameObject:
   - component: {fileID: 3193606337263817414}
   - component: {fileID: 5042453826024498571}
   - component: {fileID: 5462243128920223602}
+  - component: {fileID: 1871465056915630520}
   m_Layer: 0
   m_Name: Buy
   m_TagString: Untagged
@@ -965,6 +979,18 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &1871465056915630520
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8638633664978551963}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3eef747c6e75e4ba3ab551b42d134b52, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GameJam.UI.ButtonClickSound
 --- !u!1 &9078372733734186277
 GameObject:
   m_ObjectHideFlags: 0

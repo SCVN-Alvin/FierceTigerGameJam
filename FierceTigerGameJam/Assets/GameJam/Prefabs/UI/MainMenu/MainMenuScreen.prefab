@@ -286,6 +286,7 @@ GameObject:
   - component: {fileID: 8551438397167876941}
   - component: {fileID: 456692110264181564}
   - component: {fileID: 7838076211627538383}
+  - component: {fileID: 5645522028153960524}
   m_Layer: 0
   m_Name: SettingsButton
   m_TagString: Untagged
@@ -394,6 +395,18 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &5645522028153960524
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1551122825934618156}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3eef747c6e75e4ba3ab551b42d134b52, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GameJam.UI.ButtonClickSound
 --- !u!1 &1618396035100328697
 GameObject:
   m_ObjectHideFlags: 0
@@ -707,6 +720,7 @@ GameObject:
   - component: {fileID: 816762653590824610}
   - component: {fileID: 3428797040816355766}
   - component: {fileID: 6808791902712151666}
+  - component: {fileID: 8935242144423541116}
   m_Layer: 0
   m_Name: PlayButton
   m_TagString: Untagged
@@ -815,3 +829,15 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &8935242144423541116
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7630229555934779289}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3eef747c6e75e4ba3ab551b42d134b52, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GameJam.UI.ButtonClickSound

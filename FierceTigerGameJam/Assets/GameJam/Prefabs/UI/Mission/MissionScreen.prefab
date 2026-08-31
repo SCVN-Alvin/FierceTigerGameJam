@@ -499,6 +499,7 @@ GameObject:
   - component: {fileID: 2291816072087642387}
   - component: {fileID: 3550656909625244512}
   - component: {fileID: 5119333212499603365}
+  - component: {fileID: 6146617396961089786}
   m_Layer: 0
   m_Name: PrevMissionButton
   m_TagString: Untagged
@@ -607,6 +608,18 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &6146617396961089786
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4798015287085773523}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3eef747c6e75e4ba3ab551b42d134b52, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GameJam.UI.ButtonClickSound
 --- !u!1 &6089795037190587049
 GameObject:
   m_ObjectHideFlags: 0
@@ -873,6 +886,7 @@ GameObject:
   - component: {fileID: 8299905666997352456}
   - component: {fileID: 8564203942660895084}
   - component: {fileID: 5830249466207725138}
+  - component: {fileID: 3278190582182019619}
   m_Layer: 0
   m_Name: NextMissionButton
   m_TagString: Untagged
@@ -981,6 +995,18 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &3278190582182019619
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8294598500217017563}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3eef747c6e75e4ba3ab551b42d134b52, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GameJam.UI.ButtonClickSound
 --- !u!1 &9058998338243293464
 GameObject:
   m_ObjectHideFlags: 0

@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 6213335892770210497}
   - component: {fileID: 5112404106758358285}
   - component: {fileID: 5515126962122637146}
+  - component: {fileID: 5769061757879222011}
   m_Layer: 0
   m_Name: RunSettingsButton
   m_TagString: Untagged
@@ -120,6 +121,18 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &5769061757879222011
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2144335551794867811}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3eef747c6e75e4ba3ab551b42d134b52, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GameJam.UI.ButtonClickSound
 --- !u!1 &2283136734390867449
 GameObject:
   m_ObjectHideFlags: 0

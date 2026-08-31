@@ -49,6 +49,7 @@ GameObject:
   - component: {fileID: 4774760503773236670}
   - component: {fileID: 1231282415043749814}
   - component: {fileID: 7935037290641461215}
+  - component: {fileID: 173706677907833182}
   m_Layer: 0
   m_Name: VehicleTypeTab
   m_TagString: Untagged
@@ -157,6 +158,18 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &173706677907833182
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 599376484447114578}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3eef747c6e75e4ba3ab551b42d134b52, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GameJam.UI.ButtonClickSound
 --- !u!1 &1002302967854688712
 GameObject:
   m_ObjectHideFlags: 0
@@ -1215,6 +1228,7 @@ GameObject:
   - component: {fileID: 1331220541914944577}
   - component: {fileID: 5338481793033862397}
   - component: {fileID: 6349195339675984347}
+  - component: {fileID: 2203904135772090399}
   m_Layer: 0
   m_Name: CloseButton
   m_TagString: Untagged
@@ -1323,6 +1337,18 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &2203904135772090399
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7566567543249998467}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3eef747c6e75e4ba3ab551b42d134b52, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GameJam.UI.ButtonClickSound
 --- !u!1 &7943059204483253157
 GameObject:
   m_ObjectHideFlags: 0
@@ -1335,6 +1361,7 @@ GameObject:
   - component: {fileID: 378710600317033070}
   - component: {fileID: 3926096778256554556}
   - component: {fileID: 7141706248585156825}
+  - component: {fileID: 3404102846587463569}
   m_Layer: 0
   m_Name: BulletTypeTab
   m_TagString: Untagged
@@ -1443,6 +1470,18 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &3404102846587463569
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7943059204483253157}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3eef747c6e75e4ba3ab551b42d134b52, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GameJam.UI.ButtonClickSound
 --- !u!1 &7955381367368688134
 GameObject:
   m_ObjectHideFlags: 0
