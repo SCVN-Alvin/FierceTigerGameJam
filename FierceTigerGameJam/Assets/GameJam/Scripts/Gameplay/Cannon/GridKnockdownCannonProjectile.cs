@@ -1,6 +1,7 @@
 using UnityEngine;
 using GameJam.Gameplay;
 using GameJam.Gameplay.Combat;
+using GameJam.Gameplay.Playfield;
 using GameJam.Gameplay.Wall;
 using System.Collections.Generic;
 
@@ -402,6 +403,18 @@ namespace GameJam.Gameplay.Cannon
             damageMultiplier = 1f;
         }
 
+        /// <summary>
+        /// Sends a live shot home early, for anything outside the ball that decides its flight is
+        /// over. Exists so an out-of-bounds <see cref="FallBreakZone"/> in Despawn mode has a way
+        /// to clear a ball that escaped the floor: destroying it there would take a pooled
+        /// instance out of circulation permanently, shrinking the pool every time a shot went
+        /// wide.
+        /// </summary>
+        public void ReturnToPool()
+        {
+            Despawn();
+        }
+
         private void Despawn()
         {
             if (pool != null)
@@ -417,6 +430,28 @@ namespace GameJam.Gameplay.Cannon
         {
             if (hasHit || collision == null)
             {
+                return;
+            }
+
+            // The floor ends a flight instead of being ignored: the ball lands, rolls out its
+            // post-impact beat on the floor's friction, and goes home to the pool. Ignoring it was
+            // harmless when shots were flat and died off-screen; under the Brief 18 arc it reads
+            // as the world having no ground. Deliberately ahead of the block lookup, so the floor
+            // never reaches the miss branch below and never gets an IgnoreCollision pair - those
+            // persist for the life of a pooled instance.
+            //
+            // No `if (!hasHit)` guard around this, unlike the brief's sketch: the method has
+            // already returned above when hasHit is true, so a ball touching the floor after
+            // hitting a block keeps its running timer without any further test here.
+            if (collision.collider.GetComponentInParent<FallBreakZone>() != null)
+            {
+                hasHit = true;
+                sinceHit = 0f;
+
+                // Same reason as the block branch below: nothing left to tunnel through.
+                projectileRigidbody.collisionDetectionMode = CollisionDetectionMode.Discrete;
+
+                // No damage and no ignore - physics is left to keep the ball on the surface.
                 return;
             }
 
