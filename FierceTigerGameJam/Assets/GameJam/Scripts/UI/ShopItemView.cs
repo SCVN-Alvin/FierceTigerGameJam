@@ -159,10 +159,7 @@ namespace GameJam.UI
                 buyLabel.text = state.BuyCaption;
             }
 
-            if (buyButton != null)
-            {
-                buyButton.interactable = state.BuyInteractable;
-            }
+            SetInteractableInstantly(buyButton, state.BuyInteractable);
 
             bool unlocked = state.Unlocked;
 
@@ -352,6 +349,44 @@ namespace GameJam.UI
             {
                 selectButton.gameObject.SetActive(false);
             }
+
+            // Buy is never hidden - it is on every row in every state - but it must not be drawn
+            // bright before anyone has said it can be pressed. Set here in Awake rather than in
+            // Bind so the Selectable's own OnEnable carries it into the dim state instantly; an
+            // interactable change made after that point is a tween, which is the flash itself.
+            if (buyButton != null)
+            {
+                buyButton.interactable = false;
+            }
+        }
+
+        /// <summary>
+        /// Sets a button's interactable state without the colour fade.
+        ///
+        /// A Selectable tweens its tint over fadeDuration (0.1 s on the garage rows) whenever
+        /// interactable changes, which is exactly the wrong behaviour when a row is being told
+        /// what it is for the first time: the button lights up at the authored colour, then sinks
+        /// to the real one a tenth of a second later, and switching tabs shows a row of buttons
+        /// flashing. Re-enabling the Selectable re-runs its OnEnable, which transitions instantly,
+        /// so the row is simply correct on the frame it appears.
+        /// </summary>
+        private static void SetInteractableInstantly(Selectable selectable, bool interactable)
+        {
+            if (selectable == null || selectable.interactable == interactable)
+            {
+                return;
+            }
+
+            selectable.interactable = interactable;
+
+            // Nothing to repaint while the row is off; OnEnable will do it instantly anyway.
+            if (!selectable.gameObject.activeInHierarchy)
+            {
+                return;
+            }
+
+            selectable.enabled = false;
+            selectable.enabled = true;
         }
     }
 }
