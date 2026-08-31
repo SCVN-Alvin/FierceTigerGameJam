@@ -35,7 +35,10 @@ namespace GameJam.Gameplay.Cannon
         [SerializeField] private CannonShotPresenter shotPresenter;
         [SerializeField] private CannonAimController aimController;
         [SerializeField] private float aimPlaneZ = 20f;
-        [SerializeField] private float projectileSpeed = 105f;
+        [Tooltip("How fast a ball leaves the muzzle. Low on purpose: the aim already solves a "
+                 + "ballistic arc, and above roughly 40 units per second the solution is so flat "
+                 + "and the flight so short that the parabola cannot be seen at all.")]
+        [SerializeField] private float projectileSpeed = 22f;
         [SerializeField] private float projectileLifetime = 5f;
         [SerializeField] private float muzzleSpawnOffset = 0.28f;
 
@@ -179,9 +182,16 @@ namespace GameJam.Gameplay.Cannon
             return true;
         }
 
+        /// <summary>
+        /// Names a refused tap for whoever is building the level. Widened from editor-only to
+        /// development builds so the reason travels with a test build. Note that this path is the
+        /// aim plane's bounds check - a tap at empty sky - and never a ballistic one: the solver
+        /// always answers with its best direction, so a target out of the cannon's reach is
+        /// reported by <see cref="CannonBallisticAimMath"/> itself rather than here.
+        /// </summary>
         private static void LogAimRejected(AimRejectReason rejectReason)
         {
-#if UNITY_EDITOR
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             if (rejectReason == AimRejectReason.TooLow
                 || rejectReason == AimRejectReason.TooHigh
                 || rejectReason == AimRejectReason.TooLeft

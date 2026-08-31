@@ -973,7 +973,7 @@ MonoBehaviour:
   shotPresenter: {fileID: 4100000004}
   aimController: {fileID: 2066028395}
   aimPlaneZ: 20
-  projectileSpeed: 105
+  projectileSpeed: 22
   projectileLifetime: 5
   muzzleSpawnOffset: 0.28
 --- !u!114 &2066028394
