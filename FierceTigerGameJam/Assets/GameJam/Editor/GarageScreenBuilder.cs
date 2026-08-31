@@ -419,6 +419,8 @@ namespace GameJam.EditorTools
                     Place(rect, ScreenAnchorMin, ScreenAnchorMax);
                 }
 
+                UiBuilder.EnsureBackdrop(rect);
+
                 bool frameCreated = rect.Find("Frame") == null;
                 RectTransform frame = EnsureImage("Frame", rect, FrameSprite,
                     Vector2.zero, Vector2.one, Image.Type.Simple, false);

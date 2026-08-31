@@ -34,7 +34,6 @@ namespace GameJam.EditorTools
         private const string UiTextures = "Assets/GameJam/Textures/UI";
         private const string LoseTextures = UiTextures + "/LoseScreen";
 
-        private const string DimSprite = UiTextures + "/Tutorial/Filter.png";
         private const string TitleSprite = LoseTextures + "/UI_Continue_img.png";
         private const string BannerSprite = LoseTextures + "/UI_Banner_PlusAmmo.png";
         private const string CoinSprite = UiTextures + "/Common/UI_Coin.png";
@@ -104,11 +103,12 @@ namespace GameJam.EditorTools
                     Place(rect, Vector2.zero, Vector2.one);
                 }
 
-                // The one image here that takes input. The structure is still standing behind the
-                // screen and the cannon still listens for a drag, so without something over it a
-                // tap meant for the price button would also be a shot at nothing.
-                EnsureImage("Dim", rect, DimSprite, Vector2.zero, Vector2.one,
-                    Image.Type.Simple, false, true);
+                // The dark ground, and the one image here that takes input: the structure is still
+                // standing behind the screen and the cannon still listens for a drag, so without
+                // something over it a tap meant for REPLAY would also be a shot.
+                UiBuilder.EnsureBackdrop(rect);
+
+                RemoveRetiredDim(rect);
 
                 EnsureImage("Title", rect, TitleSprite,
                     new Vector2(0.12f, 0.74f), new Vector2(0.88f, 0.88f),
@@ -355,6 +355,21 @@ namespace GameJam.EditorTools
 
             EnsureFolder(parent);
             AssetDatabase.CreateFolder(parent, leaf);
+        }
+
+        /// <summary>
+        /// Clears the old Dim. It was the tutorial's Filter.png, which carries a transparent
+        /// ellipse punched through the middle for the spotlight - never what this screen wanted -
+        /// and it has been sitting here disabled, blocking nothing, because the importer left that
+        /// file unloadable as a sprite. The backdrop above is what it was always meant to be.
+        /// </summary>
+        private static void RemoveRetiredDim(RectTransform rect)
+        {
+            Transform dim = rect.Find("Dim");
+            if (dim != null)
+            {
+                Object.DestroyImmediate(dim.gameObject);
+            }
         }
 
         private static RectTransform EnsureImage(

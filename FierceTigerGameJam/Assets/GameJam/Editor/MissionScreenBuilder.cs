@@ -84,14 +84,6 @@ namespace GameJam.EditorTools
         /// </summary>
         private static readonly string[] RetiredChildren = { "MoneyChip", "MissionChip", "CloseButton" };
 
-        private const string BackdropName = "Backdrop";
-
-        /// <summary>
-        /// Black at a bit over half, so the board reads as sitting in front of the menu rather
-        /// than pasted onto it, and the menu stays legible behind it.
-        /// </summary>
-        private static readonly Color BackdropColor = new Color(0f, 0f, 0f, 0.6f);
-
         /// <summary>232x209 of card art at the frame's 600/975 scale, so three fit across the inset.</summary>
         private static readonly Vector2 CardSize = new Vector2(143f, 129f);
 
@@ -213,7 +205,7 @@ namespace GameJam.EditorTools
                 }
 
                 RemoveRetiredChildren(rect);
-                EnsureBackdrop(rect);
+                UiBuilder.EnsureBackdrop(rect);
 
                 bool frameCreated = rect.Find("Frame") == null;
                 RectTransform frame = EnsureImage("Frame", rect, FrameSprite,
@@ -598,36 +590,6 @@ namespace GameJam.EditorTools
             }
         }
 
-        /// <summary>
-        /// The dark ground the board sits on, behind everything else on the screen.
-        ///
-        /// A sprite-less Image, which draws as a flat quad its colour tints - no art needed, and
-        /// nothing to re-import if the shade changes. It stops at the screen root, so the bottom
-        /// bar underneath stays at full strength: it is the live navigation now and dimming it
-        /// would say the opposite.
-        ///
-        /// It takes raycasts on purpose. Every tap that is not on the board is one the board
-        /// should swallow rather than let through to whatever is behind it.
-        /// </summary>
-        private static void EnsureBackdrop(RectTransform rect)
-        {
-            bool created = rect.Find(BackdropName) == null;
-            RectTransform backdrop = UiBuilder.EnsureRect(BackdropName, rect, Vector2.zero, Vector2.one);
-
-            if (created)
-            {
-                Place(backdrop, Vector2.zero, Vector2.one);
-
-                Image image = UiBuilder.Ensure<Image>(backdrop.gameObject);
-                image.sprite = null;
-                image.color = BackdropColor;
-                image.raycastTarget = true;
-            }
-
-            // Enforced on every run, not only on creation: being behind everything is the whole
-            // job, and a screen built later would otherwise be able to slide underneath it.
-            backdrop.SetAsFirstSibling();
-        }
 
         private static RectTransform EnsureImage(
             string name,

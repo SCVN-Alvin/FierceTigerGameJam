@@ -142,6 +142,8 @@ namespace GameJam.EditorTools
         {
             RectTransform root = EnsureShopPanel("IapShopScreen", canvas, "GET GOLD", out RectTransform rows, out TMP_Text goldLabel);
 
+            EnsureBackdrop(root);
+
             IapShopView view = Ensure<IapShopView>(root.gameObject);
             SerializedObject serialized = new SerializedObject(view);
             SetIfEmpty(serialized, "economy", economy);

@@ -146,6 +146,59 @@ namespace GameJam.EditorTools
             return existing != null ? existing : Undo.AddComponent<T>(target);
         }
 
+        /// <summary>The one shade every screen dims its background to, so they all read alike.</summary>
+        internal static readonly Color BackdropColor = new Color(0f, 0f, 0f, 0.6f);
+
+        internal const string BackdropName = "Backdrop";
+
+        /// <summary>
+        /// The dark ground a screen sits on, covering the whole canvas rather than only the screen.
+        ///
+        /// Most of these screens are anchored above the bottom bar, so a backdrop stretched 0-1
+        /// inside one of them leaves the strip underneath at full brightness - which is the bug
+        /// this exists to answer. The coverage is worked out from the root's own anchors instead of
+        /// being written down, so it is right for a screen that stops above the bar and for one
+        /// that already fills the canvas, and stays right if a root is ever re-anchored. A root
+        /// that already spans the canvas gets exactly 0-1 back.
+        ///
+        /// A sprite-less Image: a flat quad its colour tints, so there is no art to import and no
+        /// atlas to keep in step. It takes raycasts, because a tap that is not on the screen in
+        /// front should stop here rather than reach whatever is behind it.
+        ///
+        /// The anchors are rewritten on every run - covering the canvas is the whole job, not a
+        /// starting point - while the colour is only ever set on creation, so a screen tinted by
+        /// hand keeps its shade.
+        /// </summary>
+        internal static RectTransform EnsureBackdrop(RectTransform root)
+        {
+            bool created = root.Find(BackdropName) == null;
+            RectTransform backdrop = EnsureRect(BackdropName, root, Vector2.zero, Vector2.one);
+
+            Vector2 span = root.anchorMax - root.anchorMin;
+            backdrop.anchorMin = new Vector2(
+                span.x > 0f ? -root.anchorMin.x / span.x : 0f,
+                span.y > 0f ? -root.anchorMin.y / span.y : 0f);
+            backdrop.anchorMax = new Vector2(
+                span.x > 0f ? 1f + (1f - root.anchorMax.x) / span.x : 1f,
+                span.y > 0f ? 1f + (1f - root.anchorMax.y) / span.y : 1f);
+            backdrop.offsetMin = Vector2.zero;
+            backdrop.offsetMax = Vector2.zero;
+            backdrop.localScale = Vector3.one;
+
+            if (created)
+            {
+                Image image = Ensure<Image>(backdrop.gameObject);
+                image.sprite = null;
+                image.color = BackdropColor;
+                image.raycastTarget = true;
+            }
+
+            // Behind everything, enforced every run: a screen built later could otherwise be
+            // inserted underneath it.
+            backdrop.SetAsFirstSibling();
+            return backdrop;
+        }
+
         internal static RectTransform EnsureRect(string name, Transform parent, Vector2 anchorMin, Vector2 anchorMax)
         {
             Transform existing = parent.Find(name);
