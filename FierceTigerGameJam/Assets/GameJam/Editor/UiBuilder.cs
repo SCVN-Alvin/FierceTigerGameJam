@@ -287,7 +287,27 @@ namespace GameJam.EditorTools
                 EnsureLabel("Label", rect, caption, 36, TextAlignmentOptions.Center, Vector2.zero, Vector2.one);
             }
 
+            EnsureClickSound(button);
             return button;
+        }
+
+        /// <summary>
+        /// Gives a button its click sound. Outside the "was it just created" branch above on
+        /// purpose: a button built before sound existed should gain one when a builder is next run
+        /// over it, not only a button made from scratch today.
+        ///
+        /// Idempotent, so it neither doubles up nor fights the sweep in <see cref="AudioSetup"/>:
+        /// whichever of the two reaches a button first, the other finds the component already
+        /// there and leaves it alone.
+        /// </summary>
+        internal static void EnsureClickSound(Button button)
+        {
+            if (button == null || button.GetComponent<ButtonClickSound>() != null)
+            {
+                return;
+            }
+
+            Undo.AddComponent<ButtonClickSound>(button.gameObject);
         }
 
         /// <summary>The first asset of a type in the project, since there is only ever one of each.</summary>
