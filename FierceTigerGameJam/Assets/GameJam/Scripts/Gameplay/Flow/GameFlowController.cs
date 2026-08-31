@@ -1,6 +1,7 @@
 using System;
 using GameJam.Audio;
 using GameJam.Economy;
+using GameJam.Gameplay.Cameras;
 using GameJam.Gameplay.Cannon;
 using GameJam.Gameplay.Combat;
 using GameJam.Gameplay.Wall;
@@ -154,7 +155,10 @@ namespace GameJam.Gameplay.Flow
 
         [Header("Reset On Entering A Map")]
         [SerializeField] private CannonAimController aimController;
-        [SerializeField] private SpinOnAxis structureSpinner;
+
+        [Tooltip("The pivot the camera rig orbits. Squared up between runs so every map is "
+                 + "entered from the authored viewpoint.")]
+        [SerializeField] private CameraOrbit cameraOrbit;
 
         [Tooltip("Optional. Warmed at the start of a run so the first shot of a map costs no "
                  + "more than the tenth.")]
@@ -186,9 +190,12 @@ namespace GameJam.Gameplay.Flow
                 aimController = gameplayRoot.GetComponentInChildren<CannonAimController>(true);
             }
 
-            if (structureSpinner == null && mapBuilder != null)
+            // Not resolved from the map builder the way the old structure spinner was: the orbit
+            // belongs to the camera rig rather than to the map, and deliberately hangs outside
+            // the structure so rebuilding a map cannot disturb it.
+            if (cameraOrbit == null)
             {
-                structureSpinner = mapBuilder.StructureSpinner;
+                cameraOrbit = FindFirstObjectByType<CameraOrbit>();
             }
         }
 
@@ -691,9 +698,12 @@ namespace GameJam.Gameplay.Flow
 
         private void ResetPlayfield()
         {
-            if (structureSpinner != null)
+            // The view goes back to the authored angle, not the structure: nothing turns the
+            // structure any more, so the old structureSpinner.ResetRotation() had nothing left to
+            // undo and the reference has gone with it.
+            if (cameraOrbit != null)
             {
-                structureSpinner.ResetRotation();
+                cameraOrbit.ResetRotation();
             }
 
             if (aimController != null)
