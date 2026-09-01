@@ -78,8 +78,25 @@ namespace GameJam.Gameplay.Cannon
         [Tooltip("Nudge applied after the alignment, in the mount frame's space. The alignment puts "
                  + "the barrel where the old one pivoted; this is the knob for saying it should sit "
                  + "a little lower or further forward than that, and it applies to every vehicle "
-                 + "equally so they stay in line with each other.")]
+                 + "equally so they stay in line with each other. To bring the barrel low in frame "
+                 + "the way the reference shot has it, move it towards the camera on z rather than "
+                 + "down on y: the reference barrel is cut off by the edge of the screen, not sunk "
+                 + "into the floor.")]
         [SerializeField] private Vector3 barrelAlignmentOffset = Vector3.zero;
+
+        [Tooltip("Lifts the model if anything it draws would end up under the floor. The barrel is "
+                 + "positioned by its breech, and the mesh hangs around that point, so pushing the "
+                 + "mount down far enough always buries the far end eventually. This is the floor "
+                 + "it will not go through.")]
+        [SerializeField] private bool keepAboveGround = true;
+
+        [Tooltip("World height of the floor the barrel may not sink through. The playfield's ground "
+                 + "plane sits at y = 0.")]
+        [SerializeField] private float groundHeight;
+
+        [Tooltip("How far above that floor the lowest drawn point is held. Zero rests it exactly on "
+                 + "the ground; a little more keeps the outline from z-fighting the floor.")]
+        [SerializeField] private float groundClearance = 0.01f;
 
         [Tooltip("What barrelOnly hides, matched against a spawned node's name as a case-"
                  + "insensitive prefix. Prefixes rather than whole names because the pack spells "
@@ -143,6 +160,13 @@ namespace GameJam.Gameplay.Cannon
         /// the collector a fresh list every time.
         /// </summary>
         private readonly List<Transform> searchFrontier = new List<Transform>();
+
+        /// <summary>
+        /// Reused by the ground clamp for the same reason as <see cref="searchFrontier"/>: it runs
+        /// on a vehicle swap rather than per frame, but there is no reason to hand it a new list
+        /// each time.
+        /// </summary>
+        private readonly List<Renderer> rendererQuery = new List<Renderer>();
 
         /// <summary>
         /// The barrel's rest pose is read here, before anything has aimed. Both fire controllers
@@ -277,6 +301,10 @@ namespace GameJam.Gameplay.Cannon
             // tell.
             HideNonBarrelParts(current);
 
+            // After the hiding, deliberately: the clamp measures what is actually drawn, and a
+            // base that has just been switched off must not be what holds the barrel up.
+            ClampAboveGround();
+
             SetFallbackActive(false);
 
             StripColliders(current);
@@ -312,6 +340,66 @@ namespace GameJam.Gameplay.Cannon
             // the numbers and neither needs unpicking.
             current.transform.position += barrelReference.position - barrelNode.position;
             current.transform.localPosition += barrelAlignmentOffset;
+        }
+
+        /// <summary>
+        /// Lifts the model until nothing it draws is below the floor.
+        ///
+        /// The barrel is placed by its breech, and its mesh hangs around that point rather than
+        /// above it, so any offset that pushes the mount down far enough will eventually put the
+        /// far end of the barrel through the ground - which is what happens when the barrel is
+        /// dragged downwards to get it low in frame. Getting it low is a job for moving it towards
+        /// the camera, not into the floor; this is the guard that makes the difference impossible
+        /// to get wrong by hand.
+        ///
+        /// Only enabled renderers are measured, so the parts <see cref="BarrelOnly"/> just switched
+        /// off cannot prop the barrel up from underneath - it is the visible silhouette that must
+        /// clear the floor, not the model's authored extents.
+        /// </summary>
+        private void ClampAboveGround()
+        {
+            if (!keepAboveGround || current == null)
+            {
+                return;
+            }
+
+            current.GetComponentsInChildren(false, rendererQuery);
+            if (rendererQuery.Count == 0)
+            {
+                return;
+            }
+
+            float lowest = float.MaxValue;
+            for (int i = 0; i < rendererQuery.Count; i++)
+            {
+                Renderer renderer = rendererQuery[i];
+                if (renderer == null || !renderer.enabled)
+                {
+                    continue;
+                }
+
+                float min = renderer.bounds.min.y;
+                if (min < lowest)
+                {
+                    lowest = min;
+                }
+            }
+
+            rendererQuery.Clear();
+            if (lowest == float.MaxValue)
+            {
+                return;
+            }
+
+            float floor = groundHeight + groundClearance;
+            if (lowest >= floor)
+            {
+                return;
+            }
+
+            // World space: the model may be scaled and the mount rotated, and the floor is a world
+            // height, so mixing spaces here is how a clamp ends up lifting by the wrong amount.
+            current.transform.position += new Vector3(0f, floor - lowest, 0f);
         }
 
         /// <summary>
