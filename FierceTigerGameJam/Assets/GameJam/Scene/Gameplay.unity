@@ -3607,12 +3607,6 @@ MonoBehaviour:
   buildOnStart: 0
   createStructureCenter: 1
   structureSpinner: {fileID: 744831460}
-  wallGrouping: 1
-  minimumWallCells: 4
-  groupBlocksIntoWalls: 1
-  wallGroupingMigrated: 1
-  useWallPanels: 1
-  wallTextureTilesPerCell: 1
 --- !u!1001 &143464335349630862
 PrefabInstance:
   m_ObjectHideFlags: 0

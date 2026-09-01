@@ -59,6 +59,13 @@ namespace GameJam.EditorTools
         private const string CloseSprite = GarageTextures + "/Btn_Esc.png";
         private const string MoneySprite = MenuTextures + "/UI_Money.png";
 
+        /// <summary>
+        /// The same full-screen art the main menu and the mission board stand on. The garage had a
+        /// dim and nothing else, so the world showed through it - it is a menu, not an overlay on
+        /// the run, and it gets the menu's ground.
+        /// </summary>
+        private const string BackgroundSprite = MenuTextures + "/UI_MainMenu_BG.png";
+
         private const string GarageFolder = "Assets/GameJam/Prefabs/UI/Garage";
         private const string PipPrefabPath = GarageFolder + "/UpgradeLevelView.prefab";
         private const string BulletRowPrefabPath = GarageFolder + "/BulletTypeViewItem.prefab";
@@ -420,6 +427,7 @@ namespace GameJam.EditorTools
                 }
 
                 UiBuilder.EnsureBackdrop(rect);
+                EnsureBackground(rect);
 
                 bool frameCreated = rect.Find("Frame") == null;
                 RectTransform frame = EnsureImage("Frame", rect, FrameSprite,
@@ -882,6 +890,30 @@ namespace GameJam.EditorTools
         /// Finds or creates an image and, only if it had to make one, gives it the look this
         /// layout wants. An image somebody re-sliced or nudged is handed straight back.
         /// </summary>
+        /// <summary>
+        /// The screen's own ground, in front of the backdrop and behind everything else.
+        ///
+        /// Sits after the backdrop rather than replacing it: the backdrop covers the whole canvas
+        /// including the strip beneath the bottom bar, while this is the art the garage itself
+        /// stands on. Full-bleed and raycast-off, so it is scenery and never eats a tap meant for
+        /// a row.
+        /// </summary>
+        private static void EnsureBackground(RectTransform rect)
+        {
+            bool created = rect.Find("Background") == null;
+            RectTransform background = EnsureImage("Background", rect, BackgroundSprite,
+                Vector2.zero, Vector2.one, Image.Type.Simple, false);
+
+            if (created)
+            {
+                Place(background, Vector2.zero, Vector2.one);
+            }
+
+            // Enforced every run: being behind the garage is the whole job, and the backdrop has
+            // to stay behind this in turn.
+            background.SetSiblingIndex(1);
+        }
+
         private static RectTransform EnsureImage(
             string name,
             Transform parent,
