@@ -42,6 +42,13 @@ namespace GameJam.EditorTools
         private const string RetrySprite = MissionTextures + "/Btn_Retry.png";
         private const string PlaySprite = MissionTextures + "/Btn_Play_Small.png";
         private const string LockedSprite = MissionTextures + "/Btn_Locked.png";
+        /// <summary>
+        /// The same full-screen art the main menu stands on. The board used to sit on a dim alone,
+        /// which left the cannon barrel visible through it - the board is a menu, not an overlay on
+        /// the run, so it gets the menu's ground.
+        /// </summary>
+        private const string BackgroundSprite = MenuTextures + "/UI_MainMenu_BG.png";
+
         private const string PrevSprite = MissionTextures + "/Btn_Mission_Prev.png";
         private const string NextSprite = MissionTextures + "/Btn_Mission_Next.png";
 
@@ -123,6 +130,16 @@ namespace GameJam.EditorTools
         private static readonly Vector2 PreviousGridAnchorMin = new Vector2(0f, 1f);
         private static readonly Vector2 PreviousGridAnchorMax = new Vector2(1f, 1f);
         private static readonly Vector2 PreviousGridPivot = new Vector2(0.5f, 1f);
+
+        /// <summary>
+        /// And the left-edge anchors the single-row shape used. Recognising only the original grid
+        /// was why the cards stayed pinned to the left after the row was retired: the layout flipped
+        /// back to a grid but the rect it lived in was still hung off the viewport's left edge, so
+        /// centring the content inside it had nothing to centre against.
+        /// </summary>
+        private static readonly Vector2 PreviousRowAnchorMin = new Vector2(0f, 0f);
+        private static readonly Vector2 PreviousRowAnchorMax = new Vector2(0f, 1f);
+        private static readonly Vector2 PreviousRowPivot = new Vector2(0f, 0.5f);
         private const int PreviousGridColumns = 3;
 
         /// <summary>The single-row shape that briefly replaced the grid, recognised so it migrates too.</summary>
@@ -258,6 +275,7 @@ namespace GameJam.EditorTools
 
                 RemoveRetiredChildren(rect);
                 UiBuilder.EnsureBackdrop(rect);
+                EnsureBackground(rect);
 
                 bool frameCreated = rect.Find("Frame") == null;
                 RectTransform frame = EnsureImage("Frame", rect, FrameSprite,
@@ -388,9 +406,12 @@ namespace GameJam.EditorTools
             {
                 ShapeRowContent(grid);
             }
-            else if (grid.anchorMin == PreviousGridAnchorMin
-                     && grid.anchorMax == PreviousGridAnchorMax
-                     && grid.pivot == PreviousGridPivot)
+            else if ((grid.anchorMin == PreviousGridAnchorMin
+                      && grid.anchorMax == PreviousGridAnchorMax
+                      && grid.pivot == PreviousGridPivot)
+                     || (grid.anchorMin == PreviousRowAnchorMin
+                         && grid.anchorMax == PreviousRowAnchorMax
+                         && grid.pivot == PreviousRowPivot))
             {
                 // Was hung from the top to grow downward; now hung from the left to grow
                 // rightward. Guarded on the exact old numbers so this fires once, on a board
@@ -751,6 +772,30 @@ namespace GameJam.EditorTools
         /// object is still something a later reader has to work out the purpose of, and the bar
         /// is not going away.
         /// </summary>
+        /// <summary>
+        /// The screen's own ground, in front of the backdrop and behind everything else.
+        ///
+        /// Sits after the backdrop in sibling order rather than replacing it: the backdrop covers
+        /// the whole canvas including the strip under the bottom bar, while this is the art the
+        /// board itself stands on. Full-bleed and raycast-off, so it is scenery and never eats a
+        /// tap meant for a card.
+        /// </summary>
+        private static void EnsureBackground(RectTransform rect)
+        {
+            bool created = rect.Find("Background") == null;
+            RectTransform background = EnsureImage("Background", rect, BackgroundSprite,
+                Vector2.zero, Vector2.one, Image.Type.Simple, false);
+
+            if (created)
+            {
+                Place(background, Vector2.zero, Vector2.one);
+            }
+
+            // Enforced every run: being behind the board is the whole job, and the backdrop must
+            // stay behind this in turn.
+            background.SetSiblingIndex(1);
+        }
+
         private static void RemoveRetiredChildren(RectTransform rect)
         {
             for (int i = 0; i < RetiredChildren.Length; i++)
