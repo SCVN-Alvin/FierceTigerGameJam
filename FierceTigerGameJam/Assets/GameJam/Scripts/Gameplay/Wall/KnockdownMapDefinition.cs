@@ -6,6 +6,10 @@ namespace GameJam.Gameplay.Wall
     /// <summary>
     /// Serialized shape of a knockdown map JSON file. Field names match the JSON keys because
     /// JsonUtility maps them directly, so renaming a field here changes the file format.
+    ///
+    /// Dropping a field is the safe direction: JsonUtility ignores a key it has no field for, so
+    /// the maps still carrying the retired "wall" objects parse exactly as before and simply lose
+    /// the data. That is what lets the files be cleaned in their own pass rather than this one.
     /// </summary>
     [Serializable]
     public sealed class KnockdownMapDefinition
@@ -134,58 +138,6 @@ namespace GameJam.Gameplay.Wall
         /// at rotation 0, and (2,1) and (2,2) at rotation 90.
         /// </summary>
         public float rotation;
-
-        /// <summary>
-        /// Optional. Names the wall this block belongs to. Blocks sharing a wall are built as one
-        /// body whatever their type or layer, which is how a wall spanning materials or depth is
-        /// described. Left out, the block is built as a single block (unless the authoring
-        /// component is set to NamedAndDetected, which still merges same-type neighbours on its
-        /// own for maps written before wall ids existed).
-        ///
-        /// JsonUtility fills this field in whether or not the JSON has a "wall" key, so an
-        /// absent wall reads as an instance with an empty id: <see cref="WallId"/> is the only
-        /// reliable test for whether the map assigned one.
-        /// </summary>
-        public KnockdownMapWallRef wall;
-
-        /// <summary>The wall this block was assigned to, or null when it was not assigned one.</summary>
-        public string WallId => string.IsNullOrEmpty(wall?.wall_id) ? null : wall.wall_id;
-
-        /// <summary>
-        /// Whether the wall this block belongs to behaves as an armoured shell. Absent in the
-        /// JSON means armoured, so every map written before the flag existed keeps its behaviour.
-        /// </summary>
-        public bool WallArmored => wall == null || !wall.bare;
-    }
-
-    /// <summary>
-    /// Membership is held on the block rather than in a separate list of groups: there is then
-    /// nothing to keep in sync, and deleting a block cannot leave a group pointing at an id that
-    /// no longer exists. Wall-level metadata, if it is ever needed, belongs in its own top-level
-    /// table keyed by this id.
-    /// </summary>
-    [Serializable]
-    public sealed class KnockdownMapWallRef
-    {
-        public string wall_id;
-
-        /// <summary>
-        /// Opt OUT of the armoured shell. An armoured wall - the default - takes the
-        /// ammunition's wallDamage, which is authored lower than blockDamage so a shot chips the
-        /// shell while the same shot would destroy a lone block. A bare wall takes blockDamage,
-        /// so it plays as if its cells were loose while staying one cheap rigidbody and one draw
-        /// call.
-        ///
-        /// This is what lets a mission ramp difficulty by adding shells - brick first, concrete
-        /// later - without paying for hundreds of loose bodies on the opening frame.
-        ///
-        /// Stated as an opt-out on purpose. JsonUtility gives a field the JSON does not mention
-        /// the type default, and for bool that is false, so a map written before this flag
-        /// existed reads as armoured no matter how JsonUtility treats field initialisers. An
-        /// "armored = true" field would have been readable but would silently disarm every
-        /// existing wall if that assumption were ever wrong.
-        /// </summary>
-        public bool bare;
     }
 
     /// <summary>Cell coordinate inside a layer: x is the column, y is the row upward.</summary>
