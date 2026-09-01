@@ -20,15 +20,15 @@ MonoBehaviour:
   - displayName: Cannon A I
     damageMultiplier: 1
     modelPrefab: {fileID: 7373504855224416167, guid: 1ea0c6b949d1fc2449703a8220969a03, type: 3}
-    modelScale: 0.2539333
+    modelScale: 0.6366041
     icon: {fileID: 0}
   - displayName: Cannon A II
     damageMultiplier: 1.2
     modelPrefab: {fileID: 1520581470146249749, guid: 2a300598e2ac2094eba477c45439edae, type: 3}
-    modelScale: 0.26215956
+    modelScale: 0.6858266
     icon: {fileID: 0}
   - displayName: Cannon A III
     damageMultiplier: 1.4
     modelPrefab: {fileID: 3098741634877589933, guid: c5fa0897715a6de43817b5a50493a28b, type: 3}
-    modelScale: 0.1982713
+    modelScale: 0.45603022
     icon: {fileID: 0}

@@ -34,6 +34,7 @@ Transform:
   m_LocalScale: {x: 0.5, y: 0.5, z: 0.5}
   m_ConstrainProportionsScale: 1
   m_Children:
+  - {fileID: 3427058096029734979}
   - {fileID: 6362819538738030219}
   - {fileID: 996703880424688364}
   - {fileID: 5775732871651851509}
@@ -165,6 +166,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 4294967295
   postImpactLifetime: 0.4
+  maxTumbleAngularSpeed: 20
   loadout: {fileID: 0}
   bulletOverride: {fileID: 0}
   bulletLevelOverride: 1
@@ -199,10 +201,10 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: -0.7071068, y: -0, z: -0, w: 0.7071068}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 1.3, y: 1.2999998, z: 1.2999998}
   m_ConstrainProportionsScale: 1
   m_Children: []
-  m_Father: {fileID: 5775732871651851509}
+  m_Father: {fileID: 4431117922285299017}
   m_LocalEulerAnglesHint: {x: -90, y: 0, z: 0}
 --- !u!198 &3427058096043941395
 ParticleSystem:
@@ -5157,8 +5159,7 @@ Transform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1.3, y: 1.3, z: 1.3}
   m_ConstrainProportionsScale: 1
-  m_Children:
-  - {fileID: 3427058096029734979}
+  m_Children: []
   m_Father: {fileID: 4431117922285299017}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!33 &7269323631575319008
