@@ -201,6 +201,7 @@ namespace GameJam.EditorTools
                 // icon is only the picture, centred in a slot that never stretches.
                 RectTransform icon = EnsureImage("Icon", rect, null,
                     new Vector2(0.053f, 0.25f), new Vector2(0.143f, 0.74f), Image.Type.Simple, true);
+                ClearBakedIcon(icon);
 
                 RectTransform header = EnsureRect("Header", rect,
                     new Vector2(0.214f, 0.45f), new Vector2(0.97f, 0.80f));
@@ -380,6 +381,33 @@ namespace GameJam.EditorTools
                     Object.DestroyImmediate(rowGroup, true);
                 }
             });
+        }
+
+        /// <summary>
+        /// Empties the row's icon slot, every run.
+        ///
+        /// The second place this builder overwrites something already set, and the same kind of
+        /// case as <see cref="MoveRootSelectToChild"/>: a sprite baked into the row prefab is not
+        /// a different opinion about the art, it is a stand-in the artist left behind while the
+        /// icons were being drawn. Every row's picture comes from <c>ShopItemView.Bind</c>, so a
+        /// baked one can only ever be one item's icon shown on all of them for the frames before
+        /// the first bind - which is the flash a34d7277 removed and the reason blank-until-bound
+        /// is the rule here.
+        ///
+        /// Disabled as well as emptied, which is what <see cref="EnsureImage"/> does for a
+        /// sprite-less image: the slot it sits in is already painted into the row art, and an
+        /// Image with no sprite is a white block over it.
+        /// </summary>
+        private static void ClearBakedIcon(RectTransform icon)
+        {
+            Image image = icon != null ? icon.GetComponent<Image>() : null;
+            if (image == null || image.sprite == null)
+            {
+                return;
+            }
+
+            image.sprite = null;
+            image.enabled = false;
         }
 
         /// <summary>
