@@ -1,4 +1,5 @@
 #if UNITY_EDITOR
+using GameJam.Config;
 using GameJam.Economy;
 using GameJam.Gameplay.Flow;
 using GameJam.Gameplay.Wall;
@@ -86,6 +87,34 @@ namespace GameJam.EditorTools
 
         /// <summary>232x209 of card art at the frame's 600/975 scale, so three fit across the inset.</summary>
         private static readonly Vector2 CardSize = new Vector2(143f, 129f);
+
+        /// <summary>The row's own gap. The vertical figure is kept so a re-run does not retune it.</summary>
+        private static readonly Vector2 RowSpacing = new Vector2(17f, 33f);
+
+        /// <summary>Left edge, full height: the row grows sideways out of the viewport.</summary>
+        private static readonly Vector2 RowAnchorMin = new Vector2(0f, 0f);
+        private static readonly Vector2 RowAnchorMax = new Vector2(0f, 1f);
+
+        /// <summary>
+        /// What the board measured while it was a three-across grid that scrolled downward. Only a
+        /// board still carrying exactly these is flipped to a row, so one somebody has since
+        /// re-anchored keeps what they gave it.
+        /// </summary>
+        private static readonly Vector2 PreviousGridAnchorMin = new Vector2(0f, 1f);
+        private static readonly Vector2 PreviousGridAnchorMax = new Vector2(1f, 1f);
+        private static readonly Vector2 PreviousGridPivot = new Vector2(0.5f, 1f);
+        private const int PreviousGridColumns = 3;
+
+        internal const string MissionConfigPath = "Assets/GameJam/Config/MissionConfig.asset";
+
+        /// <summary>
+        /// Where the campaign stops and the dev maps start in the MapConfig, which is how the
+        /// board's two missions were authored before they became data. Seeding by INDEX rather
+        /// than by a list of ids on purpose: Brief 25 §3 renames every one of those ids, and a
+        /// hard-coded id table here would seed a wrong board the first time anyone re-created the
+        /// asset afterwards.
+        /// </summary>
+        private const int CampaignMissionSize = 9;
 
         /// <summary>85x87 of button art at 0.615, which is what the mock draws on the card.</summary>
         private static readonly Vector2 ActionSize = new Vector2(52f, 54f);
@@ -312,9 +341,15 @@ namespace GameJam.EditorTools
         }
 
         /// <summary>
-        /// The scrolling board. Three rows fill the inset exactly at three maps, and the ten-level
-        /// plan needs a fourth, so the grid is in a ScrollRect from the start rather than becoming
-        /// one the day a fourth row spills over the frame.
+        /// The scrolling board: one row of cards that scrolls sideways.
+        ///
+        /// Still a <see cref="GridLayoutGroup"/>, constrained to a single row, rather than the
+        /// <see cref="HorizontalLayoutGroup"/> the brief offered as the alternative. A grid gives
+        /// every card the authored <see cref="CardSize"/> whatever the card prefab happens to
+        /// measure, which is what keeps 143x129 true; a horizontal group would size each child
+        /// from its own rect and leave the card's size an accident of the prefab. Keeping the
+        /// component that is already there also means a re-run flips two fields instead of
+        /// destroying and re-adding a layout, so nothing tuned on it is lost.
         /// </summary>
         private static RectTransform BuildGrid(RectTransform inset)
         {
@@ -325,50 +360,85 @@ namespace GameJam.EditorTools
             UiBuilder.Ensure<RectMask2D>(viewport.gameObject);
 
             RectTransform grid = EnsureRect("Grid", viewport,
-                new Vector2(0f, 1f), new Vector2(1f, 1f), out bool gridCreated);
+                RowAnchorMin, RowAnchorMax, out bool gridCreated);
             if (gridCreated)
             {
-                // Hung from the top and growing downward, which is what the fitter below sizes.
-                grid.pivot = new Vector2(0.5f, 1f);
-                grid.anchoredPosition = Vector2.zero;
-                grid.sizeDelta = Vector2.zero;
+                ShapeRowContent(grid);
+            }
+            else if (grid.anchorMin == PreviousGridAnchorMin
+                     && grid.anchorMax == PreviousGridAnchorMax
+                     && grid.pivot == PreviousGridPivot)
+            {
+                // Was hung from the top to grow downward; now hung from the left to grow
+                // rightward. Guarded on the exact old numbers so this fires once, on a board
+                // nobody has re-anchored since - the same rule the frame resize above follows.
+                grid.anchorMin = RowAnchorMin;
+                grid.anchorMax = RowAnchorMax;
+                ShapeRowContent(grid);
             }
 
             GridLayoutGroup layout = EnsureComponent<GridLayoutGroup>(grid.gameObject, out bool layoutCreated);
             if (layoutCreated)
             {
                 layout.cellSize = CardSize;
-                layout.spacing = new Vector2(17f, 33f);
-
-                // Fixed at three rather than left to fit: the row count has to be the same on
-                // every phone, or the board reads as a different shape on each one.
-                layout.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
-                layout.constraintCount = 3;
-                layout.childAlignment = TextAnchor.UpperCenter;
-                layout.padding = new RectOffset(0, 0, 0, 10);
+                layout.spacing = RowSpacing;
+                ShapeRowLayout(layout);
+            }
+            else if (layout.constraint == GridLayoutGroup.Constraint.FixedColumnCount
+                     && layout.constraintCount == PreviousGridColumns)
+            {
+                ShapeRowLayout(layout);
             }
 
             ContentSizeFitter fitter = EnsureComponent<ContentSizeFitter>(grid.gameObject, out bool fitterCreated);
-            if (fitterCreated)
+            if (fitterCreated
+                || (fitter.horizontalFit == ContentSizeFitter.FitMode.Unconstrained
+                    && fitter.verticalFit == ContentSizeFitter.FitMode.PreferredSize))
             {
-                fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
-                fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+                // The row is as wide as its cards and as tall as the viewport, so it is the
+                // width the fitter now has to work out.
+                fitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
+                fitter.verticalFit = ContentSizeFitter.FitMode.Unconstrained;
             }
 
             ScrollRect scroll = EnsureComponent<ScrollRect>(list.gameObject, out bool scrollCreated);
             if (scrollCreated)
             {
-                scroll.horizontal = false;
-                scroll.vertical = true;
-
-                // Clamped rather than elastic: three rows fill the inset exactly, and a board that
-                // bounces when there is nothing to scroll reads as broken.
+                // Clamped rather than elastic: a short mission does not fill the viewport, and a
+                // board that bounces when there is nothing to scroll reads as broken.
                 scroll.movementType = ScrollRect.MovementType.Clamped;
                 scroll.viewport = viewport;
                 scroll.content = grid;
             }
 
+            if (scrollCreated || (!scroll.horizontal && scroll.vertical))
+            {
+                scroll.horizontal = true;
+                scroll.vertical = false;
+            }
+
             return grid;
+        }
+
+        /// <summary>Hangs the row off the left edge, full viewport height, growing rightward.</summary>
+        private static void ShapeRowContent(RectTransform grid)
+        {
+            grid.pivot = new Vector2(0f, 0.5f);
+            grid.anchoredPosition = Vector2.zero;
+            grid.sizeDelta = Vector2.zero;
+        }
+
+        /// <summary>
+        /// One row, however many cards the mission has. FixedRowCount rather than FixedColumnCount
+        /// so the row never wraps: a mission with ten maps must be ten cards long and scroll, not
+        /// two rows of five on one phone and three of four on another.
+        /// </summary>
+        private static void ShapeRowLayout(GridLayoutGroup layout)
+        {
+            layout.constraint = GridLayoutGroup.Constraint.FixedRowCount;
+            layout.constraintCount = 1;
+            layout.childAlignment = TextAnchor.MiddleLeft;
+            layout.padding = new RectOffset(0, 0, 0, 0);
         }
 
         private static void WirePanelView(GameObject root, RectTransform grid, GameObject itemPrefab)
@@ -376,6 +446,7 @@ namespace GameJam.EditorTools
             MissionPanelView view = UiBuilder.Ensure<MissionPanelView>(root);
             SerializedObject serialized = new SerializedObject(view);
             UiBuilder.SetIfEmpty(serialized, "mapSelection", UiBuilder.LoadFirstAsset<MapSelection>());
+            UiBuilder.SetIfEmpty(serialized, "missionConfig", EnsureMissionConfig());
             UiBuilder.SetIfEmpty(serialized, "container", grid);
             UiBuilder.SetIfEmpty(serialized, "itemPrefab",
                 itemPrefab != null ? itemPrefab.GetComponent<MissionProgressItemView>() : null);
@@ -395,6 +466,75 @@ namespace GameJam.EditorTools
         }
 
 
+
+        // ------------------------------------------------------------------ missions
+
+        /// <summary>
+        /// The mission config, seeded once from the map registry and never rewritten afterwards.
+        ///
+        /// The seed reproduces the two missions the board used to carry in its own inspector -
+        /// the nine campaign maps, then the dev maps - by taking the MapConfig in order and
+        /// splitting it at <see cref="CampaignMissionSize"/>, which is exactly the order those
+        /// arrays were authored in. Only ever filled while it is empty: after that the asset is
+        /// where missions are actually arranged, and a builder that reseeded it every run would
+        /// make re-running the builder cost the arrangement.
+        /// </summary>
+        private static MissionConfig EnsureMissionConfig()
+        {
+            MissionConfig config = AssetDatabase.LoadAssetAtPath<MissionConfig>(MissionConfigPath);
+            if (config == null)
+            {
+                config = ScriptableObject.CreateInstance<MissionConfig>();
+                AssetDatabase.CreateAsset(config, MissionConfigPath);
+                Debug.Log($"{nameof(MissionScreenBuilder)} created {MissionConfigPath}.");
+            }
+
+            MapConfig maps = UiBuilder.LoadFirstAsset<MapConfig>();
+            SerializedObject serialized = new SerializedObject(config);
+            UiBuilder.SetIfEmpty(serialized, "maps", maps);
+
+            SerializedProperty missions = serialized.FindProperty("missions");
+            if (missions.arraySize == 0 && maps != null && maps.Count > 0)
+            {
+                int campaign = Mathf.Min(CampaignMissionSize, maps.Count);
+                int reserve = maps.Count - campaign;
+
+                missions.arraySize = reserve > 0 ? 2 : 1;
+                FillMission(missions.GetArrayElementAtIndex(0), "mission_1", "MISSION 1", maps, 0, campaign);
+                if (reserve > 0)
+                {
+                    FillMission(missions.GetArrayElementAtIndex(1), "mission_2", "MISSION 2", maps, campaign, reserve);
+                }
+
+                Debug.Log(
+                    $"Seeded {MissionConfigPath} with {missions.arraySize} mission(s) from "
+                    + $"{maps.name}: {campaign} campaign map(s) then {reserve} more.");
+            }
+
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(config);
+            return config;
+        }
+
+        private static void FillMission(
+            SerializedProperty mission,
+            string id,
+            string displayName,
+            MapConfig maps,
+            int firstMap,
+            int count)
+        {
+            mission.FindPropertyRelative("id").stringValue = id;
+            mission.FindPropertyRelative("displayName").stringValue = displayName;
+
+            SerializedProperty mapIds = mission.FindPropertyRelative("mapIds");
+            mapIds.arraySize = count;
+            for (int i = 0; i < count; i++)
+            {
+                MapInfo map = maps.Get(firstMap + i);
+                mapIds.GetArrayElementAtIndex(i).stringValue = map != null ? map.Id : string.Empty;
+            }
+        }
 
         // ------------------------------------------------------------------ scene
 
