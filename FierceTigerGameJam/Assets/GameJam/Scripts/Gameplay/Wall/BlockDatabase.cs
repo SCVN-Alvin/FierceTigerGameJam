@@ -17,16 +17,11 @@ namespace GameJam.Gameplay.Wall
             public string type;
             public GameObject prefab;
 
-            [Tooltip("Optional. One-cell wall panel used to draw a run of these blocks as a "
-                     + "single wall. Without one the run is drawn by welding the block meshes, "
-                     + "which costs the same vertices as the blocks it replaces.")]
-            public GameObject wallPanel;
         }
 
         [SerializeField] private Entry[] entries = Array.Empty<Entry>();
 
         private Dictionary<string, GameObject> lookup;
-        private Dictionary<string, GameObject> panelLookup;
 
         public IReadOnlyList<Entry> Entries => entries;
 
@@ -42,22 +37,6 @@ namespace GameJam.Gameplay.Wall
             return lookup.TryGetValue(type, out prefab) && prefab != null;
         }
 
-        /// <summary>
-        /// The wall panel for a type, if the art for it exists. Types without one still group;
-        /// they just fall back to welding the block meshes together.
-        /// </summary>
-        public bool TryGetWallPanel(string type, out GameObject panel)
-        {
-            if (string.IsNullOrEmpty(type))
-            {
-                panel = null;
-                return false;
-            }
-
-            EnsureLookup();
-            return panelLookup.TryGetValue(type, out panel) && panel != null;
-        }
-
         private void EnsureLookup()
         {
             if (lookup != null)
@@ -66,7 +45,6 @@ namespace GameJam.Gameplay.Wall
             }
 
             lookup = new Dictionary<string, GameObject>(entries.Length, StringComparer.Ordinal);
-            panelLookup = new Dictionary<string, GameObject>(entries.Length, StringComparer.Ordinal);
             for (int i = 0; i < entries.Length; i++)
             {
                 string type = entries[i].type;
@@ -76,15 +54,13 @@ namespace GameJam.Gameplay.Wall
                 }
 
                 lookup[type] = entries[i].prefab;
-                panelLookup[type] = entries[i].wallPanel;
             }
         }
 
         private void OnValidate()
         {
-            // Entries may have been edited in the inspector, so the cached lookups are stale.
+            // Entries may have been edited in the inspector, so the cached lookup is stale.
             lookup = null;
-            panelLookup = null;
 
             HashSet<string> seen = new HashSet<string>(StringComparer.Ordinal);
             for (int i = 0; i < entries.Length; i++)

@@ -556,7 +556,7 @@ namespace GameJam.Gameplay.Cannon
         /// <summary>
         /// Shoves a target and damages it, but only if the loaded ammunition can hurt what the
         /// target is made of. A rock that cannot scratch concrete does not get to topple it
-        /// either - it bounces off and the wall stands, which is the whole point of a material
+        /// either - it bounces off and the block stands, which is the whole point of a material
         /// the player has to unlock different ammunition for.
         /// </summary>
         private void TryAffect(
@@ -567,11 +567,9 @@ namespace GameJam.Gameplay.Cannon
             bool direct,
             float falloff)
         {
-            ResolveTarget(target, out BreakableWall wall, out BreakableBlock block, out string materialId);
+            ResolveTarget(target, out BreakableBlock block, out string materialId);
 
-            // Unarmoured walls resolve as bare material: same body, same mesh, but the shot
-            // takes blockDamage off it, which is how a level says "this material has no shell".
-            float damage = ResolveDamage(materialId, wall != null && wall.IsArmored, direct, falloff);
+            float damage = ResolveDamage(materialId, direct, falloff);
             if (damage <= 0f)
             {
                 return;
@@ -581,11 +579,7 @@ namespace GameJam.Gameplay.Cannon
             // its debris inherits its velocity from.
             target.Knock(impactPoint, forceDirection * force, ForceMode.Impulse);
 
-            if (wall != null)
-            {
-                wall.ApplyDamage(damage, impactPoint, forceDirection);
-            }
-            else if (block != null)
+            if (block != null)
             {
                 block.ApplyDamage(damage, impactPoint, forceDirection);
             }
@@ -593,19 +587,10 @@ namespace GameJam.Gameplay.Cannon
 
         private static void ResolveTarget(
             KnockdownBlock target,
-            out BreakableWall wall,
             out BreakableBlock block,
             out string materialId)
         {
-            target.TryGetComponent(out wall);
             target.TryGetComponent(out block);
-
-            if (wall != null)
-            {
-                materialId = wall.MaterialId;
-                return;
-            }
-
             materialId = block != null ? block.MaterialId : null;
         }
 
@@ -613,7 +598,7 @@ namespace GameJam.Gameplay.Cannon
         /// How much this shot takes off that material. Zero means the ammunition cannot hurt it
         /// at all, which is different from hurting it slowly.
         /// </summary>
-        private float ResolveDamage(string materialId, bool isWall, bool direct, float falloff)
+        private float ResolveDamage(string materialId, bool direct, float falloff)
         {
             BulletDefinition bullet = ResolveBullet(out int level);
             if (bullet == null)
@@ -627,7 +612,8 @@ namespace GameJam.Gameplay.Cannon
                 return 0f;
             }
 
-            float amount = isWall ? damage.wallDamage : damage.blockDamage;
+            // Every target is a block now that walls are gone, so there is one damage number.
+            float amount = damage.blockDamage;
 
             // Before the early return, so the splash path below is boosted too. A material the
             // ammunition cannot hurt is authored as 0 and stays 0 however good the vehicle is,

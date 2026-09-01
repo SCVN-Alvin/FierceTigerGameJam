@@ -12,8 +12,8 @@ namespace GameJam.Gameplay.Playfield
     /// what stops debris accumulating forever below the floor.
     ///
     /// It drives the break machinery the blocks already have rather than implementing its own, so
-    /// a block broken by the ground comes apart into exactly the same debris as one shot off a
-    /// wall.
+    /// a block broken by the ground comes apart into exactly the same debris as one shot off the
+    /// structure.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class FallBreakZone : MonoBehaviour
@@ -73,13 +73,6 @@ namespace GameJam.Gameplay.Playfield
                 return;
             }
 
-            BreakableWall wall = hit.GetComponentInParent<BreakableWall>();
-            if (wall != null)
-            {
-                wall.BreakUp();
-                return;
-            }
-
             BreakableBlock block = hit.GetComponentInParent<BreakableBlock>();
             if (block != null)
             {
@@ -109,13 +102,6 @@ namespace GameJam.Gameplay.Playfield
             if (debris != null)
             {
                 Destroy(debris.gameObject);
-                return;
-            }
-
-            BreakableWall wall = hit.GetComponentInParent<BreakableWall>();
-            if (wall != null)
-            {
-                Destroy(wall.gameObject);
                 return;
             }
 
