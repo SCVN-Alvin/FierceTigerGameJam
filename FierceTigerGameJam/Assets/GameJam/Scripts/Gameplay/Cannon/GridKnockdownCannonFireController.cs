@@ -36,15 +36,44 @@ namespace GameJam.Gameplay.Cannon
         [SerializeField] private CannonShotPresenter shotPresenter;
         [SerializeField] private CannonAimController aimController;
         [SerializeField] private float aimPlaneZ = 20f;
-        [Tooltip("How fast a ball leaves the muzzle. Low on purpose: the aim already solves a "
-                 + "ballistic arc, and above roughly 40 units per second the solution is so flat "
-                 + "and the flight so short that the parabola cannot be seen at all.")]
+        [Tooltip("Legacy fallback only. Used when there is no aim controller to ask for a tapped "
+                 + "point, which is the bare demo wiring; an aimed shot solves its own speed from "
+                 + "the arc below and ignores this.")]
         [SerializeField] private float projectileSpeed = 22f;
+
+        [Tooltip("How far above the higher of the muzzle and the tapped point the shot crests. "
+                 + "This is what makes every shot arc: raise it for a loopier lob, lower it for a "
+                 + "flatter rocket. The impact point does not move either way.")]
+        [SerializeField] private float apexHeight = 2.5f;
         [SerializeField] private float projectileLifetime = 5f;
         [SerializeField] private float muzzleSpawnOffset = 0.28f;
 
         private const float MinFireDirectionSqrMagnitude = 0.0001f;
         private const int FallbackPoolSize = 10;
+
+        /// <summary>
+        /// How nearly straight up a launch has to be before the spawn rotation needs a different
+        /// up axis to be defined at all.
+        /// </summary>
+        private const float NearlyVerticalHeading = 0.999f;
+
+        /// <summary>Half a metre of crest: the flattest arc still worth calling one.</summary>
+        private const float MinApexHeight = 0.5f;
+
+        /// <summary>
+        /// Keeps the crest off the floor. The arc is solved for the shape, so the flatter it is
+        /// asked to be the faster the shot has to go: at zero the maths still answers, with a
+        /// flight measured in a couple of frames and a speed in the hundreds. This is where that
+        /// is refused, rather than leaving a designer to wonder why one field emptied the arc out
+        /// of the game.
+        /// </summary>
+        private void OnValidate()
+        {
+            apexHeight = Mathf.Max(MinApexHeight, apexHeight);
+            projectileSpeed = Mathf.Max(0f, projectileSpeed);
+            projectileLifetime = Mathf.Max(0f, projectileLifetime);
+            muzzleSpawnOffset = Mathf.Max(0f, muzzleSpawnOffset);
+        }
 
         private void Awake()
         {
@@ -152,18 +181,15 @@ namespace GameJam.Gameplay.Cannon
                     return false;
                 }
 
-                Vector3 aimedMuzzlePosition = fireOrigin != null ? fireOrigin.position : transform.position;
-                Vector3 aimedDirection = aimController.GetFireDirection(
-                    aimedMuzzlePosition,
-                    projectileSpeed,
-                    muzzleSpawnOffset);
-
-                if (aimedDirection.sqrMagnitude < MinFireDirectionSqrMagnitude)
+                // The tapped point itself, not a heading. The arc is solved to land on it, so what
+                // the shot needs is where the player pointed rather than which way the barrel is.
+                if (!aimController.HasValidAimPoint)
                 {
                     return false;
                 }
 
-                Fire(aimedMuzzlePosition, aimedDirection.normalized);
+                Vector3 aimedMuzzlePosition = fireOrigin != null ? fireOrigin.position : transform.position;
+                FireAtAimPoint(aimedMuzzlePosition, aimController.LastAimWorldPoint);
                 return true;
             }
 
@@ -179,16 +205,16 @@ namespace GameJam.Gameplay.Cannon
                 return false;
             }
 
-            Fire(muzzlePosition, fireDirection.normalized);
+            FireInDirection(muzzlePosition, fireDirection.normalized);
             return true;
         }
 
         /// <summary>
         /// Names a refused tap for whoever is building the level. Widened from editor-only to
-        /// development builds so the reason travels with a test build. Note that this path is the
-        /// aim plane's bounds check - a tap at empty sky - and never a ballistic one: the solver
-        /// always answers with its best direction, so a target out of the cannon's reach is
-        /// reported by <see cref="CannonBallisticAimMath"/> itself rather than here.
+        /// development builds so the reason travels with a test build. This is the only way a tap
+        /// is refused now, and it is the aim plane's bounds check - a tap at empty sky. There is no
+        /// ballistic refusal left to report: the fixed-apex solve reaches every point, however far
+        /// or high, so nothing inside the arc maths can decline a shot.
         /// </summary>
         private static void LogAimRejected(AimRejectReason rejectReason)
         {
@@ -244,18 +270,97 @@ namespace GameJam.Gameplay.Cannon
             return bulletLoadout.Find(bulletInventory.FindFirstAvailable());
         }
 
-        private void Fire(Vector3 muzzlePosition, Vector3 direction)
+        /// <summary>
+        /// The aimed shot: a rocket arc that crests <see cref="apexHeight"/> above the higher of
+        /// the muzzle and the tap and comes down on the tap itself. Solved twice, as the old
+        /// fixed-speed path was, because the ball does not actually leave the muzzle point - it is
+        /// pushed forward along its own heading first, and re-solving from where it really starts
+        /// is what keeps that offset from becoming a miss.
+        /// </summary>
+        private void FireAtAimPoint(Vector3 muzzlePosition, Vector3 aimPoint)
         {
-            Vector3 spawnPosition = muzzlePosition + direction * muzzleSpawnOffset;
             BulletDefinition ammunition = ResolveShotAmmunition();
+            GridKnockdownCannonProjectile prefab = ResolveProjectilePrefab(ammunition);
+            float gravity = ResolveLaunchGravity(prefab);
+
+            Vector3 launchVelocity = CannonBallisticAimMath.GetLobVelocity(
+                muzzlePosition,
+                aimPoint,
+                apexHeight,
+                gravity);
+
+            Vector3 spawnPosition = muzzlePosition;
+            if (muzzleSpawnOffset > 0f && launchVelocity.sqrMagnitude >= MinFireDirectionSqrMagnitude)
+            {
+                spawnPosition = muzzlePosition + (launchVelocity.normalized * muzzleSpawnOffset);
+                launchVelocity = CannonBallisticAimMath.GetLobVelocity(
+                    spawnPosition,
+                    aimPoint,
+                    apexHeight,
+                    gravity);
+            }
+
+            Fire(ammunition, prefab, spawnPosition, launchVelocity);
+        }
+
+        /// <summary>
+        /// The unaimed shot, kept for the wiring that has no aim controller at all: a straight
+        /// push at <see cref="projectileSpeed"/> along the given heading, with no promise about
+        /// where it comes down.
+        /// </summary>
+        private void FireInDirection(Vector3 muzzlePosition, Vector3 direction)
+        {
+            BulletDefinition ammunition = ResolveShotAmmunition();
+            Fire(
+                ammunition,
+                ResolveProjectilePrefab(ammunition),
+                muzzlePosition + (direction * muzzleSpawnOffset),
+                direction * projectileSpeed);
+        }
+
+        /// <summary>
+        /// The gravity the arc must be solved against: the world's, times what the shot will
+        /// multiply it by in flight. Read off the prefab rather than the instance because the
+        /// instance does not exist until the spawn point is known, and the spawn point depends on
+        /// this answer - a pooled ball is a copy of that prefab, so the two agree. A shot with no
+        /// prefab at all falls back to the same default the projectile's own field carries, which
+        /// is what the built-in debugging sphere will come up with.
+        /// </summary>
+        private static float ResolveLaunchGravity(GridKnockdownCannonProjectile prefab)
+        {
+            float multiplier = prefab != null
+                ? prefab.GravityMultiplier
+                : GridKnockdownCannonProjectile.DefaultGravityMultiplier;
+
+            // The magnitude, so the number matches what the projectile applies along
+            // Physics.gravity itself. Both assume that vector points straight down; tilting it
+            // project-wide would need the solve rewritten in gravity's own frame.
+            return Physics.gravity.magnitude * multiplier;
+        }
+
+        private void Fire(
+            BulletDefinition ammunition,
+            GridKnockdownCannonProjectile prefab,
+            Vector3 spawnPosition,
+            Vector3 launchVelocity)
+        {
             if (ammunition != null && !bulletInventory.TrySpend(ammunition.Id))
             {
                 return;
             }
 
-            Quaternion spawnRotation = Quaternion.LookRotation(direction, Vector3.up);
+            Vector3 direction = launchVelocity.sqrMagnitude >= MinFireDirectionSqrMagnitude
+                ? launchVelocity.normalized
+                : Vector3.forward;
+
+            // LookRotation is undefined for a heading parallel to its up axis, which only a shot
+            // solved as straight up can produce.
+            Quaternion spawnRotation = Mathf.Abs(direction.y) > NearlyVerticalHeading
+                ? Quaternion.LookRotation(direction, Vector3.forward)
+                : Quaternion.LookRotation(direction, Vector3.up);
+
             GridKnockdownCannonProjectile projectile = RentProjectile(
-                ResolveProjectilePrefab(ammunition),
+                prefab,
                 spawnPosition,
                 spawnRotation,
                 direction);
@@ -278,7 +383,10 @@ namespace GameJam.Gameplay.Cannon
                 projectile.SetDamageMultiplier(vehicleLoadout.SelectedDamageMultiplier);
             }
 
-            projectile.Launch(direction, projectileSpeed, projectileLifetime);
+            // The velocity, not a heading and a speed: how fast this shot leaves is part of the
+            // answer the arc was solved for, and rounding it back to a direction would throw that
+            // away.
+            projectile.Launch(launchVelocity, projectileLifetime);
             if (shotPresenter != null)
             {
                 shotPresenter.PlayShot();

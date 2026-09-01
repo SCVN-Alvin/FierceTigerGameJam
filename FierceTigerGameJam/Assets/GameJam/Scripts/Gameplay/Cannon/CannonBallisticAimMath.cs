@@ -15,11 +15,65 @@ namespace GameJam.Gameplay.Cannon
         private const float DefaultFixedDeltaTime = 0.02f;
 
         /// <summary>
-        /// How far the capped search below may land from the aimed point before the shot is
-        /// treated as unmakeable and said so in a development build. A metre: wider than the
-        /// step error of the simulation, narrower than a block.
+        /// Floor under the crest the lob is solved for. Only ever reached by a caller that asks
+        /// for a flat arc; it keeps both halves of the flight strictly positive, which is what
+        /// makes every target solvable rather than a square root of zero.
         /// </summary>
-        private const float UnreachableMissSqrMagnitude = 1f;
+        private const float MinApexHeight = 0.01f;
+
+        /// <summary>
+        /// The velocity to launch at so the shot crests <paramref name="apexHeight"/> above the
+        /// higher of <paramref name="origin"/> and <paramref name="target"/> and then falls onto
+        /// the target. The opposite trade from <see cref="TryGetLaunchDirection"/>: that one fixes
+        /// the speed and lets the shape of the arc fall out of the distance, so a near tap is a
+        /// flat shove and a far one a lob, and some aims have no solution at all. This one fixes
+        /// the shape and lets the speed fall out, so every shot reads as the same rocket, every
+        /// target is reachable, and a tap on the top of a tower is still lobbed over rather than
+        /// driven through it.
+        ///
+        /// <paramref name="gravity"/> is a magnitude, and must be the same number the shot will
+        /// actually fall at - the caller's world gravity times whatever it multiplies it by. If
+        /// the two ever disagree the shot quietly misses the tap, which is the one thing this
+        /// method exists to prevent.
+        ///
+        /// Assumes gravity points straight down, since it splits the flight into a vertical solve
+        /// and a horizontal one. A project that tilts <see cref="Physics.gravity"/> off the Y axis
+        /// would need the whole solve done in the gravity's own frame; today's is (0, -9.81, 0).
+        /// </summary>
+        public static Vector3 GetLobVelocity(Vector3 origin, Vector3 target, float apexHeight, float gravity)
+        {
+            float g = Mathf.Max(gravity, MinGravity);
+            float apex = Mathf.Max(apexHeight, MinApexHeight);
+
+            float apexY = Mathf.Max(origin.y, target.y) + apex;
+            float riseHeight = apexY - origin.y;
+            float dropHeight = apexY - target.y;
+
+            // Both strictly positive by construction - the crest is above both ends - so neither
+            // root below can go imaginary and the flight time can never be zero.
+            float verticalSpeed = Mathf.Sqrt(2f * g * riseHeight);
+            float timeUp = verticalSpeed / g;
+            float timeDown = Mathf.Sqrt(2f * dropHeight / g);
+            float flightTime = timeUp + timeDown;
+
+            Vector3 velocity;
+            velocity.x = (target.x - origin.x) / flightTime;
+            velocity.z = (target.z - origin.z) / flightTime;
+
+            // Half a step of gravity added back, which is not in the closed form above and is the
+            // one deliberate departure from it. PhysX integrates semi-implicitly - velocity first,
+            // then position from the new velocity - so a body's height after n steps is the
+            // continuous answer minus g*dt*t/2: it falls ahead of the maths by half a step's
+            // acceleration, growing with the flight. At the defaults that is 25cm of drop by the
+            // time a far shot arrives, which lands it about a quarter of a metre short of the tap.
+            // Adding g*dt/2 to the launch makes the stepped path pass exactly through the
+            // continuous one at every step; simulated, it takes the landing error from ~0.25 u to
+            // under a millimetre and makes the crest hit the solved apex instead of 0.11 u under
+            // it. Horizontal motion needs no such term - with no acceleration on it, the stepped
+            // and continuous answers are already identical.
+            velocity.y = verticalSpeed + (g * ResolveFixedDeltaTime() * 0.5f);
+            return velocity;
+        }
 
         public static bool TryGetLaunchDirection(Vector3 origin, Vector3 target, float speed, out Vector3 direction)
         {
@@ -123,21 +177,10 @@ namespace GameJam.Gameplay.Cannon
                 bestAngleRad = angleRad;
             }
 
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-            // Said here because this is the only place that knows it. The closed form has already
-            // declined the shot, and the search above is capped at MaxLaunchAngleDegrees, so a best
-            // miss this wide means the target is out of the cannon's reach at this speed rather
-            // than merely awkward. The symptom a map author would otherwise see is a tap near the
-            // top of a tall structure that quietly does nothing.
-            if (bestMissSqr > UnreachableMissSqrMagnitude)
-            {
-                Debug.LogWarning(
-                    $"Cannon aim out of reach: no launch at or below {MaxLaunchAngleDegrees} degrees "
-                    + $"and {speed} units per second gets within {Mathf.Sqrt(bestMissSqr):0.##} units "
-                    + "of the aimed point. Raise the projectile speed or lower the structure.");
-            }
-#endif
-
+            // No out-of-reach warning here any more. The gameplay cannon solves its arc with
+            // GetLobVelocity, which can always reach the tap, so this capped search is only
+            // reached by the fixed-speed demo path - where a warning about raising the projectile
+            // speed would be aimed at nobody.
             return TryBuildDirectionFromAngle(horizontalDirection, bestAngleRad, out direction);
         }
 
