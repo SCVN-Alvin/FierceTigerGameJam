@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using GameJam.Config;
 using GameJam.Data;
 using GameJam.Gameplay.Wall;
 using TMPro;
@@ -10,16 +11,18 @@ using UnityEngine.UI;
 namespace GameJam.UI
 {
     /// <summary>
-    /// The mission board, shown one mission at a time. A mission is nine authored slots; a slot
-    /// either names a map in the config or is an empty placeholder for a level that has not been
-    /// authored yet. Placeholders look locked but answer a tap with a shake and a notice, so the
-    /// board can show the shape of the campaign before the campaign exists. A whole mission can
-    /// also be locked, which greys its cards out and ignores them entirely until it is opened by
-    /// hand in the inspector.
+    /// The mission board, shown one mission at a time. What a mission is and which maps it holds
+    /// is <see cref="MissionConfig"/>'s business now, not this screen's: the board draws one card
+    /// per map the mission actually has, so a short mission is a short row rather than a row
+    /// padded out with blanks.
     ///
-    /// Levels are numbered straight through the slots - mission 2 starts at LEVEL 10 - and the
-    /// unlock rule runs over the REAL maps in slot order, skipping placeholders: the first real
-    /// map is open, and each next one opens when the real map before it has been passed.
+    /// A mission the player has not earned yet is drawn greyed and answers to nothing. Whether it
+    /// is earned is asked of <see cref="MissionConfig.IsUnlocked"/> rather than decided here,
+    /// because the cleared screen needs the same answer when it works out what comes next.
+    ///
+    /// Levels are numbered straight through the missions - mission 2 starts at the level after
+    /// mission 1's last - and inside an open mission each map opens when the one before it in
+    /// board order has been passed.
     ///
     /// Tapping a card only selects the map. What happens next is the flow's business, reached
     /// through <see cref="MapSelection.SelectionChanged"/>, which is why nothing here holds a
@@ -27,49 +30,16 @@ namespace GameJam.UI
     /// </summary>
     public sealed class MissionPanelView : MonoBehaviour
     {
-        /// <summary>One mission's slots, and whether the whole mission is still shut.</summary>
-        [Serializable]
-        public struct MissionSlots
-        {
-            [Tooltip("A locked mission is shown greyed out and answers to nothing.")]
-            public bool locked;
-
-            [Tooltip("One entry per card: a map id from the map config, or empty for a "
-                     + "placeholder level that is not authored yet.")]
-            public string[] slotMapIds;
-        }
-
         [Tooltip("Where the choice is recorded, and the source of the map list.")]
         [SerializeField] private MapSelection mapSelection;
+
+        [Tooltip("Which missions there are, which maps are in them, and when the next one opens.")]
+        [SerializeField] private MissionConfig missionConfig;
 
         [Tooltip("Cards are spawned under here. Falls back to this object's transform.")]
         [SerializeField] private RectTransform container;
 
         [SerializeField] private MissionProgressItemView itemPrefab;
-
-        [Tooltip("Mission 1 carries the maps that exist so far; mission 2 is reserved and locked.")]
-        [SerializeField] private MissionSlots[] missions =
-        {
-            new MissionSlots
-            {
-                locked = false,
-                slotMapIds = new[]
-                {
-                    "map_001_hollow_brick_hut", "map_002_brick_courtyard_tower", "map_003_three_storey_brick_house",
-                    "map_004_glass_belt_warehouse", "map_005_two_storey_glass_house", "map_006_large_glass_school",
-                    "map_007_concrete_frame_school", "2", "map_009_hollow_concrete_tower",
-                },
-            },
-            new MissionSlots
-            {
-                locked = true,
-                slotMapIds = new[]
-                {
-                    "map_004_level_01", "map_005_level_02", "map_005_two_storey_hollow_courtyard",
-                    "", "", "", "", "", "",
-                },
-            },
-        };
 
         [Tooltip("Reads MISSION n. The word is no longer baked into the frame art.")]
         [SerializeField] private TMP_Text missionTitle;
@@ -97,6 +67,13 @@ namespace GameJam.UI
         private const string ItemNamePrefix = "Mission_";
 
         private readonly List<MissionProgressItemView> items = new List<MissionProgressItemView>();
+
+        /// <summary>
+        /// Every real map on the whole board, in board order, rebuilt at the top of each refresh
+        /// and reused rather than reallocated. It used to be built once per card, which made a
+        /// refresh quadratic in the number of maps and threw away a list each time.
+        /// </summary>
+        private readonly List<string> realMapSequence = new List<string>();
 
         private int missionIndex;
         private Coroutine noticeRoutine;
@@ -175,10 +152,16 @@ namespace GameJam.UI
                 return;
             }
 
+            if (MissionCount() == 0)
+            {
+                Debug.LogWarning($"{name} has no {nameof(MissionConfig)} with missions in it, so the board is empty.", this);
+                return;
+            }
+
             missionIndex = Mathf.Clamp(missionIndex, 0, MissionCount() - 1);
 
             Transform parent = container != null ? container : transform;
-            string[] slots = ResolveSlots(missionIndex, config);
+            string[] slots = ResolveSlots(missionIndex);
 
             for (int i = 0; i < slots.Length; i++)
             {
@@ -209,9 +192,12 @@ namespace GameJam.UI
                 return;
             }
 
-            bool missionLocked = IsMissionLocked(missionIndex);
-            string[] slots = ResolveSlots(missionIndex, config);
+            bool missionLocked = !IsMissionUnlocked(missionIndex);
+            string[] slots = ResolveSlots(missionIndex);
             int firstNumber = FirstSlotNumber(missionIndex);
+
+            // Once per refresh rather than once per card: every card asks the same question of it.
+            RebuildRealMapSequence(config);
 
             for (int i = 0; i < items.Count && i < slots.Length; i++)
             {
@@ -229,7 +215,7 @@ namespace GameJam.UI
 
             if (missionTitle != null)
             {
-                missionTitle.text = $"MISSION {missionIndex + 1}";
+                missionTitle.text = ResolveMissionTitle(missionIndex);
             }
 
             if (previousMissionButton != null)
@@ -245,69 +231,72 @@ namespace GameJam.UI
 
         private int MissionCount()
         {
-            return missions != null && missions.Length > 0 ? missions.Length : 1;
+            return missionConfig != null ? missionConfig.Count : 0;
         }
 
-        private bool IsMissionLocked(int mission)
+        /// <summary>
+        /// Asked of the config rather than answered here. The rule is about progress, not about
+        /// this screen, and the cleared screen has to be able to ask it too.
+        /// </summary>
+        private bool IsMissionUnlocked(int mission)
         {
-            return missions != null && mission >= 0 && mission < missions.Length && missions[mission].locked;
+            return missionConfig == null || missionConfig.IsUnlocked(mission);
         }
 
-        /// <summary>LEVEL numbers run straight through the missions, so mission 2 starts at 10.</summary>
+        /// <summary>The mission's own name, or MISSION n when it was not given one.</summary>
+        private string ResolveMissionTitle(int mission)
+        {
+            Mission entry = missionConfig != null ? missionConfig.Get(mission) : null;
+            return entry != null && !string.IsNullOrEmpty(entry.displayName)
+                ? entry.displayName
+                : $"MISSION {mission + 1}";
+        }
+
+        /// <summary>LEVEL numbers run straight through the missions, so mission 2 starts after
+        /// mission 1's last map rather than at a fixed number: missions may be any length now.</summary>
         private int FirstSlotNumber(int mission)
         {
             int number = 1;
-            for (int m = 0; m < mission && missions != null && m < missions.Length; m++)
+            for (int m = 0; m < mission; m++)
             {
-                number += missions[m].slotMapIds != null ? missions[m].slotMapIds.Length : 0;
+                number += ResolveSlots(m).Length;
             }
 
             return number;
         }
 
         /// <summary>
-        /// The slot list a mission shows. With nothing authored, the whole map config is one
-        /// mission, which is how the board behaved before slots existed.
+        /// The maps a mission shows, in order. Straight from the config: there is no fallback that
+        /// turns the whole map registry into one mission any more, because a board with no mission
+        /// config is a wiring mistake and drawing something plausible would hide it.
         /// </summary>
-        private string[] ResolveSlots(int mission, MapConfig config)
+        private string[] ResolveSlots(int mission)
         {
-            if (missions != null && missions.Length > 0)
-            {
-                string[] authored = missions[Mathf.Clamp(mission, 0, missions.Length - 1)].slotMapIds;
-                return authored ?? Array.Empty<string>();
-            }
-
-            string[] slots = new string[config.Count];
-            for (int i = 0; i < config.Count; i++)
-            {
-                MapInfo map = config.Get(i);
-                slots[i] = map != null ? map.Id : "";
-            }
-
-            return slots;
+            Mission entry = missionConfig != null ? missionConfig.Get(mission) : null;
+            return entry != null && entry.mapIds != null ? entry.mapIds : Array.Empty<string>();
         }
 
         /// <summary>
-        /// Every real map on the whole board, in slot order. The unlock rule walks this, so
-        /// placeholders between two maps do not wall the later one off.
+        /// Every real map on the whole board, in board order, into the reused list. The per-map
+        /// unlock rule walks this, so a mis-authored id between two maps does not wall the later
+        /// one off.
         /// </summary>
-        private List<string> RealMapSequence(MapConfig config)
+        private void RebuildRealMapSequence(MapConfig config)
         {
-            List<string> sequence = new List<string>();
+            realMapSequence.Clear();
+
             int count = MissionCount();
             for (int m = 0; m < count; m++)
             {
-                string[] slots = ResolveSlots(m, config);
+                string[] slots = ResolveSlots(m);
                 for (int i = 0; i < slots.Length; i++)
                 {
                     if (!string.IsNullOrEmpty(slots[i]) && config.TryGet(slots[i], out _))
                     {
-                        sequence.Add(slots[i]);
+                        realMapSequence.Add(slots[i]);
                     }
                 }
             }
-
-            return sequence;
         }
 
         /// <summary>
@@ -319,8 +308,11 @@ namespace GameJam.UI
             bool isReal = !string.IsNullOrEmpty(slotMapId) && config.TryGet(slotMapId, out _);
             if (!isReal)
             {
-                // A locked mission's placeholders may as well be plain locks: nothing in a locked
-                // mission answers taps anyway.
+                // Missions carry only real maps now, so this is no longer an unauthored slot - it
+                // is an id in the mission config that the map registry does not have. Kept as
+                // Missing rather than removed: the shake and the notice are the only thing that
+                // tells a player why a card did nothing, and MissionConfig.OnValidate has already
+                // named the bad id in the console for whoever authored it.
                 return missionLocked ? MissionItemState.Locked : MissionItemState.Missing;
             }
 
@@ -335,9 +327,8 @@ namespace GameJam.UI
                 return MissionItemState.Cleared;
             }
 
-            List<string> sequence = RealMapSequence(config);
-            int position = sequence.IndexOf(slotMapId);
-            bool open = position <= 0 || progress.IsPassed(sequence[position - 1]);
+            int position = realMapSequence.IndexOf(slotMapId);
+            bool open = position <= 0 || progress.IsPassed(realMapSequence[position - 1]);
             return open ? MissionItemState.Current : MissionItemState.Locked;
         }
 
@@ -367,7 +358,7 @@ namespace GameJam.UI
         /// </summary>
         private void HandleItemClicked(int slot)
         {
-            if (IsMissionLocked(missionIndex))
+            if (!IsMissionUnlocked(missionIndex))
             {
                 return;
             }
@@ -378,7 +369,7 @@ namespace GameJam.UI
                 return;
             }
 
-            string[] slots = ResolveSlots(missionIndex, config);
+            string[] slots = ResolveSlots(missionIndex);
             if (slot < 0 || slot >= slots.Length || slot >= items.Count)
             {
                 return;
@@ -495,6 +486,11 @@ namespace GameJam.UI
 
         private void SetMission(int index)
         {
+            if (MissionCount() == 0)
+            {
+                return;
+            }
+
             int clamped = Mathf.Clamp(index, 0, MissionCount() - 1);
             if (clamped == missionIndex)
             {
