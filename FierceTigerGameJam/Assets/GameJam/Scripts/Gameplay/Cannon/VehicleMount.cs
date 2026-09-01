@@ -96,11 +96,12 @@ namespace GameJam.Gameplay.Cannon
                  + "CannonRoot, so the barrel lands where that object sits.")]
         [SerializeField] private Vector3 barrelAlignmentOffset = Vector3.zero;
 
-        [Tooltip("Lifts the model if anything it draws would end up under the floor. The barrel is "
-                 + "positioned by its breech, and the mesh hangs around that point, so pushing the "
-                 + "mount down far enough always buries the far end eventually. This is the floor "
-                 + "it will not go through.")]
-        [SerializeField] private bool keepAboveGround = true;
+        [Tooltip("Lifts the model if anything it draws would end up under the floor. Off, because "
+                 + "the mount point is placed by hand now and a model is expected to spawn exactly "
+                 + "on it - a clamp that quietly raised it would make the placement a suggestion "
+                 + "rather than a fact, and hide the fact that the frame is too low. Turn it on if "
+                 + "the frame is ever driven by something that can put it through the ground.")]
+        [SerializeField] private bool keepAboveGround;
 
         [Tooltip("World height of the floor the barrel may not sink through. The playfield's ground "
                  + "plane sits at y = 0.")]
@@ -287,6 +288,10 @@ namespace GameJam.Gameplay.Cannon
 
             Transform parent = mountPoint != null ? mountPoint : transform;
             current = Instantiate(prefab, parent);
+            // Exactly on the mount point, and nothing below moves it unless it is explicitly
+            // asked to: the frame is positioned by hand against the reference art, so the model
+            // spawning anywhere other than its origin would be the code overruling that placement.
+            // Both alignBarrelToPivot and keepAboveGround are off for the same reason.
             current.transform.localPosition = Vector3.zero;
             current.transform.localRotation = Quaternion.identity;
             // Two scales, deliberately: the fitted one belongs to the model and comes from the
