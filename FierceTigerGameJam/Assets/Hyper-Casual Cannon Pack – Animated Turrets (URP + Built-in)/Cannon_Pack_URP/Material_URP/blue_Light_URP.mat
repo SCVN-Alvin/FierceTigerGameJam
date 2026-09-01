@@ -122,7 +122,7 @@ Material:
     - _MobileFakeAO: 1
     - _MobileMode: 0
     - _OcclusionStrength: 1
-    - _OutlineWidth: 0.011
+    - _OutlineWidth: 0.002
     - _Parallax: 0.005
     - _QueueOffset: 0
     - _RampSmoothing: 0.367
@@ -164,6 +164,7 @@ Material:
     - _SmoothnessColor: {r: 0.5986116, g: 0.6350921, b: 0.6679245, a: 1}
     - _SpecColor: {r: 0.2, g: 0.2, b: 0.2, a: 1}
   m_BuildTextureStacks: []
+  m_AllowLocking: 1
 --- !u!114 &8611407016927993283
 MonoBehaviour:
   m_ObjectHideFlags: 11
