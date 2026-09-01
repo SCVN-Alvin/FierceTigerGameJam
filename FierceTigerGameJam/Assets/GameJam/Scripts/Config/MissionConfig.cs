@@ -32,6 +32,18 @@ namespace GameJam.Config
 
         [Tooltip("Map ids from the MapConfig, in the order the row draws them.")]
         public string[] mapIds = Array.Empty<string>();
+
+        [Tooltip("Backdrop picture the playfield shows for every level of this mission. Left "
+                 + "empty the scene keeps whatever its backdrops were authored with.")]
+        public Sprite background;
+
+        [Tooltip("Picture tiled across the ground plane for this mission. Left empty the ground "
+                 + "keeps its authored material.")]
+        public Texture2D floorTexture;
+
+        [Tooltip("Repeats of the floor picture across the ground. Small numbers stretch, big "
+                 + "numbers tile. 0 counts as 1.")]
+        [Range(0f, 32f)] public float floorTiling;
     }
 
     /// <summary>
@@ -173,5 +185,52 @@ namespace GameJam.Config
                 }
             }
         }
+        /// <summary>Index of the mission whose mapIds contain this map, or -1.</summary>
+        public int MissionIndexOf(string mapId)
+        {
+            if (string.IsNullOrEmpty(mapId))
+            {
+                return -1;
+            }
+
+            for (int m = 0; m < missions.Length; m++)
+            {
+                string[] ids = missions[m] != null ? missions[m].mapIds : null;
+                for (int i = 0; ids != null && i < ids.Length; i++)
+                {
+                    if (string.Equals(ids[i], mapId, StringComparison.Ordinal))
+                    {
+                        return m;
+                    }
+                }
+            }
+
+            return -1;
+        }
+
+        /// <summary>
+        /// The scenery authored for the mission this map belongs to. False when the map is in no
+        /// mission or its mission has no scenery set - the caller keeps the scene's defaults.
+        /// </summary>
+        public bool TryGetScenery(string mapId, out Sprite background, out Texture2D floor,
+            out float tiling)
+        {
+            background = null;
+            floor = null;
+            tiling = 1f;
+
+            int index = MissionIndexOf(mapId);
+            if (index < 0)
+            {
+                return false;
+            }
+
+            Mission mission = missions[index];
+            background = mission.background;
+            floor = mission.floorTexture;
+            tiling = mission.floorTiling <= 0f ? 1f : mission.floorTiling;
+            return background != null || floor != null;
+        }
+
     }
 }
