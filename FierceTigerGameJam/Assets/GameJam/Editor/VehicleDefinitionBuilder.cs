@@ -123,6 +123,31 @@ namespace GameJam.EditorTools
             new Vector3(-0.0073143532f, 0.5320612f, 0.10477993f);
 
         /// <summary>
+        /// How tall CannonA stood in the mount's own space, kept as a number for the same reason
+        /// its pose is: the object is gone from the prefab, and this tool's whole yardstick was
+        /// measured off it.
+        ///
+        /// Without this the fit does not run at all. <see cref="TryMeasureBarrelHeight"/> looks for
+        /// "CannonA", finds nothing, warns and returns - so every menu run since the old cannon art
+        /// was deleted has fitted nothing while looking like it did something. That is worth
+        /// knowing before reading the number below as an invention.
+        ///
+        /// It is not one. It was recovered two independent ways that agree to five figures:
+        ///
+        ///   - The scales this tool itself last wrote. Every one of the nine fitted levels satisfies
+        ///     modelScale * (its model's whole height in metres) = 0.69773, which is exactly the
+        ///     target the run that wrote them was measuring against.
+        ///   - The old barrel mesh. CannonA's mesh in LunaSmashdown/Models/Cannon.fbx is 0.4156 tall
+        ///     and 0.6579 deep, and it hung at the pivot's 31.439-degree nose-up rest pitch, which
+        ///     puts 0.4156*cos + 0.6579*sin = 0.6977 into a world-aligned box - what Renderer.bounds
+        ///     would have reported.
+        ///
+        /// A live CannonA still wins when one exists, so a project that never deleted it keeps
+        /// measuring rather than trusting this.
+        /// </summary>
+        private const float LegacyBarrelHeight = 0.697727f;
+
+        /// <summary>
         /// A fitted model may be a twentieth of the pack's size or twice it; anything outside
         /// that is a measurement gone wrong (an empty prefab, a stray renderer a kilometre away)
         /// and a clamp keeps it from writing a scale that makes the vehicle invisible.
@@ -470,7 +495,7 @@ namespace GameJam.EditorTools
         [MenuItem("Tools/Smashdown/Fit Vehicle Models")]
         public static void FitVehicleModels()
         {
-            if (!TryMeasureBarrelHeight(out float targetHeight))
+            if (!TryReadFitTarget(out FitTarget target))
             {
                 return;
             }
@@ -494,13 +519,51 @@ namespace GameJam.EditorTools
                     continue;
                 }
 
-                fitted += FitLevels(vehicle, targetHeight);
+                fitted += FitLevels(vehicle, target);
             }
 
             AssetDatabase.SaveAssets();
+
+            // Which half of the model was measured is in the line on purpose. The two answers are
+            // roughly a third apart, so a scale that looks wrong is usually a run made in the other
+            // mode rather than a model that changed.
+            string measured = target.BarrelOnly ? "barrel only" : "the whole model";
             Debug.Log(
                 $"{nameof(VehicleDefinitionBuilder)} fitted {fitted} vehicle model(s) to the "
-                + $"{BarrelObjectName} height of {targetHeight:0.000} (measured in the mount's own space).");
+                + $"{BarrelObjectName} height of {target.Height:0.000} (measured in the mount's own "
+                + $"space, {measured}).");
+        }
+
+        /// <summary>
+        /// What a fit measures against, and how much of a model it measures.
+        ///
+        /// The second half is not a setting of this tool: it is read off the <see cref="VehicleMount"/>
+        /// in the Slingshot prefab, because the mount is what decides which parts of a spawned model
+        /// are ever drawn. A base that is switched off the moment it spawns must not count towards
+        /// the height its model is scaled by, or the three families - whose bases are proportioned
+        /// quite differently - end up with barrels of visibly different sizes. Reading the mount
+        /// rather than duplicating its rule also means turning the whole-vehicle look back on and
+        /// re-running the fit is enough to get the old numbers back.
+        /// </summary>
+        private readonly struct FitTarget
+        {
+            public FitTarget(float height, bool barrelOnly, string[] hiddenPartPrefixes)
+            {
+                Height = height;
+                BarrelOnly = barrelOnly;
+                HiddenPartPrefixes = hiddenPartPrefixes;
+            }
+
+            /// <summary>The old barrel's height, in the mount point's own local space.</summary>
+            public float Height { get; }
+
+            public bool BarrelOnly { get; }
+
+            /// <summary>
+            /// Null when nothing is hidden. Plain strings, so it outlives the prefab contents it
+            /// was read from - unlike anything holding a Unity object would.
+            /// </summary>
+            public string[] HiddenPartPrefixes { get; }
         }
 
         /// <summary>
@@ -509,7 +572,7 @@ namespace GameJam.EditorTools
         /// scale is already fitted, and writing a number onto an empty slot would only be a
         /// number nobody reads.
         /// </summary>
-        private static int FitLevels(VehicleDefinition vehicle, float targetHeight)
+        private static int FitLevels(VehicleDefinition vehicle, in FitTarget target)
         {
             SerializedObject serialized = new SerializedObject(vehicle);
             SerializedProperty levels = serialized.FindProperty("levels");
@@ -531,23 +594,24 @@ namespace GameJam.EditorTools
                     continue;
                 }
 
-                if (!TryMeasurePrefabHeight(AssetDatabase.GetAssetPath(model), out float modelHeight))
+                if (!TryMeasurePrefabHeight(AssetDatabase.GetAssetPath(model), target, out float modelHeight))
                 {
                     continue;
                 }
 
                 float previous = scaleProperty.floatValue;
-                float scale = Mathf.Clamp(targetHeight / modelHeight, MinFittedScale, MaxFittedScale);
+                float scale = Mathf.Clamp(target.Height / modelHeight, MinFittedScale, MaxFittedScale);
                 scaleProperty.floatValue = scale;
                 fitted++;
 
                 // The raw heights go in the log next to the ratio on purpose: a scale that looks
                 // wrong is almost always a model measured wrong, and the only way to tell the two
                 // apart from a console line is to see what was measured.
+                string measured = target.BarrelOnly ? "barrel" : "model";
                 Debug.Log(
                     $"{nameof(VehicleDefinitionBuilder)} fitted {vehicle.name} level {i + 1} ({model.name}): "
-                    + $"modelScale {previous:0.000} -> {scale:0.000} (model {modelHeight:0.000} high, "
-                    + $"target {targetHeight:0.000}).",
+                    + $"modelScale {previous:0.000} -> {scale:0.000} ({measured} {modelHeight:0.000} high, "
+                    + $"target {target.Height:0.000}).",
                     vehicle);
             }
 
@@ -560,8 +624,10 @@ namespace GameJam.EditorTools
         }
 
         /// <summary>
-        /// The yardstick: how tall the old barrel is, expressed in the mount point's own local
-        /// space.
+        /// The yardstick, and how much of a model to hold against it. Both come out of the
+        /// Slingshot prefab, and it is opened once for the pair rather than twice.
+        ///
+        /// The height is the old barrel's, expressed in the mount point's own local space.
         ///
         /// Deviation from the brief, which records the barrel's world height directly. The
         /// Slingshot root is scaled to 0.5, so the barrel's world height is half its height in
@@ -569,9 +635,9 @@ namespace GameJam.EditorTools
         /// root scale with the fitted number, so a world measurement would fit every vehicle at
         /// half the size it should be.
         /// </summary>
-        private static bool TryMeasureBarrelHeight(out float height)
+        private static bool TryReadFitTarget(out FitTarget target)
         {
-            height = 0f;
+            target = default;
 
             GameObject root = PrefabUtility.LoadPrefabContents(SlingshotPrefabPath);
             if (root == null)
@@ -584,44 +650,31 @@ namespace GameJam.EditorTools
 
             try
             {
-                Transform barrel = FindDescendant(root.transform, BarrelObjectName);
-                if (barrel == null)
+                // Read before the height, so a prefab with no barrel left in it still tells us
+                // which look the mount is set to.
+                bool barrelOnly = false;
+                string[] hiddenPartPrefixes = null;
+                VehicleMount mount = root.GetComponentInChildren<VehicleMount>(true);
+                if (mount != null)
+                {
+                    barrelOnly = mount.BarrelOnly;
+                    hiddenPartPrefixes = mount.HiddenPartPrefixes;
+                }
+                else
                 {
                     Debug.LogWarning(
-                        $"{nameof(VehicleDefinitionBuilder)} found no \"{BarrelObjectName}\" inside "
-                        + $"{SlingshotPrefabPath}, so no vehicle model could be fitted.");
+                        $"{nameof(VehicleDefinitionBuilder)} found no {nameof(VehicleMount)} in "
+                        + $"{SlingshotPrefabPath}, so the models were fitted whole. Run Wire Vehicle Mount "
+                        + "and fit again if the cannon is showing barrels only.");
+                }
+
+                if (!TryMeasureBarrelHeight(root.transform, out float height))
+                {
                     return false;
                 }
 
-                // Switched on only long enough to be measured: an inactive renderer's bounds are
-                // whatever they last were, which for a model that has never been drawn is zero.
-                // The contents are unloaded without ever being saved, so the prefab keeps the
-                // barrel switched off.
-                bool wasActive = barrel.gameObject.activeSelf;
-                barrel.gameObject.SetActive(true);
-                bool measured = TryMeasureHeight(barrel.gameObject, out float worldHeight);
-                barrel.gameObject.SetActive(wasActive);
-
-                if (!measured)
-                {
-                    Debug.LogWarning(
-                        $"{nameof(VehicleDefinitionBuilder)} found no renderer under \"{BarrelObjectName}\", "
-                        + "so the vehicle models have nothing to be fitted to.");
-                    return false;
-                }
-
-                Transform mountPoint = FindDescendant(root.transform, CannonObjectName);
-                float mountScale = mountPoint != null ? Mathf.Abs(mountPoint.lossyScale.y) : 1f;
-                if (mountScale < Mathf.Epsilon)
-                {
-                    Debug.LogWarning(
-                        $"{nameof(VehicleDefinitionBuilder)} read a zero scale on \"{CannonObjectName}\", so "
-                        + "the barrel height could not be expressed in the mount's space.");
-                    return false;
-                }
-
-                height = worldHeight / mountScale;
-                return height > Mathf.Epsilon;
+                target = new FitTarget(height, barrelOnly, hiddenPartPrefixes);
+                return true;
             }
             finally
             {
@@ -630,11 +683,73 @@ namespace GameJam.EditorTools
         }
 
         /// <summary>
+        /// The old barrel's height in the mount's space: measured off CannonA where it still
+        /// stands, and taken from <see cref="LegacyBarrelHeight"/> where it has been deleted.
+        ///
+        /// The fallback is the whole reason this tool still runs. Falling back rather than
+        /// refusing is the right call here because the number is not a preference somebody might
+        /// have meant differently - it is a fact about a cannon the game was laid out around, and
+        /// every scale currently in the configs was fitted to exactly it.
+        /// </summary>
+        private static bool TryMeasureBarrelHeight(Transform root, out float height)
+        {
+            height = 0f;
+
+            Transform barrel = FindDescendant(root, BarrelObjectName);
+            if (barrel == null)
+            {
+                height = LegacyBarrelHeight;
+                Debug.Log(
+                    $"{nameof(VehicleDefinitionBuilder)} found no \"{BarrelObjectName}\" inside "
+                    + $"{SlingshotPrefabPath} - the old cannon art has been deleted - so the models were "
+                    + $"fitted to its recorded height of {LegacyBarrelHeight:0.000}.");
+                return true;
+            }
+
+            // Switched on only long enough to be measured: an inactive renderer's bounds are
+            // whatever they last were, which for a model that has never been drawn is zero.
+            // The contents are unloaded without ever being saved, so the prefab keeps the
+            // barrel switched off.
+            bool wasActive = barrel.gameObject.activeSelf;
+            barrel.gameObject.SetActive(true);
+
+            // Measured whole, never barrel-only: this is the old cannon's own art, and the parts
+            // the mount hides are parts of the pack models, not of it.
+            bool measured = TryMeasureHeight(barrel.gameObject, null, out float worldHeight);
+            barrel.gameObject.SetActive(wasActive);
+
+            if (!measured)
+            {
+                Debug.LogWarning(
+                    $"{nameof(VehicleDefinitionBuilder)} found no renderer under \"{BarrelObjectName}\", "
+                    + "so the vehicle models have nothing to be fitted to.");
+                return false;
+            }
+
+            Transform mountPoint = FindDescendant(root, CannonObjectName);
+            float mountScale = mountPoint != null ? Mathf.Abs(mountPoint.lossyScale.y) : 1f;
+            if (mountScale < Mathf.Epsilon)
+            {
+                Debug.LogWarning(
+                    $"{nameof(VehicleDefinitionBuilder)} read a zero scale on \"{CannonObjectName}\", so "
+                    + "the barrel height could not be expressed in the mount's space.");
+                return false;
+            }
+
+            height = worldHeight / mountScale;
+            return height > Mathf.Epsilon;
+        }
+
+        /// <summary>
         /// A model prefab's height at scale 1 - the size the mount will draw it at before the
         /// fitted scale is applied, since the mount overwrites whatever root scale the prefab
         /// carries.
+        ///
+        /// "Draw" is the operative word: when the mount is showing barrels only, the parts it
+        /// hides are left out of the measurement, because a base nobody sees contributing to a
+        /// height is what would make one family's barrel twice another's.
         /// </summary>
-        private static bool TryMeasurePrefabHeight(string prefabPath, out float height)
+        private static bool TryMeasurePrefabHeight(string prefabPath, in FitTarget target, out float height)
         {
             height = 0f;
 
@@ -661,8 +776,13 @@ namespace GameJam.EditorTools
             try
             {
                 contents.transform.localScale = Vector3.one;
-                if (!TryMeasureHeight(contents, out height) || height <= Mathf.Epsilon)
+                string[] hidden = target.BarrelOnly ? target.HiddenPartPrefixes : null;
+                if (!TryMeasureHeight(contents, hidden, out height) || height <= Mathf.Epsilon)
                 {
+                    // Reached in the one case worth spelling out: a model whose every renderer sits
+                    // under a hidden part, which means the prefix list has swallowed the barrel too.
+                    // Keeping the old scale rather than writing a clamped guess leaves the cannon
+                    // the size it was while somebody works out which prefix is too broad.
                     Debug.LogWarning(
                         $"{nameof(VehicleDefinitionBuilder)} measured no height on {prefabPath}, so that "
                         + "level keeps the scale it already had.");
@@ -681,8 +801,12 @@ namespace GameJam.EditorTools
         /// Union of every mesh renderer's world bounds under an object. Particle and trail
         /// renderers are left out: their bounds are whatever they last emitted, which is a
         /// property of a simulation rather than of the model's size.
+        ///
+        /// <paramref name="hiddenPartPrefixes"/> names the parts to leave out, or is null to
+        /// measure everything. The rule itself lives on <see cref="VehicleMount"/> rather than
+        /// here, so what this measures and what the game draws cannot drift apart.
         /// </summary>
-        private static bool TryMeasureHeight(GameObject root, out float height)
+        private static bool TryMeasureHeight(GameObject root, string[] hiddenPartPrefixes, out float height)
         {
             height = 0f;
             Renderer[] renderers = root.GetComponentsInChildren<Renderer>(true);
@@ -693,6 +817,11 @@ namespace GameJam.EditorTools
             {
                 Renderer renderer = renderers[i];
                 if (renderer is ParticleSystemRenderer || renderer is TrailRenderer || renderer is LineRenderer)
+                {
+                    continue;
+                }
+
+                if (IsUnderHiddenPart(renderer.transform, root.transform, hiddenPartPrefixes))
                 {
                     continue;
                 }
@@ -714,6 +843,30 @@ namespace GameJam.EditorTools
 
             height = bounds.size.y;
             return true;
+        }
+
+        /// <summary>
+        /// Whether a renderer sits inside a part the mount hides - itself, or anything above it up
+        /// to but not including the model's own root. The root is excluded for the same reason the
+        /// mount's hiding pass skips it: it is the model, and a prefab that happened to be named
+        /// after one of its parts would otherwise measure as nothing at all.
+        /// </summary>
+        private static bool IsUnderHiddenPart(Transform node, Transform root, string[] hiddenPartPrefixes)
+        {
+            if (hiddenPartPrefixes == null || hiddenPartPrefixes.Length == 0)
+            {
+                return false;
+            }
+
+            for (Transform walk = node; walk != null && walk != root; walk = walk.parent)
+            {
+                if (VehicleMount.IsHiddenPart(walk.name, hiddenPartPrefixes))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private static VehicleDefinition.Level Level(string displayName, float damageMultiplier, string modelPrefabName)
