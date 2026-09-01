@@ -88,8 +88,17 @@ namespace GameJam.EditorTools
         /// <summary>232x209 of card art at the frame's 600/975 scale, so three fit across the inset.</summary>
         private static readonly Vector2 CardSize = new Vector2(143f, 129f);
 
-        /// <summary>The row's own gap. The vertical figure is kept so a re-run does not retune it.</summary>
+        /// <summary>The grid's gap, horizontal and vertical.</summary>
         private static readonly Vector2 RowSpacing = new Vector2(17f, 33f);
+
+        /// <summary>
+        /// How many cards stack vertically before the grid starts a new column. Three keeps the
+        /// board reading as the grid it always was - a mission of nine draws 3x3 exactly as before -
+        /// while a longer mission now runs off the right edge instead of the bottom, which is the
+        /// direction the list scrolls. Rows rather than columns is what makes that true: a grid
+        /// constrained by columns can only ever grow downward.
+        /// </summary>
+        private const int GridRows = 3;
 
         /// <summary>Left edge, full height: the row grows sideways out of the viewport.</summary>
         private static readonly Vector2 RowAnchorMin = new Vector2(0f, 0f);
@@ -104,6 +113,9 @@ namespace GameJam.EditorTools
         private static readonly Vector2 PreviousGridAnchorMax = new Vector2(1f, 1f);
         private static readonly Vector2 PreviousGridPivot = new Vector2(0.5f, 1f);
         private const int PreviousGridColumns = 3;
+
+        /// <summary>The single-row shape that briefly replaced the grid, recognised so it migrates too.</summary>
+        private const int PreviousRowCount = 1;
 
         internal const string MissionConfigPath = "Assets/GameJam/Config/MissionConfig.asset";
 
@@ -341,9 +353,9 @@ namespace GameJam.EditorTools
         }
 
         /// <summary>
-        /// The scrolling board: one row of cards that scrolls sideways.
+        /// The scrolling board: the grid of cards it always was, overflowing sideways.
         ///
-        /// Still a <see cref="GridLayoutGroup"/>, constrained to a single row, rather than the
+        /// Still a <see cref="GridLayoutGroup"/>, constrained by rows rather than the
         /// <see cref="HorizontalLayoutGroup"/> the brief offered as the alternative. A grid gives
         /// every card the authored <see cref="CardSize"/> whatever the card prefab happens to
         /// measure, which is what keeps 143x129 true; a horizontal group would size each child
@@ -384,9 +396,14 @@ namespace GameJam.EditorTools
                 layout.spacing = RowSpacing;
                 ShapeRowLayout(layout);
             }
-            else if (layout.constraint == GridLayoutGroup.Constraint.FixedColumnCount
-                     && layout.constraintCount == PreviousGridColumns)
+            else if ((layout.constraint == GridLayoutGroup.Constraint.FixedColumnCount
+                      && layout.constraintCount == PreviousGridColumns)
+                     || (layout.constraint == GridLayoutGroup.Constraint.FixedRowCount
+                         && layout.constraintCount == PreviousRowCount))
             {
+                // Two earlier shapes to bring forward: the original three-across grid that grew
+                // downward, and the single row that briefly replaced it. Both are recognised by
+                // their exact numbers, so a board somebody has since tuned keeps what they gave it.
                 ShapeRowLayout(layout);
             }
 
@@ -395,8 +412,8 @@ namespace GameJam.EditorTools
                 || (fitter.horizontalFit == ContentSizeFitter.FitMode.Unconstrained
                     && fitter.verticalFit == ContentSizeFitter.FitMode.PreferredSize))
             {
-                // The row is as wide as its cards and as tall as the viewport, so it is the
-                // width the fitter now has to work out.
+                // The grid is as wide as its columns need and as tall as the viewport, so width
+                // is what the fitter has to work out.
                 fitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
                 fitter.verticalFit = ContentSizeFitter.FitMode.Unconstrained;
             }
@@ -429,14 +446,14 @@ namespace GameJam.EditorTools
         }
 
         /// <summary>
-        /// One row, however many cards the mission has. FixedRowCount rather than FixedColumnCount
+        /// A fixed number of rows, however many cards the mission has. FixedRowCount rather than FixedColumnCount
         /// so the row never wraps: a mission with ten maps must be ten cards long and scroll, not
         /// two rows of five on one phone and three of four on another.
         /// </summary>
         private static void ShapeRowLayout(GridLayoutGroup layout)
         {
             layout.constraint = GridLayoutGroup.Constraint.FixedRowCount;
-            layout.constraintCount = 1;
+            layout.constraintCount = GridRows;
             layout.childAlignment = TextAnchor.MiddleLeft;
             layout.padding = new RectOffset(0, 0, 0, 0);
         }
