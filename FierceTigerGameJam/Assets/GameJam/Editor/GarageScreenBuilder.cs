@@ -2,6 +2,7 @@
 using GameJam.Economy;
 using GameJam.Gameplay.Combat;
 using GameJam.Gameplay.Flow;
+using GameJam.Gameplay.Tool;
 using GameJam.UI;
 using TMPro;
 using UnityEditor;
@@ -34,10 +35,15 @@ namespace GameJam.EditorTools
     /// re-running it cost the tuning, which is the same as not being able to run it again.
     /// Deleting the prefab is how you ask for the numbers below back.
     ///
-    /// There is one exception, and it is meant to be read as one: a row whose equip target is
-    /// still the row root is migrated onto the SELECT button - see
-    /// <see cref="MoveRootSelectToChild"/> - because that reference is no longer a different
-    /// choice, it is a row that would hide itself the moment its item was equipped.
+    /// The exceptions are meant to be read as exceptions, and there are three:
+    ///
+    ///   - <see cref="MoveRootSelectToChild"/>, because a row whose equip target is still the row
+    ///     root would hide itself the moment its item was equipped;
+    ///   - <see cref="ClearBakedIcon"/>, because a sprite baked into a row prefab is a stand-in
+    ///     rather than a choice - every row's picture comes from its bind;
+    ///   - the preview rig's culling mask, render target and starting state, rewritten on every
+    ///     run in <see cref="EnsurePreviewRig"/>, because those three are the whole of the rig's
+    ///     containment and a drifted one draws the playfield into the garage.
     /// </summary>
     public static class GarageScreenBuilder
     {
@@ -114,15 +120,74 @@ namespace GameJam.EditorTools
         private static readonly Vector2 ScreenAnchorMin = new Vector2(0f, 0.135f);
         private static readonly Vector2 ScreenAnchorMax = new Vector2(1f, 1f);
 
+        // ---------------------------------------------------------------- 3D preview
+
+        /// <summary>
+        /// The layer the preview rig lives on, and the only layer its camera draws. Nothing else
+        /// in the project may be put on it: the rig's whole safety is that the main camera cannot
+        /// see the layer and the preview camera cannot see anything else.
+        /// </summary>
+        private const string PreviewLayerName = "Preview";
+
+        /// <summary>
+        /// Where the search for a free slot starts. Layers 0-7 are Unity's own; three of them are
+        /// blank and editable, and this project has already put "Debris" in one - which is exactly
+        /// why they are left alone here. A builtin slot is somebody else's to spend.
+        /// </summary>
+        private const int FirstUserLayer = 8;
+
+        private const string TagManagerPath = "ProjectSettings/TagManager.asset";
+
+        private const string TexturesFolder = "Assets/GameJam/Textures";
+
+        private const string PreviewTexturePath = TexturesFolder + "/RT_Preview.renderTexture";
+
+        /// <summary>Square, so the fit does not have to care which way the window is longer.</summary>
+        private const int PreviewTextureSize = 512;
+
+        /// <summary>The artist's marker for the preview window, one under each panel's Preview.</summary>
+        private const string Preview3DName = "Tank_Preview_3D";
+
+        private const string RigObjectName = "PreviewRig";
+        private const string RigPivotName = "Pivot";
+        private const string RigCameraName = "PreviewCamera";
+        private const string RigLightName = "PreviewLight";
+
+        /// <summary>
+        /// Far below the playfield. Not a hiding place - the mannequin has no colliders and the
+        /// main camera cannot see its layer - but distance costs nothing and means a mistake in
+        /// either of those two shows up as a model in the middle of nowhere rather than one in
+        /// the middle of the level.
+        /// </summary>
+        private static readonly Vector3 RigPosition = new Vector3(0f, -50f, 0f);
+
+        private static readonly Vector3 RigCameraLocalPosition = new Vector3(0f, 0f, -4f);
+
+        /// <summary>Roughly a portrait lens: enough perspective to read as 3D, not enough to bow.</summary>
+        private const float RigCameraFieldOfView = 30f;
+
+        /// <summary>
+        /// The window inside the artist's Preview rect: everything above the caption, with a
+        /// hair of margin. Written only when the slot is first turned into a rect.
+        /// </summary>
+        private static readonly Vector2 Preview3DAnchorMin = new Vector2(0.04f, 0.17f);
+        private static readonly Vector2 Preview3DAnchorMax = new Vector2(0.96f, 0.98f);
+
         [MenuItem("Tools/Smashdown/Build Garage Screen")]
         public static void BuildGarageScreen()
         {
             EnsureFolder(GarageFolder);
 
+            // Before the prefab, because the screen's two preview windows are wired to the
+            // texture as they are built. A layer that could not be made takes the whole rig with
+            // it - see EnsurePreviewLayer.
+            int previewLayer = EnsurePreviewLayer();
+            RenderTexture previewTexture = previewLayer >= 0 ? EnsurePreviewTexture() : null;
+
             GameObject pip = BuildPipPrefab();
             GameObject bulletRow = BuildRowPrefab(BulletRowPrefabPath, "BulletTypeViewItem", pip, false);
             GameObject vehicleRow = BuildRowPrefab(VehicleRowPrefabPath, "VehicleTypeViewItem", pip, true);
-            GameObject screen = BuildScreenPrefab(bulletRow, vehicleRow);
+            GameObject screen = BuildScreenPrefab(bulletRow, vehicleRow, previewTexture);
 
             FillMissingIcons();
 
@@ -134,11 +199,17 @@ namespace GameJam.EditorTools
                 DeleteOldShopPrefabs();
             }
 
+            if (previewLayer >= 0)
+            {
+                EnsurePreviewRig(previewLayer, previewTexture);
+            }
+
             AssetDatabase.SaveAssets();
             Debug.Log(
-                "Built the garage into " + ScreenPrefabPath + " and put an instance of it in the scene. "
-                + "Save the scene: the old shop prefab has been deleted, and a scene still holding the "
-                + "unsaved reference to it would come back broken.");
+                "Built the garage into " + ScreenPrefabPath + " and put an instance of it in the scene, "
+                + "with the 3D preview rig under the scene's SYSTEM section. Save the scene: the old shop "
+                + "prefab has been deleted and the rig lives in the scene, so a scene left unsaved would "
+                + "come back both broken and without a preview.");
         }
 
         // ------------------------------------------------------------------ pips
@@ -201,6 +272,7 @@ namespace GameJam.EditorTools
                 // icon is only the picture, centred in a slot that never stretches.
                 RectTransform icon = EnsureImage("Icon", rect, null,
                     new Vector2(0.053f, 0.25f), new Vector2(0.143f, 0.74f), Image.Type.Simple, true);
+                ClearBakedIcon(icon);
 
                 RectTransform header = EnsureRect("Header", rect,
                     new Vector2(0.214f, 0.45f), new Vector2(0.97f, 0.80f));
@@ -383,6 +455,33 @@ namespace GameJam.EditorTools
         }
 
         /// <summary>
+        /// Empties the row's icon slot, every run.
+        ///
+        /// The second place this builder overwrites something already set, and the same kind of
+        /// case as <see cref="MoveRootSelectToChild"/>: a sprite baked into the row prefab is not
+        /// a different opinion about the art, it is a stand-in the artist left behind while the
+        /// icons were being drawn. Every row's picture comes from <c>ShopItemView.Bind</c>, so a
+        /// baked one can only ever be one item's icon shown on all of them for the frames before
+        /// the first bind - which is the flash a34d7277 removed and the reason blank-until-bound
+        /// is the rule here.
+        ///
+        /// Disabled as well as emptied, which is what <see cref="EnsureImage"/> does for a
+        /// sprite-less image: the slot it sits in is already painted into the row art, and an
+        /// Image with no sprite is a white block over it.
+        /// </summary>
+        private static void ClearBakedIcon(RectTransform icon)
+        {
+            Image image = icon != null ? icon.GetComponent<Image>() : null;
+            if (image == null || image.sprite == null)
+            {
+                return;
+            }
+
+            image.sprite = null;
+            image.enabled = false;
+        }
+
+        /// <summary>
         /// Repoints a row's <c>selectButton</c> from the row root to the SELECT child, and only
         /// from there. The one exception to this builder's rule that a reference already set is
         /// never touched: the old shape - the row root as the equip target - is now actively
@@ -416,7 +515,10 @@ namespace GameJam.EditorTools
         /// preview stands on and the dark inset the list scrolls in are all painted into the one
         /// frame sprite, so what is built here is the empty boxes over them and nothing else.
         /// </summary>
-        private static GameObject BuildScreenPrefab(GameObject bulletRow, GameObject vehicleRow)
+        private static GameObject BuildScreenPrefab(
+            GameObject bulletRow,
+            GameObject vehicleRow,
+            RenderTexture previewTexture)
         {
             return EnsurePrefab(ScreenPrefabPath, ScreenName, (root, created) =>
             {
@@ -483,8 +585,8 @@ namespace GameJam.EditorTools
                     }
                 }
 
-                WireShopView(vehiclePanel, true, goldLabel, vehicleRow);
-                WireShopView(bulletPanel, false, goldLabel, bulletRow);
+                WireShopView(vehiclePanel, true, goldLabel, vehicleRow, previewTexture);
+                WireShopView(bulletPanel, false, goldLabel, bulletRow, previewTexture);
 
                 WireTabs(root, vehicleTab, vehiclePanel, bulletTab, bulletPanel);
 
@@ -578,11 +680,18 @@ namespace GameJam.EditorTools
             return panel.gameObject;
         }
 
-        private static void WireShopView(GameObject panel, bool vehicle, TMP_Text goldLabel, GameObject rowPrefab)
+        private static void WireShopView(
+            GameObject panel,
+            bool vehicle,
+            TMP_Text goldLabel,
+            GameObject rowPrefab,
+            RenderTexture previewTexture)
         {
             RectTransform rows = panel.transform.Find("List/Viewport/Rows") as RectTransform;
             Transform previewItem = panel.transform.Find("Preview/PreviewItem");
             Transform previewCaption = panel.transform.Find("Preview/PreviewCaption");
+            ModelPreviewView preview3D = EnsurePreview3D(
+                panel.transform.Find("Preview") as RectTransform, previewTexture);
 
             Component view = vehicle
                 ? (Component)UiBuilder.Ensure<VehicleShopView>(panel)
@@ -600,6 +709,7 @@ namespace GameJam.EditorTools
                 previewItem != null ? previewItem.GetComponent<Image>() : null);
             UiBuilder.SetIfEmpty(serialized, "previewCaption",
                 previewCaption != null ? previewCaption.GetComponent<TMP_Text>() : null);
+            UiBuilder.SetIfEmpty(serialized, "preview3D", preview3D);
             serialized.ApplyModifiedPropertiesWithoutUndo();
         }
 
@@ -640,6 +750,410 @@ namespace GameJam.EditorTools
             entry.FindPropertyRelative("panel").objectReferenceValue = panel;
             entry.FindPropertyRelative("selectedSprite").objectReferenceValue = UiBuilder.LoadSprite(selectedSpritePath);
             entry.FindPropertyRelative("unselectedSprite").objectReferenceValue = UiBuilder.LoadSprite(unselectedSpritePath);
+        }
+
+        // ------------------------------------------------------------------ 3D preview
+
+        /// <summary>
+        /// The layer the rig draws on, added to the project if it is not there yet.
+        ///
+        /// A free slot is searched for rather than assumed. The obvious shortcut - take 31,
+        /// nobody uses it - is how two tools end up sharing a layer and the second one silently
+        /// starts rendering the first one's objects; and this project has already spent one of
+        /// the blank builtin slots on "Debris", which is the same lesson from the other side.
+        ///
+        /// Failure is loud and stops the rig being built at all. There is no safe fallback:
+        /// putting the preview on a gameplay layer would draw the playfield into the garage
+        /// window and hang the mannequin in front of the player, and both of those are worse than
+        /// a garage whose preview window is empty.
+        /// </summary>
+        /// <returns>The layer's index, or -1 when there is none to be had.</returns>
+        private static int EnsurePreviewLayer()
+        {
+            Object[] assets = AssetDatabase.LoadAllAssetsAtPath(TagManagerPath);
+            if (assets == null || assets.Length == 0 || assets[0] == null)
+            {
+                Debug.LogError(
+                    $"{nameof(GarageScreenBuilder)} could not open {TagManagerPath}, so it cannot add the "
+                    + $"\"{PreviewLayerName}\" layer and the preview rig was not built.");
+                return -1;
+            }
+
+            SerializedObject tagManager = new SerializedObject(assets[0]);
+            SerializedProperty layers = tagManager.FindProperty("layers");
+            if (layers == null || !layers.isArray)
+            {
+                Debug.LogError(
+                    $"{nameof(GarageScreenBuilder)} found no layer list in {TagManagerPath}, so the preview "
+                    + "rig was not built.");
+                return -1;
+            }
+
+            for (int i = 0; i < layers.arraySize; i++)
+            {
+                if (layers.GetArrayElementAtIndex(i).stringValue == PreviewLayerName)
+                {
+                    return i;
+                }
+            }
+
+            for (int i = FirstUserLayer; i < layers.arraySize; i++)
+            {
+                SerializedProperty slot = layers.GetArrayElementAtIndex(i);
+                if (!string.IsNullOrEmpty(slot.stringValue))
+                {
+                    continue;
+                }
+
+                slot.stringValue = PreviewLayerName;
+                tagManager.ApplyModifiedPropertiesWithoutUndo();
+                AssetDatabase.SaveAssets();
+                Debug.Log(
+                    $"{nameof(GarageScreenBuilder)} added the \"{PreviewLayerName}\" layer at index {i}. It "
+                    + "belongs to the garage's preview rig; nothing else should be put on it.");
+                return i;
+            }
+
+            Debug.LogError(
+                $"{nameof(GarageScreenBuilder)} found no free user layer for \"{PreviewLayerName}\", so the "
+                + "preview rig was not built. Sharing a gameplay layer would put the playfield in the "
+                + "garage window and the preview model in front of the player. Free one of layers "
+                + $"{FirstUserLayer}-31 and run this again.");
+            return -1;
+        }
+
+        /// <summary>
+        /// The texture the rig renders into and the garage draws.
+        ///
+        /// Built once and never rewritten: the size, the depth and the format are a starting
+        /// point somebody may want to change, and a builder that reset them on every run would
+        /// make the change impossible to keep. Deleting the asset is how you ask for these
+        /// numbers back - the same rule the prefabs here follow.
+        ///
+        /// Its format carries alpha on purpose. The camera clears to nothing rather than to a
+        /// colour, so the garage's own frame art stays the backdrop behind the model instead of a
+        /// grey square being pasted over it.
+        /// </summary>
+        private static RenderTexture EnsurePreviewTexture()
+        {
+            RenderTexture existing = AssetDatabase.LoadAssetAtPath<RenderTexture>(PreviewTexturePath);
+            if (existing != null)
+            {
+                return existing;
+            }
+
+            EnsureFolder(TexturesFolder);
+
+            RenderTexture texture =
+                new RenderTexture(PreviewTextureSize, PreviewTextureSize, 16, RenderTextureFormat.ARGB32)
+                {
+                    name = "RT_Preview",
+                    antiAliasing = 1,
+                    useMipMap = false,
+                    autoGenerateMips = false,
+                    wrapMode = TextureWrapMode.Clamp,
+                    filterMode = FilterMode.Bilinear,
+                };
+
+            AssetDatabase.CreateAsset(texture, PreviewTexturePath);
+            Debug.Log($"{nameof(GarageScreenBuilder)} created {PreviewTexturePath}.");
+            return texture;
+        }
+
+        /// <summary>
+        /// Turns the artist's <c>Tank_Preview_3D</c> marker into the window that draws the rig.
+        ///
+        /// Deviation from Brief 25, which reads the marker as a rect to size a RawImage to. It is
+        /// not one: the artist authored it as a plain Transform holding real model prefabs
+        /// parented straight into the canvas - the very approach the brief considered and
+        /// rejected - at a 3D pose (z -112, scale 80) that means nothing to a UI layout. That
+        /// mock-up cannot work as it stands either way: this canvas renders in Screen Space
+        /// Overlay, which does not draw meshes at all.
+        ///
+        /// So the marker is kept for what it is - the artist saying where the preview goes - and
+        /// converted: a RectTransform replaces the Transform, it is placed over the window above
+        /// the caption, and the mock models under it are switched off rather than deleted, so the
+        /// reference is still there for anyone who wants to look at it.
+        ///
+        /// All of that happens once, on the run that converts. After it the rect is a rect, so a
+        /// nudge in the inspector survives - the same promise every other part of this screen
+        /// makes. Switching the marker on is the one thing enforced every run: one of the two
+        /// shipped switched off, and an inactive window is a preview that never runs at all.
+        /// </summary>
+        private static ModelPreviewView EnsurePreview3D(RectTransform preview, RenderTexture texture)
+        {
+            if (preview == null || texture == null)
+            {
+                // No texture means no layer, which means no rig - see EnsurePreviewLayer. Nothing
+                // is converted in that case: the artist's marker is left exactly as it is until
+                // the run that can actually finish the job.
+                return null;
+            }
+
+            Transform slot = preview.Find(Preview3DName);
+            if (slot == null)
+            {
+                // No marker - a panel built before the artist's pass, or a third tab added later.
+                // Made rather than skipped, so the preview does not depend on art having landed.
+                slot = UiBuilder.EnsureRect(Preview3DName, preview, Preview3DAnchorMin, Preview3DAnchorMax);
+            }
+
+            RectTransform rect = EnsurePreview3DRect(slot);
+            if (rect == null)
+            {
+                return null;
+            }
+
+            bool created = rect.GetComponent<RawImage>() == null;
+            RawImage image = UiBuilder.Ensure<RawImage>(rect.gameObject);
+            if (created)
+            {
+                image.texture = texture;
+                image.color = Color.white;
+
+                // Never: there is nothing to tap in the window, and a raycast target over the
+                // garage table would only eat drags meant for the list behind it.
+                image.raycastTarget = false;
+
+                // Down in the prefab, the same rule the row icons and the EQUIPPED chip follow:
+                // the shop switches it on when it has a model to show, and one shipped up would
+                // draw whatever the render texture happened to hold last.
+                image.enabled = false;
+            }
+
+            ModelPreviewView view = UiBuilder.Ensure<ModelPreviewView>(rect.gameObject);
+            SerializedObject serialized = new SerializedObject(view);
+            UiBuilder.SetIfEmpty(serialized, "image", image);
+            UiBuilder.SetIfEmpty(serialized, "previewTexture", texture);
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+
+            rect.gameObject.SetActive(true);
+            return view;
+        }
+
+        /// <summary>
+        /// The marker as a rect, converting it the first time and handing back what is already
+        /// there afterwards. AddComponent replaces a plain Transform with a RectTransform, which
+        /// is the only way to make a UI object out of one; it is checked rather than assumed,
+        /// because a null here would otherwise surface as a RawImage that never draws.
+        /// </summary>
+        private static RectTransform EnsurePreview3DRect(Transform slot)
+        {
+            if (slot is RectTransform existing)
+            {
+                return existing;
+            }
+
+            GameObject slotObject = slot.gameObject;
+
+            // Before the transform is replaced, while the mock-up's placement is still intact.
+            for (int i = slotObject.transform.childCount - 1; i >= 0; i--)
+            {
+                slotObject.transform.GetChild(i).gameObject.SetActive(false);
+            }
+
+            RectTransform rect = slotObject.AddComponent<RectTransform>();
+            if (rect == null)
+            {
+                Debug.LogError(
+                    $"{nameof(GarageScreenBuilder)} could not turn \"{Preview3DName}\" into a RectTransform, "
+                    + "so that panel has no 3D preview and falls back to the flat icon.");
+                return null;
+            }
+
+            rect.localScale = Vector3.one;
+            rect.localRotation = Quaternion.identity;
+            Place(rect, Preview3DAnchorMin, Preview3DAnchorMax);
+
+            Debug.Log(
+                $"{nameof(GarageScreenBuilder)} converted \"{Preview3DName}\" from the artist's in-canvas "
+                + "mock-up into the render-texture window, and switched the mock models under it off.");
+            return rect;
+        }
+
+        /// <summary>
+        /// The one rig in the scene: a pivot models spawn under, the camera that draws it into
+        /// the texture, and a light of its own.
+        ///
+        /// Found by its component rather than by its name, so a rig somebody renamed or filed
+        /// somewhere else is still the rig - which is also what keeps a second run, with or
+        /// without a domain reload, from leaving two of them.
+        ///
+        /// Poses and settings are written only on creation, except the three that are the whole
+        /// point of the rig and are enforced every run: the camera's culling mask, its target
+        /// texture, and that it starts switched off. A mask that has drifted is the preview
+        /// rendering the playfield; a missing target is the preview rendering over the game.
+        /// </summary>
+        private static void EnsurePreviewRig(int layer, RenderTexture texture)
+        {
+            Scene scene = SceneManager.GetActiveScene();
+            if (!scene.IsValid() || !scene.isLoaded)
+            {
+                Debug.LogWarning(
+                    $"{nameof(GarageScreenBuilder)} has no loaded scene to put the preview rig in, so the "
+                    + "garage will fall back to its flat icons.");
+                return;
+            }
+
+            ModelPreviewRig rig = Object.FindFirstObjectByType<ModelPreviewRig>(FindObjectsInactive.Include);
+            GameObject root;
+
+            if (rig == null)
+            {
+                root = new GameObject(RigObjectName);
+                Undo.RegisterCreatedObjectUndo(root, "Create Preview Rig");
+                SceneManager.MoveGameObjectToScene(root, scene);
+
+                Transform section = FindSection(scene, SceneHierarchyOrganizer.SystemHeader);
+                if (section != null)
+                {
+                    root.transform.SetParent(section, false);
+                }
+
+                root.transform.position = RigPosition;
+                root.transform.rotation = Quaternion.identity;
+                root.transform.localScale = Vector3.one;
+                rig = Undo.AddComponent<ModelPreviewRig>(root);
+            }
+            else
+            {
+                root = rig.gameObject;
+            }
+
+            Transform pivot = EnsureRigChild(root.transform, RigPivotName, out bool _);
+            Transform cameraObject = EnsureRigChild(root.transform, RigCameraName, out bool cameraCreated);
+            Transform lightObject = EnsureRigChild(root.transform, RigLightName, out bool lightCreated);
+
+            Camera camera = UiBuilder.Ensure<Camera>(cameraObject.gameObject);
+            if (cameraCreated)
+            {
+                cameraObject.localPosition = RigCameraLocalPosition;
+                cameraObject.localRotation = Quaternion.identity;
+                camera.orthographic = false;
+                camera.fieldOfView = RigCameraFieldOfView;
+                camera.nearClipPlane = 0.05f;
+                camera.farClipPlane = 50f;
+
+                // Nothing, not a colour: the garage frame art is what the model should stand on.
+                camera.clearFlags = CameraClearFlags.SolidColor;
+                camera.backgroundColor = new Color(0f, 0f, 0f, 0f);
+
+                camera.useOcclusionCulling = false;
+                camera.allowHDR = false;
+                camera.allowMSAA = false;
+            }
+
+            camera.cullingMask = 1 << layer;
+            camera.targetTexture = texture;
+            camera.enabled = false;
+
+            Light light = UiBuilder.Ensure<Light>(lightObject.gameObject);
+            if (lightCreated)
+            {
+                // A point light, not the directional one the brief describes. URP ignores a
+                // light's culling mask, so a directional light added here would light the whole
+                // playfield as a second sun - the mask that was supposed to contain it does
+                // nothing. A point light is contained by its own falloff instead: fifty units
+                // under the world with a range of twelve, it cannot reach anything the player
+                // sees. The scene's own sun still falls on the model, which is harmless because
+                // it never moves; this is what makes sure the model is lit whatever it does.
+                lightObject.localPosition = new Vector3(1.6f, 2.2f, -2.6f);
+                light.type = LightType.Point;
+                light.range = 12f;
+                light.intensity = 4f;
+                light.color = Color.white;
+                light.shadows = LightShadows.None;
+            }
+
+            light.cullingMask = 1 << layer;
+
+            // Every run, and the whole subtree: a child added by hand on the default layer is a
+            // model the preview camera cannot see, which reads as the preview being broken.
+            SetLayerRecursively(root.transform, layer);
+
+            SerializedObject serialized = new SerializedObject(rig);
+            UiBuilder.SetIfEmpty(serialized, "pivot", pivot);
+            UiBuilder.SetIfEmpty(serialized, "previewCamera", camera);
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+
+            DropPreviewLayerFromCameras(layer, camera);
+
+            EditorSceneManager.MarkSceneDirty(scene);
+        }
+
+        private static Transform EnsureRigChild(Transform parent, string name, out bool created)
+        {
+            Transform child = parent.Find(name);
+            created = child == null;
+            if (!created)
+            {
+                return child;
+            }
+
+            GameObject childObject = new GameObject(name);
+            Undo.RegisterCreatedObjectUndo(childObject, $"Create {name}");
+            child = childObject.transform;
+            child.SetParent(parent, false);
+            child.localPosition = Vector3.zero;
+            child.localRotation = Quaternion.identity;
+            child.localScale = Vector3.one;
+            return child;
+        }
+
+        /// <summary>
+        /// Takes the preview layer out of every other camera's culling mask.
+        ///
+        /// Every camera rather than only the one tagged MainCamera: the mask is what stops a
+        /// cannon appearing fifty units under the level, and a second camera nobody remembered
+        /// would show it. Only a mask that actually contains the layer is written, so a re-run
+        /// over an already-correct scene changes nothing and says nothing.
+        /// </summary>
+        private static void DropPreviewLayerFromCameras(int layer, Camera previewCamera)
+        {
+            Camera[] cameras = Object.FindObjectsByType<Camera>(
+                FindObjectsInactive.Include, FindObjectsSortMode.None);
+
+            int bit = 1 << layer;
+            for (int i = 0; i < cameras.Length; i++)
+            {
+                Camera camera = cameras[i];
+                if (camera == null || camera == previewCamera || (camera.cullingMask & bit) == 0)
+                {
+                    continue;
+                }
+
+                camera.cullingMask &= ~bit;
+                EditorUtility.SetDirty(camera);
+                Debug.Log(
+                    $"{nameof(GarageScreenBuilder)} dropped the \"{PreviewLayerName}\" layer from "
+                    + $"\"{camera.name}\"'s culling mask.",
+                    camera);
+            }
+        }
+
+        private static Transform FindSection(Scene scene, string sectionName)
+        {
+            GameObject[] roots = scene.GetRootGameObjects();
+            for (int i = 0; i < roots.Length; i++)
+            {
+                if (roots[i].name == sectionName)
+                {
+                    return roots[i].transform;
+                }
+            }
+
+            // Not created here. Filing the hierarchy is Organize Scene Hierarchy's job, and it
+            // will pick a rootless rig up on its next run.
+            return null;
+        }
+
+        private static void SetLayerRecursively(Transform node, int layer)
+        {
+            node.gameObject.layer = layer;
+            for (int i = 0; i < node.childCount; i++)
+            {
+                SetLayerRecursively(node.GetChild(i), layer);
+            }
         }
 
         // ------------------------------------------------------------------ icons

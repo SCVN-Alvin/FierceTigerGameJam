@@ -131,6 +131,11 @@ namespace GameJam.EditorTools
                 level.FindPropertyRelative("displayName").stringValue = levels[i].displayName;
                 level.FindPropertyRelative("splashShare").floatValue = levels[i].splashShare;
 
+                // Filled rather than rewritten, unlike the damage numbers above and for the same
+                // reason the ball is: a picture is a wiring decision, and the numbers are the
+                // starting point this menu item exists to restore.
+                ItemIconTable.ApplyIcon(level.FindPropertyRelative("icon"), id, i, bullet);
+
                 SerializedProperty damageProperty = level.FindPropertyRelative("damage");
                 damageProperty.arraySize = levels[i].damage.Length;
                 for (int d = 0; d < levels[i].damage.Length; d++)

@@ -4,6 +4,7 @@ using System.Globalization;
 using GameJam.Audio;
 using GameJam.Data;
 using GameJam.Economy;
+using GameJam.Gameplay.Cannon;
 using GameJam.Gameplay.Combat;
 using TMPro;
 using UnityEngine;
@@ -55,6 +56,11 @@ namespace GameJam.UI
 
         [Tooltip("Optional. The equipped ammunition's level name under the preview, e.g. ROCK II.")]
         [SerializeField] private TMP_Text previewCaption;
+
+        [Tooltip("Optional. The 3D window over the garage table. When it can show the equipped "
+                 + "ammunition's projectile the flat icon above is hidden; when it cannot - no "
+                 + "ball wired, or no rig in the scene - the icon is what the player sees.")]
+        [SerializeField] private ModelPreviewView preview3D;
 
         [Header("Layout")]
         [SerializeField] private bool useVerticalLayout = true;
@@ -203,13 +209,15 @@ namespace GameJam.UI
         }
 
         /// <summary>
-        /// Draws the equipped ammunition over the garage table. It is the same sprite the row
-        /// shows, only larger: a second piece of art per item would be one more thing to draw
-        /// before a new kind of ammunition could ship.
+        /// Draws the equipped ammunition over the garage table: the ball itself, spinning, when
+        /// the ammunition names a projectile, and the flat icon when it does not. The ball shown
+        /// is the copy the shot would fire at this level, down to which of its LV meshes is up,
+        /// because the rig picks that with the projectile's own rule rather than a second copy
+        /// of it.
         /// </summary>
         private void RefreshPreview()
         {
-            if (previewImage == null && previewCaption == null)
+            if (previewImage == null && previewCaption == null && preview3D == null)
             {
                 return;
             }
@@ -218,14 +226,20 @@ namespace GameJam.UI
             BulletDefinition selected = catalogue != null ? catalogue.Selected : null;
             int level = catalogue != null ? catalogue.SelectedLevel : 1;
 
+            // First, because whether it worked is what decides if the icon is drawn at all.
+            GridKnockdownCannonProjectile projectile = selected != null ? selected.ProjectilePrefab : null;
+            bool showingModel = preview3D != null
+                && preview3D.Show(projectile != null ? projectile.gameObject : null, level);
+
             if (previewImage != null)
             {
                 Sprite sprite = selected != null ? selected.ResolveIcon(level) : null;
                 previewImage.sprite = sprite;
 
                 // Disabled rather than left drawing: an Image with no sprite is a white block
-                // over the table the frame art already draws.
-                previewImage.enabled = sprite != null;
+                // over the table the frame art already draws. Down as well while the ball is up,
+                // so the icon is not sitting on top of the thing it stands in for.
+                previewImage.enabled = !showingModel && sprite != null;
             }
 
             if (previewCaption != null)

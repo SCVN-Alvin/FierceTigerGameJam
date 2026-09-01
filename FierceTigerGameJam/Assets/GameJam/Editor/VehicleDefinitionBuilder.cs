@@ -966,6 +966,12 @@ namespace GameJam.EditorTools
                 SetIfEmpty(level.FindPropertyRelative("displayName"), levels[i].displayName);
                 SetIfEmpty(level.FindPropertyRelative("modelPrefab"), levels[i].modelPrefab);
 
+                // The shop row's and the preview's picture. Kept in one table alongside the
+                // ammunition's rather than here, because the pairing to check is between the
+                // three families and their four colours, not between a vehicle and its own three
+                // sprites.
+                ItemIconTable.ApplyIcon(level.FindPropertyRelative("icon"), id, i, vehicle);
+
                 // Zero counts as unset here. A vehicle authored to multiply by nothing would be
                 // one that disarms the bullet, which no shop copy can explain, so treating it as
                 // an untouched slot costs nothing and fills in a freshly grown array element.
