@@ -447,6 +447,9 @@ GameObject:
   - component: {fileID: 307929675}
   - component: {fileID: 307929676}
   - component: {fileID: 307929677}
+  - component: {fileID: 1500100010}
+  - component: {fileID: 1500100012}
+  - component: {fileID: 1500100014}
   m_Layer: 0
   m_Name: GameFlowController
   m_TagString: Untagged
@@ -499,6 +502,7 @@ MonoBehaviour:
   bottomBarRoot: {fileID: 1228826495}
   settingsRoot: {fileID: 900935208}
   playButton: {fileID: 1821873701}
+  tapLabelFont: {fileID: 11400000, guid: c1482dbce654844b9ba1c753cbea5d80, type: 2}
   iapShopButton: {fileID: 1952174076}
   homeButton: {fileID: 1518871820}
   shopButton: {fileID: 483862867}
@@ -4290,3 +4294,56 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!114 &1500100010
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 307929674}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5d8c3f7a91e24b06a3c1d5e7f8091a2b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  flow: {fileID: 307929676}
+  mapSelection: {fileID: 11400000, guid: 4a9040d203d9b4e0d95e653e89e423d5, type: 2}
+  hintParent: {fileID: 32302313}
+  handSprite: {fileID: 21300000, guid: 22f0596543ce94bf5a521ca3139cfe02, type: 3}
+  dimSprite: {fileID: 21300000, guid: b4c76e417814a483184dd8d5d5bda7a0, type: 3}
+  panelSprite: {fileID: 21300000, guid: 12791722e06864ec3a5827d80fa671f5, type: 3}
+  labelFont: {fileID: 11400000, guid: c1482dbce654844b9ba1c753cbea5d80, type: 2}
+  targetMapId: mission1_map1
+--- !u!114 &1500100012
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 307929674}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8a4f1c29d3b64e7f9a02c5d1e6f7a8b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  flow: {fileID: 307929676}
+  fireController: {fileID: 2066028396}
+  barParent: {fileID: 32302313}
+  screenHeightAnchor: 0.075
+--- !u!114 &1500100014
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 307929674}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7b3e9d1a5c2f4e8ab6d0f4c8a9e21b37, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  flow: {fileID: 307929676}
+  fireController: {fileID: 2066028396}
+  hintParent: {fileID: 32302313}
+  panelSprite: {fileID: 21300000, guid: 12791722e06864ec3a5827d80fa671f5, type: 3}
+  labelFont: {fileID: 11400000, guid: c1482dbce654844b9ba1c753cbea5d80, type: 2}

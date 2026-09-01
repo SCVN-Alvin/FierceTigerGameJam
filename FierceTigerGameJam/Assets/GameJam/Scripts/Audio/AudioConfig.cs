@@ -52,6 +52,10 @@ namespace GameJam.Audio
         [Tooltip("Gold granted or spent successfully.")]
         [SerializeField] private AudioClip[] coin;
 
+        [Tooltip("A star slamming onto the cleared screen. Authored as a thump, not a chime - "
+                 + "the stars DROP, and the sound is the landing.")]
+        [SerializeField] private AudioClip[] starLand;
+
         [SerializeField] private AudioClip[] stageClear;
         [SerializeField] private AudioClip[] stageFailed;
 
@@ -118,6 +122,7 @@ namespace GameJam.Audio
                 case AudioSlot.BreakBrick: return breakBrick;
                 case AudioSlot.BreakConcrete: return breakConcrete;
                 case AudioSlot.BreakGlass: return breakGlass;
+                case AudioSlot.StarLand: return starLand;
                 case AudioSlot.UiClick: return uiClick;
                 case AudioSlot.Denied: return denied;
                 case AudioSlot.Coin: return coin;

@@ -64,6 +64,8 @@ namespace GameJam.UI
 
         private readonly List<Row> spawnedRows = new List<Row>();
 
+        private ShopModelShowcase showcase;
+
         private void OnEnable()
         {
             if (economy != null)
@@ -90,6 +92,11 @@ namespace GameJam.UI
 
         private void OnDisable()
         {
+            if (showcase != null)
+            {
+                showcase.Hide();
+            }
+
             if (economy != null)
             {
                 // The service is an asset and outlives this scene, so a subscription left behind
@@ -229,6 +236,21 @@ namespace GameJam.UI
             VehicleLoadout catalogue = ResolveLoadout();
             VehicleDefinition selected = catalogue != null ? catalogue.Selected : null;
             int level = catalogue != null ? catalogue.SelectedLevel : 1;
+
+            // The 3D prop on the table - the equipped cannon at its equipped level.
+            if (previewImage != null)
+            {
+                GameObject model = selected != null ? selected.ResolveModelPrefab(level) : null;
+                if (showcase == null && model != null)
+                {
+                    showcase = ShopModelShowcase.Create(previewImage.rectTransform);
+                }
+
+                if (showcase != null)
+                {
+                    showcase.Show(model);
+                }
+            }
 
             if (previewImage != null)
             {

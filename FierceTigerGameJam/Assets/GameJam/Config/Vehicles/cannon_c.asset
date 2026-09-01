@@ -21,13 +21,24 @@ MonoBehaviour:
     modelPrefab: {fileID: 3417500241488856357, guid: 9914f0c69ac707e4c93c9092a25d05e2, type: 3}
     modelScale: 0.91726625
     icon: {fileID: 21300000, guid: 88356b7eacd1940699896eb710886792, type: 3}
+    muzzleOffsets: []
+    reloadSeconds: 0.3
   - displayName: Cannon C II
     damageMultiplier: 2
     modelPrefab: {fileID: 4837391762139258429, guid: a2bebbabece97d947a7b9645a11b3266, type: 3}
     modelScale: 1.0121067
     icon: {fileID: 21300000, guid: 4e75ac6e2ecb7459bb371db0894b53ff, type: 3}
+    muzzleOffsets:
+    - {x: -0.18, y: 0}
+    - {x: 0.18, y: 0}
+    reloadSeconds: 0.25
   - displayName: Cannon C III
     damageMultiplier: 2.6
     modelPrefab: {fileID: 6989382899717065268, guid: 1411308c2f0e1a14b9e5a94eabc681fa, type: 3}
     modelScale: 0.91726553
     icon: {fileID: 21300000, guid: 104912f320f7049fd8b3341edfd9093e, type: 3}
+    muzzleOffsets:
+    - {x: 0, y: 0}
+    - {x: -0.32, y: 0}
+    - {x: 0.32, y: 0}
+    reloadSeconds: 0.2

@@ -44,6 +44,14 @@ namespace GameJam.Config
         [Tooltip("Repeats of the floor picture across the ground. Small numbers stretch, big "
                  + "numbers tile. 0 counts as 1.")]
         [Range(0f, 32f)] public float floorTiling;
+
+        [Tooltip("Slides the whole backdrop strip up or down, in world units, so the picture's "
+                 + "horizon can be put where this mission wants it. Tune it live in Play mode - "
+                 + "the playfield re-reads it every frame.")]
+        [Range(-20f, 20f)] public float backdropOffsetY;
+
+        [Tooltip("Grows or shrinks the backdrop strip around its authored size. 0 counts as 1.")]
+        [Range(0f, 4f)] public float backdropScale;
     }
 
     /// <summary>
@@ -62,6 +70,15 @@ namespace GameJam.Config
         [SerializeField] private MapConfig maps;
 
         [SerializeField] private Mission[] missions = Array.Empty<Mission>();
+
+        [Header("Star Thresholds")]
+        [Tooltip("Best clear percent that earns the SECOND star. The first star is simply "
+                 + "passing the map (its own requiredClearPercent); the third is the threshold "
+                 + "below. Shared by every level - stars mean the same thing everywhere.")]
+        [Range(0f, 1f)] [SerializeField] private float twoStarClearPercent = 0.75f;
+
+        [Tooltip("Best clear percent that earns the THIRD star. 1 = a full clear.")]
+        [Range(0f, 1f)] [SerializeField] private float threeStarClearPercent = 1f;
 
         public IReadOnlyList<Mission> Missions => missions;
 
@@ -230,6 +247,34 @@ namespace GameJam.Config
             floor = mission.floorTexture;
             tiling = mission.floorTiling <= 0f ? 1f : mission.floorTiling;
             return background != null || floor != null;
+        }
+
+        /// <summary>
+        /// Stars for a record: none unpassed, one for the pass itself, the rest from the best
+        /// percent ever - which only rises, so a worse replay can never take a star back.
+        /// </summary>
+        public int StarsFor(bool passed, float bestClearPercent)
+        {
+            if (!passed)
+            {
+                return 0;
+            }
+
+            if (bestClearPercent >= threeStarClearPercent)
+            {
+                return 3;
+            }
+
+            return bestClearPercent >= twoStarClearPercent ? 2 : 1;
+        }
+
+        /// <summary>How this map's mission wants the backdrop strip placed. Always answers.</summary>
+        public void GetBackdropPlacement(string mapId, out float offsetY, out float scale)
+        {
+            int index = MissionIndexOf(mapId);
+            Mission mission = index >= 0 ? missions[index] : null;
+            offsetY = mission != null ? mission.backdropOffsetY : 0f;
+            scale = mission != null && mission.backdropScale > 0f ? mission.backdropScale : 1f;
         }
 
     }

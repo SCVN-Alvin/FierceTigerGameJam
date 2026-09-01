@@ -20,5 +20,15 @@ namespace GameJam.Data
         /// mid-tutorial should repeat it, and firing once proves nothing was learned.
         /// </summary>
         public bool completed;
+
+        /// <summary>The level-1 hold-and-drag hint has been answered with a real drag.</summary>
+        public bool dragTaught;
+
+        /// <summary>The one-time "1 FREE Double Shoot" popup has been used (first level after a
+        /// cannon reaches level 2).</summary>
+        public bool doubleShotIntroDone;
+
+        /// <summary>Same for "1 FREE Triple Shoot" (first level after a cannon reaches level 3).</summary>
+        public bool tripleShotIntroDone;
     }
 }

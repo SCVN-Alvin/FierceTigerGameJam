@@ -4,6 +4,7 @@ using System.Globalization;
 using GameJam.Audio;
 using GameJam.Data;
 using GameJam.Economy;
+using GameJam.Gameplay.Cannon;
 using GameJam.Gameplay.Combat;
 using TMPro;
 using UnityEngine;
@@ -71,6 +72,8 @@ namespace GameJam.UI
 
         private readonly List<Row> spawnedRows = new List<Row>();
 
+        private ShopModelShowcase showcase;
+
         private void OnEnable()
         {
             if (economy != null)
@@ -99,6 +102,11 @@ namespace GameJam.UI
 
         private void OnDisable()
         {
+            if (showcase != null)
+            {
+                showcase.Hide();
+            }
+
             if (economy != null)
             {
                 // The service is an asset and outlives this scene, so a subscription left behind
@@ -226,6 +234,40 @@ namespace GameJam.UI
                 // Disabled rather than left drawing: an Image with no sprite is a white block
                 // over the table the frame art already draws.
                 previewImage.enabled = sprite != null;
+            }
+
+            // The 3D prop on the table. A bullet with no prefab of its own is photographed as
+            // the fire controller's default ball - the same fallback the shot itself takes.
+            if (previewImage != null)
+            {
+                GameObject model = null;
+                if (selected != null)
+                {
+                    if (selected.ProjectilePrefab != null)
+                    {
+                        model = selected.ProjectilePrefab.gameObject;
+                    }
+                    else
+                    {
+                        GridKnockdownCannonFireController fire =
+                            FindFirstObjectByType<GridKnockdownCannonFireController>(
+                                FindObjectsInactive.Include);
+                        if (fire != null && fire.DefaultProjectilePrefab != null)
+                        {
+                            model = fire.DefaultProjectilePrefab.gameObject;
+                        }
+                    }
+                }
+
+                if (showcase == null && model != null)
+                {
+                    showcase = ShopModelShowcase.Create(previewImage.rectTransform);
+                }
+
+                if (showcase != null)
+                {
+                    showcase.Show(model);
+                }
             }
 
             if (previewCaption != null)

@@ -1,5 +1,7 @@
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
+using GameJam.Gameplay.Flow;
 using GameJam.Gameplay.Wall;
 
 namespace GameJam.Gameplay.Cannon
@@ -69,8 +71,48 @@ namespace GameJam.Gameplay.Cannon
             StopStructureRotation();
         }
 
+        /// <summary>
+        /// Whether the pointer is over any raycastable UI. Every screen dims the canvas with a
+        /// full-cover backdrop, so this one check also answers "is a screen up right now" - a tap
+        /// on the Cleared screen lands on its dimmer, not on the playfield.
+        /// </summary>
+        private static bool PointerOverUi()
+        {
+            EventSystem eventSystem = EventSystem.current;
+            if (eventSystem == null)
+            {
+                return false;
+            }
+
+            if (eventSystem.IsPointerOverGameObject())
+            {
+                return true;
+            }
+
+            // Touch pointers register under their own ids with the input-system UI module, and
+            // the no-argument overload only speaks for the mouse.
+            Touchscreen touch = Touchscreen.current;
+            return touch != null
+                && eventSystem.IsPointerOverGameObject(touch.primaryTouch.touchId.ReadValue());
+        }
+
         private void BeginPress(Vector2 screenPosition)
         {
+            // A gesture that starts on UI belongs to the UI, whole. Without this, every HUD
+            // button tap also fired the cannon, and a drag across a screen spun the orbit
+            // behind it.
+            if (PointerOverUi())
+            {
+                return;
+            }
+
+            // The Double/Triple Shoot intro owns the whole screen: no rotating the board
+            // behind it, no gesture banked for a shot after it closes.
+            if (ShotBoostIntroController.BlockingInput)
+            {
+                return;
+            }
+
             isPointerDown = true;
             isDragging = false;
             pressScreenPosition = screenPosition;
@@ -99,8 +141,13 @@ namespace GameJam.Gameplay.Cannon
             {
                 UpdateStructureRotation(screenPosition);
             }
-            else
+            else if (!PointerOverUi() && !DragHintController.BlockingFire
+                     && !ShotBoostIntroController.BlockingInput)
             {
+                // Checked again at release: a screen (Cleared, Fail) can have appeared while the
+                // finger was down, and the tap that dismisses it must not also fire a shot. And
+                // while the drag lesson is up, taps buy nothing - the cannon waits until the
+                // player has actually held and dragged.
                 FireAtScreenPosition(screenPosition);
             }
 

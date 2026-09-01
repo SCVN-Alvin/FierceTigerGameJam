@@ -40,6 +40,19 @@ namespace GameJam.Gameplay.Combat
 
             [Tooltip("Optional. Shown in the shop row / preview. Falls back like modelPrefab.")]
             public Sprite icon;
+
+            [Tooltip("Where each round of the burst leaves, one entry per round, in world "
+                     + "units relative to the aim: x is rightward, y is upward. Author it to "
+                     + "match THIS model's real barrels - two side-by-side barrels want "
+                     + "(-x, 0) and (+x, 0), two STACKED barrels want (0, +y) and (0, -y). "
+                     + "Left empty the burst spreads sideways on its own.")]
+            public Vector2[] muzzleOffsets;
+
+            [Tooltip("Seconds between shots at this level - the tap rate. While it runs, taps "
+                     + "do nothing and the HUD reload bar fills. 0 = no reload gate (fire as "
+                     + "fast as the player taps, the pre-reload behaviour). Author it per level "
+                     + "so upgrades can shorten it.")]
+            [Min(0f)] public float reloadSeconds;
         }
 
         [Tooltip("Stable id used in saves and configs, e.g. vehicle_truck. Never rename after release.")]
@@ -133,6 +146,22 @@ namespace GameJam.Gameplay.Combat
         }
 
         /// <summary>Same fallback rule for icons.</summary>
+        /// <summary>This level's authored per-round muzzle offsets, or null when unset.</summary>
+        public Vector2[] ResolveMuzzleOffsets(int level)
+        {
+            Level entry = GetLevel(level);
+            return entry != null && entry.muzzleOffsets != null && entry.muzzleOffsets.Length > 0
+                ? entry.muzzleOffsets
+                : null;
+        }
+
+        /// <summary>This level's reload time in seconds; 0 = no reload gate.</summary>
+        public float ResolveReloadSeconds(int level)
+        {
+            Level entry = GetLevel(level);
+            return entry != null ? Mathf.Max(0f, entry.reloadSeconds) : 0f;
+        }
+
         public Sprite ResolveIcon(int level)
         {
             if (levels.Length == 0)

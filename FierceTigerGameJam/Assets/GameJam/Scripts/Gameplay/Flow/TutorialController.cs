@@ -168,6 +168,9 @@ namespace GameJam.Gameplay.Flow
             // misses every round should meet the tutorial again next launch.
             if (result.Passed)
             {
+                // The 100-gold completion prize is NOT paid here: the tutorial map authors
+                // passMapRewardId "tutorial_complete", so the normal reward pipeline pays it
+                // claim-once and the cleared screen shows it like any map reward.
                 UserData.Tutorial.completed = true;
                 UserData.Save();
             }

@@ -28,7 +28,9 @@ MonoBehaviour:
     - mission1_map9
     background: {fileID: 21300000, guid: 2131a16cb61e94fdcb1f0e248445debb, type: 3}
     floorTexture: {fileID: 2800000, guid: 0af3932cc55254546b1783f2ff19c2d4, type: 3}
-    floorTiling: 0.6
+    floorTiling: 0
+    backdropOffsetY: 0
+    backdropScale: 0
   - id: mission_2
     displayName: MISSION 2
     mapIds:
@@ -43,7 +45,9 @@ MonoBehaviour:
     - mission2_map9
     background: {fileID: 21300000, guid: 80bf4c2206133418091c26c875735ecc, type: 3}
     floorTexture: {fileID: 2800000, guid: 4f49490b2d0204481bc78951075d1d47, type: 3}
-    floorTiling: 2.5
+    floorTiling: 32
+    backdropOffsetY: 2.7
+    backdropScale: 0
   - id: mission_3
     displayName: MISSION 3
     mapIds:
@@ -56,6 +60,11 @@ MonoBehaviour:
     - mission3_map7
     - mission3_map8
     - mission3_map9
+    - mission3_map10
     background: {fileID: 21300000, guid: 3385774b0bdd640dc9c141212adcf92a, type: 3}
     floorTexture: {fileID: 2800000, guid: ab2d5556b72da4663bd8dea807350703, type: 3}
     floorTiling: 20
+    backdropOffsetY: 2.35
+    backdropScale: 0.84
+  twoStarClearPercent: 0.75
+  threeStarClearPercent: 0.95

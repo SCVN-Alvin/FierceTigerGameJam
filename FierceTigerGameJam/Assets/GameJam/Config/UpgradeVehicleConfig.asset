@@ -16,18 +16,18 @@ MonoBehaviour:
   - vehicleId: cannon_a
     levels:
     - targetLevel: 2
-      goldPrice: 300
+      goldPrice: 500
     - targetLevel: 3
-      goldPrice: 700
+      goldPrice: 1500
   - vehicleId: cannon_b
     levels:
     - targetLevel: 2
-      goldPrice: 1200
-    - targetLevel: 3
       goldPrice: 2000
+    - targetLevel: 3
+      goldPrice: 3500
   - vehicleId: cannon_c
     levels:
     - targetLevel: 2
-      goldPrice: 2500
-    - targetLevel: 3
       goldPrice: 4000
+    - targetLevel: 3
+      goldPrice: 6000

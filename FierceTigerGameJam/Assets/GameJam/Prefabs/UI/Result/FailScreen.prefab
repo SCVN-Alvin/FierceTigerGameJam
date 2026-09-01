@@ -551,6 +551,7 @@ MonoBehaviour:
   economy: {fileID: 11400000, guid: d9863aa9d057e436a9f96a1dc33ee50b, type: 2}
   continueButton: {fileID: 7451600387347538974}
   priceLabel: {fileID: 1349686307433630765}
+  labelFont: {fileID: 11400000, guid: c1482dbce654844b9ba1c753cbea5d80, type: 2}
 --- !u!1 &8378456521208235317
 GameObject:
   m_ObjectHideFlags: 0

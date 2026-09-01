@@ -26,6 +26,9 @@ namespace GameJam.Audio
         BreakConcrete,
         BreakGlass,
 
+        /// <summary>A result-screen star slamming onto its slot.</summary>
+        StarLand,
+
         /// <summary>Any UI button.</summary>
         UiClick,
 

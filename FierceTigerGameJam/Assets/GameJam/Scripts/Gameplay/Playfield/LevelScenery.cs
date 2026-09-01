@@ -43,6 +43,9 @@ namespace GameJam.Gameplay.Playfield
         private MaterialPropertyBlock block;
         private string shownMapId;
         private bool captured;
+        private Transform backdropRoot;
+        private Vector3 rootHomePosition;
+        private Vector3 rootHomeScale = Vector3.one;
 
         private void OnEnable()
         {
@@ -59,13 +62,15 @@ namespace GameJam.Gameplay.Playfield
         {
             MapInfo map = mapSelection != null ? mapSelection.Selected : null;
             string id = map != null ? map.Id : null;
-            if (string.Equals(id, shownMapId))
+            if (!string.Equals(id, shownMapId))
             {
-                return;
+                shownMapId = id;
+                Apply(id);
             }
 
-            shownMapId = id;
-            Apply(id);
+            // Every frame, straight off the config, so the two placement numbers in
+            // MissionConfig can be dragged in Play mode and answer immediately.
+            ApplyBackdropPlacement(id);
         }
 
         /// <summary>What the scene was authored with, kept so a mission without scenery falls back.</summary>
@@ -90,6 +95,16 @@ namespace GameJam.Gameplay.Playfield
                     authoredScales[i] = backdrops[i] != null
                         ? backdrops[i].transform.localScale
                         : Vector3.one;
+                }
+            }
+
+            if (backdrops != null && backdrops.Length > 0 && backdrops[0] != null)
+            {
+                backdropRoot = backdrops[0].transform.parent;
+                if (backdropRoot != null)
+                {
+                    rootHomePosition = backdropRoot.localPosition;
+                    rootHomeScale = backdropRoot.localScale;
                 }
             }
 
@@ -152,6 +167,26 @@ namespace GameJam.Gameplay.Playfield
                         new Vector3(authored.x * fit, authored.y * fit, authored.z);
                 }
             }
+        }
+
+        /// <summary>The strip slid and scaled the way the mission asks, back to home without one.</summary>
+        private void ApplyBackdropPlacement(string mapId)
+        {
+            if (backdropRoot == null)
+            {
+                return;
+            }
+
+            float offsetY = 0f;
+            float scale = 1f;
+            if (missionConfig != null && !string.IsNullOrEmpty(mapId))
+            {
+                missionConfig.GetBackdropPlacement(mapId, out offsetY, out scale);
+            }
+
+            backdropRoot.localPosition = rootHomePosition + new Vector3(0f, offsetY, 0f);
+            backdropRoot.localScale = new Vector3(
+                rootHomeScale.x * scale, rootHomeScale.y * scale, rootHomeScale.z);
         }
 
         private void ApplyFloor(Texture floor, Vector4 st)
