@@ -34,6 +34,7 @@ Material:
     - _IndirectIntensity: 0.743
     - _MatCapIntensity: 0.32
     - _Metallic: 0.455
+    - _OutlineWidth: 0.002
     - _RampSmoothing: 1
     - _RampThreshold: 0.513
     - _Smoothness: 0.247
@@ -43,6 +44,7 @@ Material:
     - _SColor: {r: 0.058823537, g: 0.5921569, b: 0.26400682, a: 1}
     - _SmoothnessColor: {r: 0.10482895, g: 0.3207547, b: 0, a: 1}
   m_BuildTextureStacks: []
+  m_AllowLocking: 1
 --- !u!114 &8611407016927993283
 MonoBehaviour:
   m_ObjectHideFlags: 11
