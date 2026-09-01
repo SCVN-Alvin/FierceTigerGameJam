@@ -27,8 +27,8 @@ namespace GameJam.Gameplay.Combat
                      + "the material at all, however many times it hits.")]
             public float blockDamage;
 
-            [Tooltip("Hit points taken off a wall of this material. Lower than blockDamage is what "
-                     + "makes a shot chip a wall while destroying a lone block.")]
+            [Tooltip("Unused since walls were removed; kept so authored configs do not churn. "
+                     + "Every shot now resolves against a block and reads blockDamage.")]
             public float wallDamage;
         }
 
@@ -133,14 +133,14 @@ namespace GameJam.Gameplay.Combat
         }
 
         /// <summary>Convenience for the common question: can this shot hurt this material at all?</summary>
-        public bool CanDamage(int level, string materialId, bool isWall)
+        public bool CanDamage(int level, string materialId)
         {
             if (!TryGetDamage(level, materialId, out MaterialDamage damage))
             {
                 return false;
             }
 
-            return (isWall ? damage.wallDamage : damage.blockDamage) > 0f;
+            return damage.blockDamage > 0f;
         }
 
         private void OnValidate()

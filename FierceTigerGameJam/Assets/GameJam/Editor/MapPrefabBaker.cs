@@ -1,5 +1,4 @@
 #if UNITY_EDITOR
-using System.Collections.Generic;
 using GameJam.Gameplay.Wall;
 using UnityEditor;
 using UnityEngine;
@@ -12,10 +11,9 @@ namespace GameJam.EditorTools
     /// parsing JSON and spawning hundreds of blocks inside the frame the player is waiting on.
     ///
     /// The bake runs the exact same build code the game runs - KnockdownLayoutMapAuthoring on a
-    /// temporary object - so a baked map cannot drift from what the JSON would have built. Two
-    /// things need editor-only care afterwards: welded wall meshes are runtime objects, so copies
-    /// of them are saved into the prefab as sub-assets; and the walls' break-up manifests ride
-    /// along because BreakableWall serializes them.
+    /// temporary object - so a baked map cannot drift from what the JSON would have built. The
+    /// build no longer generates any mesh of its own, so the saved hierarchy is nothing but block
+    /// prefab instances referencing shared assets.
     ///
     /// Physics is deliberately NOT baked: rigidbodies and knockdown state are added at load by
     /// WallBlockPhysicsSetup exactly as they are for a JSON build, which is what keeps the two
@@ -98,12 +96,10 @@ namespace GameJam.EditorTools
         private static GameObject Bake(string id, TextAsset json, BlockDatabase blocks)
         {
             string path = $"{OutputFolder}/Map_{Sanitize(id)}.prefab";
-            string meshPath = $"{OutputFolder}/Map_{Sanitize(id)}_Meshes.asset";
 
-            // Deleted rather than overwritten: overwriting would strand the previous bake's
-            // meshes inside the files as orphans.
+            // Deleted rather than overwritten, so a rebake never inherits anything from the file
+            // it replaces.
             AssetDatabase.DeleteAsset(path);
-            AssetDatabase.DeleteAsset(meshPath);
 
             GameObject temp = new GameObject($"MapBake_{id}");
             try
@@ -127,59 +123,11 @@ namespace GameJam.EditorTools
 
                 generated.gameObject.name = $"Map_{Sanitize(id)}";
 
-                // BEFORE the prefab is saved, not after: SaveAsPrefabAsset nulls out any
-                // reference to a scene-only object, so a runtime mesh still on a wall at save
-                // time is silently dropped and the wall bakes invisible. Making the meshes
-                // assets first is what lets the save keep them.
-                PersistRuntimeMeshes(generated, meshPath);
-
                 return PrefabUtility.SaveAsPrefabAsset(generated.gameObject, path);
             }
             finally
             {
                 Object.DestroyImmediate(temp);
-            }
-        }
-
-        /// <summary>
-        /// Welded wall meshes are created at build time and belong to the scene. Copies are
-        /// saved into a mesh asset beside the prefab and swapped onto the walls, so the prefab
-        /// save that follows keeps real references instead of nulling scene-only ones.
-        /// The originals stay with the temp builder, which destroys them on teardown.
-        /// </summary>
-        private static void PersistRuntimeMeshes(Transform generated, string meshPath)
-        {
-            Dictionary<Mesh, Mesh> copies = new Dictionary<Mesh, Mesh>();
-            foreach (MeshFilter filter in generated.GetComponentsInChildren<MeshFilter>(true))
-            {
-                Mesh mesh = filter.sharedMesh;
-                if (mesh == null || EditorUtility.IsPersistent(mesh))
-                {
-                    continue;
-                }
-
-                if (!copies.TryGetValue(mesh, out Mesh copy))
-                {
-                    copy = Object.Instantiate(mesh);
-                    copy.name = mesh.name;
-                    if (copies.Count == 0)
-                    {
-                        AssetDatabase.CreateAsset(copy, meshPath);
-                    }
-                    else
-                    {
-                        AssetDatabase.AddObjectToAsset(copy, meshPath);
-                    }
-
-                    copies[mesh] = copy;
-                }
-
-                filter.sharedMesh = copy;
-            }
-
-            if (copies.Count > 0)
-            {
-                AssetDatabase.SaveAssets();
             }
         }
 
