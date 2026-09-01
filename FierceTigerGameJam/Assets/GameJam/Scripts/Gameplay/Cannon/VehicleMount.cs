@@ -36,6 +36,16 @@ namespace GameJam.Gameplay.Cannon
         [Tooltip("Applied to the spawned model so art can be authored at any scale.")]
         [SerializeField] private Vector3 modelLocalScale = Vector3.one;
 
+        [Tooltip("Draws every cannon at the same size, ignoring the per-level scale the fitting "
+                 + "tool writes. The fitted numbers made each barrel match the old cannon's height, "
+                 + "which is right when the whole machine is drawn and wrong for barrels alone - "
+                 + "the nine of them came out visibly different sizes. One number is what the art "
+                 + "actually wants. Off restores the fitted per-level scale.")]
+        [SerializeField] private bool useUniformModelScale = true;
+
+        [Tooltip("The size every cannon is drawn at while the uniform scale is on.")]
+        [SerializeField] private Vector3 uniformModelScale = new Vector3(0.2f, 0.2f, 0.2f);
+
         [Tooltip("Shown only while no vehicle model resolves - the old tank, so an unwired or "
                  + "model-less loadout still shows a cannon rather than a floating barrel.")]
         [SerializeField] private GameObject fallbackModel;
@@ -70,11 +80,11 @@ namespace GameJam.Gameplay.Cannon
         [SerializeField] private bool barrelOnly = true;
 
         [Tooltip("Puts the spawned model's barrel bone exactly where the aim pivot is, which is "
-                 + "where the old CannonA pivoted. Without it a barrel-only model hangs at whatever "
-                 + "height its bone was authored at times its fitted scale, so the nine levels sit "
-                 + "at nine different heights. Off mounts the model at the frame's origin, which is "
-                 + "what you want when the wheels are drawn and the model should stand on them.")]
-        [SerializeField] private bool alignBarrelToPivot = true;
+                 + "where the old CannonA pivoted. Off by default because CannonRoot is now placed "
+                 + "by hand against the reference art, and snapping the bone to the aim pivot would "
+                 + "quietly undo that placement on every spawn. Turn it on when nobody is "
+                 + "hand-placing the frame and the models need to agree with each other instead.")]
+        [SerializeField] private bool alignBarrelToPivot;
 
         [Tooltip("Nudge applied after the alignment, in the mount frame's space. The alignment puts "
                  + "the barrel where the old one pivoted; this is the knob for saying it should sit "
@@ -84,7 +94,7 @@ namespace GameJam.Gameplay.Cannon
                  + "down on y: the reference barrel is cut off by the edge of the screen, not sunk "
                  + "into the floor. The z here is the reference CannonA's own offset inside "
                  + "CannonRoot, so the barrel lands where that object sits.")]
-        [SerializeField] private Vector3 barrelAlignmentOffset = new Vector3(0f, 0f, 0.5292f);
+        [SerializeField] private Vector3 barrelAlignmentOffset = Vector3.zero;
 
         [Tooltip("Lifts the model if anything it draws would end up under the floor. The barrel is "
                  + "positioned by its breech, and the mesh hangs around that point, so pushing the "
@@ -114,6 +124,15 @@ namespace GameJam.Gameplay.Cannon
             "Cannon_Pase",
             "wheel",
         };
+
+        /// <summary>
+        /// The size a model is drawn at, resolved the same way a spawn resolves it. Published for
+        /// the editor's preview tool: a preview that guessed the scale would be showing something
+        /// the game does not, which is worse than no preview at all. Per-level fitted scales cannot
+        /// be answered here - they belong to a vehicle and a level - so this reports the uniform
+        /// size while it is on and the mount's own tweak while it is not.
+        /// </summary>
+        public Vector3 PreviewModelScale => useUniformModelScale ? uniformModelScale : modelLocalScale;
 
         /// <summary>The spawned model's Animator, for whoever presents the shot. Null on the fallback.</summary>
         public Animator CurrentAnimator { get; private set; }
@@ -274,7 +293,9 @@ namespace GameJam.Gameplay.Cannon
             // config the fitting tool writes, while modelLocalScale is the mount's own hand
             // tweak - a preview rig that wants everything half size sets it once and every
             // vehicle stays in proportion.
-            current.transform.localScale = modelLocalScale * vehicle.ResolveModelScale(level);
+            current.transform.localScale = useUniformModelScale
+                ? uniformModelScale
+                : modelLocalScale * vehicle.ResolveModelScale(level);
 
             currentVehicle = vehicle;
             currentLevel = level;
