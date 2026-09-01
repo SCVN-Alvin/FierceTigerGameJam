@@ -92,17 +92,28 @@ namespace GameJam.EditorTools
         private static readonly Vector2 RowSpacing = new Vector2(17f, 33f);
 
         /// <summary>
-        /// How many cards stack vertically before the grid starts a new column. Three keeps the
-        /// board reading as the grid it always was - a mission of nine draws 3x3 exactly as before -
-        /// while a longer mission now runs off the right edge instead of the bottom, which is the
-        /// direction the list scrolls. Rows rather than columns is what makes that true: a grid
-        /// constrained by columns can only ever grow downward.
+        /// How many cards sit across before the grid wraps to the next line.
+        ///
+        /// Constraining by columns, not rows, and the difference is the whole of two layout bugs.
+        /// A row-constrained grid fills top-to-bottom down each column before starting the next, so
+        /// a mission of three drew a single vertical stack rather than three cards side by side,
+        /// and a mission of nine filled column-first instead of reading left to right. Column-
+        /// constrained fills across and wraps down, which is what the reference board shows: nine
+        /// cards as 3x3, three cards as one line.
+        ///
+        /// It follows that the board overflows downward rather than sideways - a grid fixed at
+        /// three columns can never be wider than three columns - so the list scrolls vertically.
         /// </summary>
-        private const int GridRows = 3;
+        private const int GridColumns = 3;
 
-        /// <summary>Left edge, full height: the row grows sideways out of the viewport.</summary>
-        private static readonly Vector2 RowAnchorMin = new Vector2(0f, 0f);
-        private static readonly Vector2 RowAnchorMax = new Vector2(0f, 1f);
+        /// <summary>
+        /// Top centre. The fitter sizes the grid to its own content, so anchoring the middle of
+        /// that content to the middle of the viewport is what centres the cards - a child alignment
+        /// alone cannot, because the rect it would align within is already hugging the cards.
+        /// </summary>
+        private static readonly Vector2 RowAnchorMin = new Vector2(0.5f, 1f);
+        private static readonly Vector2 RowAnchorMax = new Vector2(0.5f, 1f);
+        private static readonly Vector2 RowPivot = new Vector2(0.5f, 1f);
 
         /// <summary>
         /// What the board measured while it was a three-across grid that scrolled downward. Only a
@@ -386,6 +397,7 @@ namespace GameJam.EditorTools
                 // nobody has re-anchored since - the same rule the frame resize above follows.
                 grid.anchorMin = RowAnchorMin;
                 grid.anchorMax = RowAnchorMax;
+                grid.pivot = RowPivot;
                 ShapeRowContent(grid);
             }
 
@@ -399,7 +411,8 @@ namespace GameJam.EditorTools
             else if ((layout.constraint == GridLayoutGroup.Constraint.FixedColumnCount
                       && layout.constraintCount == PreviousGridColumns)
                      || (layout.constraint == GridLayoutGroup.Constraint.FixedRowCount
-                         && layout.constraintCount == PreviousRowCount))
+                         && (layout.constraintCount == PreviousRowCount
+                             || layout.constraintCount == GridColumns)))
             {
                 // Two earlier shapes to bring forward: the original three-across grid that grew
                 // downward, and the single row that briefly replaced it. Both are recognised by
@@ -415,7 +428,7 @@ namespace GameJam.EditorTools
                 // The grid is as wide as its columns need and as tall as the viewport, so width
                 // is what the fitter has to work out.
                 fitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
-                fitter.verticalFit = ContentSizeFitter.FitMode.Unconstrained;
+                fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
             }
 
             ScrollRect scroll = EnsureComponent<ScrollRect>(list.gameObject, out bool scrollCreated);
@@ -430,8 +443,11 @@ namespace GameJam.EditorTools
 
             if (scrollCreated || (!scroll.horizontal && scroll.vertical))
             {
-                scroll.horizontal = true;
-                scroll.vertical = false;
+                // Down, not sideways: three fixed columns can never be wider than the viewport,
+                // so a horizontal scroll would have nothing to move. A fourth row is what a long
+                // mission produces, and that is what has to be reachable.
+                scroll.horizontal = false;
+                scroll.vertical = true;
             }
 
             return grid;
@@ -452,9 +468,9 @@ namespace GameJam.EditorTools
         /// </summary>
         private static void ShapeRowLayout(GridLayoutGroup layout)
         {
-            layout.constraint = GridLayoutGroup.Constraint.FixedRowCount;
-            layout.constraintCount = GridRows;
-            layout.childAlignment = TextAnchor.MiddleLeft;
+            layout.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+            layout.constraintCount = GridColumns;
+            layout.childAlignment = TextAnchor.UpperCenter;
             layout.padding = new RectOffset(0, 0, 0, 0);
         }
 
