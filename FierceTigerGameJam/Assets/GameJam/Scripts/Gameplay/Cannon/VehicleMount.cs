@@ -68,6 +68,19 @@ namespace GameJam.Gameplay.Cannon
                  + "the player is buying want, so the two looks are a checkbox apart.")]
         [SerializeField] private bool barrelOnly = true;
 
+        [Tooltip("Puts the spawned model's barrel bone exactly where the aim pivot is, which is "
+                 + "where the old CannonA pivoted. Without it a barrel-only model hangs at whatever "
+                 + "height its bone was authored at times its fitted scale, so the nine levels sit "
+                 + "at nine different heights. Off mounts the model at the frame's origin, which is "
+                 + "what you want when the wheels are drawn and the model should stand on them.")]
+        [SerializeField] private bool alignBarrelToPivot = true;
+
+        [Tooltip("Nudge applied after the alignment, in the mount frame's space. The alignment puts "
+                 + "the barrel where the old one pivoted; this is the knob for saying it should sit "
+                 + "a little lower or further forward than that, and it applies to every vehicle "
+                 + "equally so they stay in line with each other.")]
+        [SerializeField] private Vector3 barrelAlignmentOffset = Vector3.zero;
+
         [Tooltip("What barrelOnly hides, matched against a spawned node's name as a case-"
                  + "insensitive prefix. Prefixes rather than whole names because the pack spells "
                  + "its base three ways - Cannone_Pase, Cannon_Base and Cannon_Pase - and because "
@@ -255,6 +268,10 @@ namespace GameJam.Gameplay.Cannon
 
             CacheBarrelNode(current);
 
+            // After the bone is cached and after the scale is applied, because it measures where
+            // the bone actually ended up.
+            AlignBarrelToPivot();
+
             // After the bone is cached, not before: the hiding pass asks whether a part it is
             // about to switch off is carrying that bone, and a null bone would make it unable to
             // tell.
@@ -263,6 +280,38 @@ namespace GameJam.Gameplay.Cannon
             SetFallbackActive(false);
 
             StripColliders(current);
+        }
+
+        /// <summary>
+        /// Slides the spawned model so its barrel bone sits exactly where the aim pivot does.
+        ///
+        /// This is what makes the barrel-only look sit where the old CannonA sat. Mounting a model
+        /// at the frame's origin puts its *own* origin there, which for these models is the ground
+        /// under the wheels - fine while the wheels were drawn, wrong once they are not. The barrel
+        /// then hangs at whatever height its bone happens to be authored at, multiplied by that
+        /// model's fitted scale: measured across the nine catalogue levels that is anywhere from
+        /// 0.25 to 0.58 in mount space, so the barrels sat too high and, worse, at visibly
+        /// different heights from one another.
+        ///
+        /// Aligning the bone rather than the bounds is the whole trick. CannonA pivoted at its
+        /// breech, and the aim, the muzzle and the recorded pivot pose were all laid out around
+        /// that point; putting each model's breech on the same point reproduces the old geometry
+        /// exactly and closes the per-model spread for free, with no per-level offset to author
+        /// and nothing for the fitting tool to keep in step.
+        ///
+        /// Position only - the bone's rotation is the barrel follow's business, every frame.
+        /// </summary>
+        private void AlignBarrelToPivot()
+        {
+            if (!alignBarrelToPivot || current == null || barrelNode == null || barrelReference == null)
+            {
+                return;
+            }
+
+            // World space on both sides, so the model's own scale and the mount's are already in
+            // the numbers and neither needs unpicking.
+            current.transform.position += barrelReference.position - barrelNode.position;
+            current.transform.localPosition += barrelAlignmentOffset;
         }
 
         /// <summary>
