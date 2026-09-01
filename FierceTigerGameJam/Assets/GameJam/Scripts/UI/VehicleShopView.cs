@@ -54,6 +54,11 @@ namespace GameJam.UI
                  + "preview, e.g. TRUCK II \u00b7 DAMAGE \u00d71.20.")]
         [SerializeField] private TMP_Text previewCaption;
 
+        [Tooltip("Optional. The 3D window over the garage table. When it can show the equipped "
+                 + "vehicle's model the flat icon above is hidden; when it cannot - no art for "
+                 + "that level, or no rig in the scene - the icon is what the player sees.")]
+        [SerializeField] private ModelPreviewView preview3D;
+
         private const string RowNamePrefix = "VehicleRow_";
 
         /// <summary>Nothing left to sell. Dimmed rather than hidden, so the row keeps its shape.</summary>
@@ -215,13 +220,17 @@ namespace GameJam.UI
         /// name, a level and a price and nothing else, and a player asked to pay for level 2 has
         /// no other way to see what level 2 buys them.
         ///
-        /// The sprite is the same one the row shows, only larger. A render-texture rig pointed at
-        /// the real model would look better and is deliberately not here: it is a second way for
-        /// a vehicle to be drawn, and one of the two would always be the one nobody updated.
+        /// The vehicle is drawn twice over, and only ever one of the two at a time: the real model
+        /// spinning in the 3D window when there is art for it, and the flat icon when there is
+        /// not. That was once argued against here on the grounds that one of two ways of drawing
+        /// a vehicle would always be the one nobody updated - which holds for two pieces of art
+        /// and not for these two, because both read the same catalogue entry. The icon is now the
+        /// fallback rather than a second description, and a vehicle with no model still has a
+        /// picture.
         /// </summary>
         private void RefreshPreview()
         {
-            if (previewImage == null && previewCaption == null)
+            if (previewImage == null && previewCaption == null && preview3D == null)
             {
                 return;
             }
@@ -230,14 +239,19 @@ namespace GameJam.UI
             VehicleDefinition selected = catalogue != null ? catalogue.Selected : null;
             int level = catalogue != null ? catalogue.SelectedLevel : 1;
 
+            // First, because whether it worked is what decides if the icon is drawn at all.
+            bool showingModel = preview3D != null
+                && preview3D.Show(selected != null ? selected.ResolveModelPrefab(level) : null, level);
+
             if (previewImage != null)
             {
                 Sprite sprite = selected != null ? selected.ResolveIcon(level) : null;
                 previewImage.sprite = sprite;
 
                 // Disabled rather than left drawing: an Image with no sprite is a white block
-                // over the table the frame art already draws.
-                previewImage.enabled = sprite != null;
+                // over the table the frame art already draws. Down as well while the model is up,
+                // so the icon is not sitting on top of the thing it stands in for.
+                previewImage.enabled = !showingModel && sprite != null;
             }
 
             if (previewCaption != null)

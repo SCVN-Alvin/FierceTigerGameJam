@@ -146,7 +146,74 @@ namespace GameJam.Gameplay.Cannon
         /// </summary>
         private void ApplyLevelLook(int level)
         {
-            if (levelLooks == null || levelLooks.Length == 0)
+            EnableLevelLook(levelLooks, levelLookNumbers, level);
+        }
+
+        /// <summary>
+        /// The same rule applied to a projectile nobody is firing - the garage's preview copy.
+        ///
+        /// Static and taking the root rather than the component, because that copy is a mannequin:
+        /// its scripts, colliders and rigidbody are stripped off before it is ever shown, so there
+        /// is no instance left to ask. Reusing the rule rather than the object is what keeps the
+        /// garage and the shot agreeing about which mesh level 2 is - a second copy of the suffix
+        /// spelling is exactly how the two would drift apart the next time the artist renames one.
+        ///
+        /// This one allocates, unlike the per-shot path, which is why that path keeps its cache:
+        /// this runs when the player taps a row, never in flight.
+        /// </summary>
+        public static void ApplyLevelLook(Transform root, int level)
+        {
+            if (root == null)
+            {
+                return;
+            }
+
+            int childCount = root.childCount;
+            int found = 0;
+            for (int i = 0; i < childCount; i++)
+            {
+                if (TryParseLevelSuffix(root.GetChild(i).name, out _))
+                {
+                    found++;
+                }
+            }
+
+            if (found == 0)
+            {
+                // A model with no LV children at all - every vehicle, and any ball authored as one
+                // mesh. Left exactly as the prefab has it.
+                return;
+            }
+
+            GameObject[] looks = new GameObject[found];
+            int[] numbers = new int[found];
+
+            int next = 0;
+            for (int i = 0; i < childCount && next < found; i++)
+            {
+                Transform child = root.GetChild(i);
+                if (!TryParseLevelSuffix(child.name, out int number))
+                {
+                    continue;
+                }
+
+                looks[next] = child.gameObject;
+                numbers[next] = number;
+                next++;
+            }
+
+            EnableLevelLook(looks, numbers, level);
+        }
+
+        /// <summary>
+        /// Switches on the one look a level should show and switches the rest off. The whole of
+        /// the choice, in one place, so the in-flight ball and the garage's mannequin cannot
+        /// disagree: the highest n not above the level wins, and a prefab whose looks start above
+        /// level 1 falls back to its lowest.
+        /// </summary>
+        private static void EnableLevelLook(GameObject[] looks, int[] numbers, int level)
+        {
+            if (looks == null || looks.Length == 0)
             {
                 return;
             }
@@ -154,15 +221,15 @@ namespace GameJam.Gameplay.Cannon
             int wanted = Mathf.Max(1, level);
             int bestAtOrBelow = -1;
             int lowest = -1;
-            for (int i = 0; i < levelLooks.Length; i++)
+            for (int i = 0; i < looks.Length; i++)
             {
-                int number = levelLookNumbers[i];
-                if (number <= wanted && (bestAtOrBelow < 0 || number > levelLookNumbers[bestAtOrBelow]))
+                int number = numbers[i];
+                if (number <= wanted && (bestAtOrBelow < 0 || number > numbers[bestAtOrBelow]))
                 {
                     bestAtOrBelow = i;
                 }
 
-                if (lowest < 0 || number < levelLookNumbers[lowest])
+                if (lowest < 0 || number < numbers[lowest])
                 {
                     lowest = i;
                 }
@@ -171,11 +238,11 @@ namespace GameJam.Gameplay.Cannon
             // Nothing authored at or below the level means a prefab whose looks start higher than
             // level 1; its lowest is still a ball, which beats an invisible shot.
             int chosen = bestAtOrBelow >= 0 ? bestAtOrBelow : lowest;
-            for (int i = 0; i < levelLooks.Length; i++)
+            for (int i = 0; i < looks.Length; i++)
             {
-                if (levelLooks[i] != null)
+                if (looks[i] != null)
                 {
-                    levelLooks[i].SetActive(i == chosen);
+                    looks[i].SetActive(i == chosen);
                 }
             }
         }
