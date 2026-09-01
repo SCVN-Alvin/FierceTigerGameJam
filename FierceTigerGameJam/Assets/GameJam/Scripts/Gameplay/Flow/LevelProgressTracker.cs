@@ -10,9 +10,12 @@ namespace GameJam.Gameplay.Flow
     ///
     /// Progress is counted by looking at what is still standing rather than by tallying
     /// destruction events. A block can leave play several ways - shattered by a shot, broken on
-    /// landing, or dropped off the edge into the fall zone - and a wall can take a dozen blocks
-    /// with it at once. Counting what remains is right for all of those without a subscription
-    /// for each, and cannot drift or double count.
+    /// landing, or dropped off the edge into the fall zone. Counting what remains is right for
+    /// all of those without a subscription for each, and cannot drift or double count.
+    ///
+    /// Numerator and denominator are both plain block counts: the builder reports one placement
+    /// per authored block, and every placement becomes one object under the generated root, so a
+    /// fully cleared map reads exactly 100 %.
     /// </summary>
     public sealed class LevelProgressTracker : MonoBehaviour
     {
@@ -92,14 +95,6 @@ namespace GameJam.Gameplay.Flow
             for (int i = 0; i < generatedRoot.childCount; i++)
             {
                 Transform child = generatedRoot.GetChild(i);
-
-                // A wall stands in for several blocks, so it is worth what it replaced. Checked
-                // first because a wall also carries a KnockdownBlock, which would count it once.
-                if (child.TryGetComponent(out BreakableWall wall))
-                {
-                    remaining += Mathf.Max(1, wall.CellCount);
-                    continue;
-                }
 
                 // Debris is what is left of a destroyed block, so it must not count as standing.
                 if (child.GetComponent<ShatteredBlock>() != null)
