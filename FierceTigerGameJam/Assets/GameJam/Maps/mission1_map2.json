@@ -1,0 +1,1353 @@
+{
+ "schemaVersion": 1,
+ "id": "mission1_map2",
+ "grid": {
+  "width": 6,
+  "height": 8,
+  "cellSize": 0.25,
+  "layerDepth": 0.25
+ },
+ "layers": [
+  {
+   "level": 0,
+   "blocks": [
+    {
+     "id": "f0_c0_r0",
+     "type": "brick_1x1",
+     "position": {
+      "x": 0,
+      "y": 0
+     },
+     "rotation": 0,
+     "wall": {
+      "wall_id": "left_brick_b0_6",
+      "bare": true
+     }
+    },
+    {
+     "id": "f0_c1_r0",
+     "type": "brick_2x1",
+     "position": {
+      "x": 1,
+      "y": 0
+     },
+     "rotation": 0,
+     "wall": {
+      "wall_id": "front_brick_b0_3",
+      "bare": true
+     }
+    },
+    {
+     "id": "f0_c3_r0",
+     "type": "brick_2x1",
+     "position": {
+      "x": 3,
+      "y": 0
+     },
+     "rotation": 0,
+     "wall": {
+      "wall_id": "front_brick_b0_3",
+      "bare": true
+     }
+    },
+    {
+     "id": "f0_c5_r0",
+     "type": "brick_1x1",
+     "position": {
+      "x": 5,
+      "y": 0
+     },
+     "rotation": 0,
+     "wall": {
+      "wall_id": "right_brick_b0_9",
+      "bare": true
+     }
+    },
+    {
+     "id": "f0_c0_r1",
+     "type": "brick_1x1",
+     "position": {
+      "x": 0,
+      "y": 1
+     },
+     "rotation": 0,
+     "wall": {
+      "wall_id": "left_brick_b0_6",
+      "bare": true
+     }
+    },
+    {
+     "id": "f0_c1_r1",
+     "type": "brick_1x1",
+     "position": {
+      "x": 1,
+      "y": 1
+     },
+     "rotation": 0,
+     "wall": {
+      "wall_id": "front_brick_b0_3",
+      "bare": true
+     }
+    },
+    {
+     "id": "f0_c4_r1",
+     "type": "brick_1x1",
+     "position": {
+      "x": 4,
+      "y": 1
+     },
+     "rotation": 0,
+     "wall": {
+      "wall_id": "front_brick_b0_3",
+      "bare": true
+     }
+    },
+    {
+     "id": "f0_c5_r1",
+     "type": "brick_1x1",
+     "position": {
+      "x": 5,
+      "y": 1
+     },
+     "rotation": 0,
+     "wall": {
+      "wall_id": "right_brick_b0_9",
+      "bare": true
+     }
+    },
+    {
+     "id": "f0_c0_r2",
+     "type": "brick_1x1",
+     "position": {
+      "x": 0,
+      "y": 2
+     },
+     "rotation": 0,
+     "wall": {
+      "wall_id": "left_brick_b0_6",
+      "bare": true
+     }
+    },
+    {
+     "id": "f0_c1_r2",
+     "type": "brick_1x1",
+     "position": {
+      "x": 1,
+      "y": 2
+     },
+     "rotation": 0,
+     "wall": {
+      "wall_id": "front_brick_b0_3",
+      "bare": true
+     }
+    },
+    {
+     "id": "f0_c4_r2",
+     "type": "brick_1x1",
+     "position": {
+      "x": 4,
+      "y": 2
+     },
+     "rotation": 0,
+     "wall": {
+      "wall_id": "front_brick_b0_3",
+      "bare": true
+     }
+    },
+    {
+     "id": "f0_c5_r2",
+     "type": "brick_1x1",
+     "position": {
+      "x": 5,
+      "y": 2
+     },
+     "rotation": 0,
+     "wall": {
+      "wall_id": "right_brick_b0_9",
+      "bare": true
+     }
+    },
+    {
+     "id": "f0_c0_r3",
+     "type": "brick_1x1",
+     "position": {
+      "x": 0,
+      "y": 3
+     },
+     "rotation": 0,
+     "wall": {
+      "wall_id": "left_brick_b1_7",
+      "bare": true
+     }
+    },
+    {
+     "id": "f0_c1_r3",
+     "type": "brick_2x1",
+     "position": {
+      "x": 1,
+      "y": 3
+     },
+     "rotation": 0,
+     "wall": {
+      "wall_id": "front_brick_b1_4",
+      "bare": true
+     }
+    },
+    {
+     "id": "f0_c3_r3",
+     "type": "brick_2x1",
+     "position": {
+      "x": 3,
+      "y": 3
+     },
+     "rotation": 0,
+     "wall": {
+      "wall_id": "front_brick_b1_4",
+      "bare": true
+     }
+    },
+    {
+     "id": "f0_c5_r3",
+     "type": "brick_1x1",
+     "position": {
+      "x": 5,
+      "y": 3
+     },
+     "rotation": 0,
+     "wall": {
+      "wall_id": "right_brick_b1_10",
+      "bare": true
+     }
+    },
+    {
+     "id": "f0_c0_r4",
+     "type": "brick_1x1",
+     "position": {
+      "x": 0,
+      "y": 4
+     },
+     "rotation": 0,
+     "wall": {
+      "wall_id": "left_brick_b1_7",
+      "bare": true
+     }
+    },
+    {
+     "id": "f0_c2_r4",
+     "type": "brick_2x1",
+     "position": {
+      "x": 2,
+      "y": 4
+     },
+     "rotation": 0,
+     "wall": {
+      "wall_id": "front_brick_b1_4",
+      "bare": true
+     }
+    },
+    {
+     "id": "f0_c5_r4",
+     "type": "brick_1x1",
+     "position": {
+      "x": 5,
+      "y": 4
+     },
+     "rotation": 0,
+     "wall": {
+      "wall_id": "right_brick_b1_10",
+      "bare": true
+     }
+    },
+    {
+     "id": "f0_c0_r5",
+     "type": "brick_1x1",
+     "position": {
+      "x": 0,
+      "y": 5
+     },
+     "rotation": 0,
+     "wall": {
+      "wall_id": "left_brick_b1_7",
+      "bare": true
+     }
+    },
+    {
+     "id": "f0_c1_r5",
+     "type": "brick_2x1",
+     "position": {
+      "x": 1,
+      "y": 5
+     },
+     "rotation": 0,
+     "wall": {
+      "wall_id": "front_brick_b1_4",
+      "bare": true
+     }
+    },
+    {
+     "id": "f0_c3_r5",
+     "type": "brick_2x1",
+     "position": {
+      "x": 3,
+      "y": 5
+     },
+     "rotation": 0,
+     "wall": {
+      "wall_id": "front_brick_b1_4",
+      "bare": true
+     }
+    },
+    {
+     "id": "f0_c5_r5",
+     "type": "brick_1x1",
+     "position": {
+      "x": 5,
+      "y": 5
+     },
+     "rotation": 0,
+     "wall": {
+      "wall_id": "right_brick_b1_10",
+      "bare": true
+     }
+    },
+    {
+     "id": "f0_c0_r6",
+     "type": "brick_1x1",
+     "position": {
+      "x": 0,
+      "y": 6
+     },
+     "rotation": 0,
+     "wall": {
+      "wall_id": "left_brick_b2_8",
+      "bare": true
+     }
+    },
+    {
+     "id": "f0_c2_r6",
+     "type": "brick_2x1",
+     "position": {
+      "x": 2,
+      "y": 6
+     },
+     "rotation": 0
+    },
+    {
+     "id": "f0_c5_r6",
+     "type": "brick_1x1",
+     "position": {
+      "x": 5,
+      "y": 6
+     },
+     "rotation": 0,
+     "wall": {
+      "wall_id": "right_brick_b2_11",
+      "bare": true
+     }
+    },
+    {
+     "id": "f0_c0_r7",
+     "type": "brick_1x1",
+     "position": {
+      "x": 0,
+      "y": 7
+     },
+     "rotation": 0
+    },
+    {
+     "id": "f0_c2_r7",
+     "type": "brick_1x1",
+     "position": {
+      "x": 2,
+      "y": 7
+     },
+     "rotation": 0
+    }
+   ]
+  },
+  {
+   "level": 1,
+   "blocks": [
+    {
+     "id": "f1_c0_r0",
+     "type": "brick_1x1",
+     "position": {
+      "x": 0,
+      "y": 0
+     },
+     "rotation": 0,
+     "wall": {
+      "wall_id": "left_brick_b0_6",
+      "bare": true
+     }
+    },
+    {
+     "id": "f1_c5_r0",
+     "type": "brick_1x1",
+     "position": {
+      "x": 5,
+      "y": 0
+     },
+     "rotation": 0,
+     "wall": {
+      "wall_id": "right_brick_b0_9",
+      "bare": true
+     }
+    },
+    {
+     "id": "f1_c0_r1",
+     "type": "brick_1x1",
+     "position": {
+      "x": 0,
+      "y": 1
+     },
+     "rotation": 0,
+     "wall": {
+      "wall_id": "left_brick_b0_6",
+      "bare": true
+     }
+    },
+    {
+     "id": "f1_c5_r1",
+     "type": "brick_1x1",
+     "position": {
+      "x": 5,
+      "y": 1
+     },
+     "rotation": 0,
+     "wall": {
+      "wall_id": "right_brick_b0_9",
+      "bare": true
+     }
+    },
+    {
+     "id": "f1_c0_r2",
+     "type": "brick_1x1",
+     "position": {
+      "x": 0,
+      "y": 2
+     },
+     "rotation": 0,
+     "wall": {
+      "wall_id": "left_brick_b0_6",
+      "bare": true
+     }
+    },
+    {
+     "id": "f1_c5_r2",
+     "type": "brick_1x1",
+     "position": {
+      "x": 5,
+      "y": 2
+     },
+     "rotation": 0,
+     "wall": {
+      "wall_id": "right_brick_b0_9",
+      "bare": true
+     }
+    },
+    {
+     "id": "f1_c0_r3",
+     "type": "brick_1x1",
+     "position": {
+      "x": 0,
+      "y": 3
+     },
+     "rotation": 0,
+     "wall": {
+      "wall_id": "left_brick_b1_7",
+      "bare": true
+     }
+    },
+    {
+     "id": "f1_c5_r3",
+     "type": "brick_1x1",
+     "position": {
+      "x": 5,
+      "y": 3
+     },
+     "rotation": 0,
+     "wall": {
+      "wall_id": "right_brick_b1_10",
+      "bare": true
+     }
+    },
+    {
+     "id": "f1_c0_r4",
+     "type": "brick_1x1",
+     "position": {
+      "x": 0,
+      "y": 4
+     },
+     "rotation": 0,
+     "wall": {
+      "wall_id": "left_brick_b1_7",
+      "bare": true
+     }
+    },
+    {
+     "id": "f1_c5_r4",
+     "type": "brick_1x1",
+     "position": {
+      "x": 5,
+      "y": 4
+     },
+     "rotation": 0,
+     "wall": {
+      "wall_id": "right_brick_b1_10",
+      "bare": true
+     }
+    },
+    {
+     "id": "f1_c0_r5",
+     "type": "brick_1x1",
+     "position": {
+      "x": 0,
+      "y": 5
+     },
+     "rotation": 0,
+     "wall": {
+      "wall_id": "left_brick_b1_7",
+      "bare": true
+     }
+    },
+    {
+     "id": "f1_c5_r5",
+     "type": "brick_1x1",
+     "position": {
+      "x": 5,
+      "y": 5
+     },
+     "rotation": 0,
+     "wall": {
+      "wall_id": "right_brick_b1_10",
+      "bare": true
+     }
+    },
+    {
+     "id": "f1_c0_r6",
+     "type": "brick_1x1",
+     "position": {
+      "x": 0,
+      "y": 6
+     },
+     "rotation": 0,
+     "wall": {
+      "wall_id": "left_brick_b2_8",
+      "bare": true
+     }
+    },
+    {
+     "id": "f1_c5_r6",
+     "type": "brick_1x1",
+     "position": {
+      "x": 5,
+      "y": 6
+     },
+     "rotation": 0,
+     "wall": {
+      "wall_id": "right_brick_b2_11",
+      "bare": true
+     }
+    },
+    {
+     "id": "f1_c5_r7",
+     "type": "brick_1x1",
+     "position": {
+      "x": 5,
+      "y": 7
+     },
+     "rotation": 0
+    }
+   ]
+  },
+  {
+   "level": 2,
+   "blocks": [
+    {
+     "id": "f2_c0_r0",
+     "type": "brick_1x1",
+     "position": {
+      "x": 0,
+      "y": 0
+     },
+     "rotation": 0,
+     "wall": {
+      "wall_id": "left_brick_b0_6",
+      "bare": true
+     }
+    },
+    {
+     "id": "f2_c5_r0",
+     "type": "brick_1x1",
+     "position": {
+      "x": 5,
+      "y": 0
+     },
+     "rotation": 0,
+     "wall": {
+      "wall_id": "right_brick_b0_9",
+      "bare": true
+     }
+    },
+    {
+     "id": "f2_c0_r1",
+     "type": "brick_1x1",
+     "position": {
+      "x": 0,
+      "y": 1
+     },
+     "rotation": 0,
+     "wall": {
+      "wall_id": "left_brick_b0_6",
+      "bare": true
+     }
+    },
+    {
+     "id": "f2_c5_r1",
+     "type": "brick_1x1",
+     "position": {
+      "x": 5,
+      "y": 1
+     },
+     "rotation": 0,
+     "wall": {
+      "wall_id": "right_brick_b0_9",
+      "bare": true
+     }
+    },
+    {
+     "id": "f2_c0_r2",
+     "type": "brick_1x1",
+     "position": {
+      "x": 0,
+      "y": 2
+     },
+     "rotation": 0,
+     "wall": {
+      "wall_id": "left_brick_b0_6",
+      "bare": true
+     }
+    },
+    {
+     "id": "f2_c5_r2",
+     "type": "brick_1x1",
+     "position": {
+      "x": 5,
+      "y": 2
+     },
+     "rotation": 0,
+     "wall": {
+      "wall_id": "right_brick_b0_9",
+      "bare": true
+     }
+    },
+    {
+     "id": "f2_c0_r3",
+     "type": "brick_1x1",
+     "position": {
+      "x": 0,
+      "y": 3
+     },
+     "rotation": 0,
+     "wall": {
+      "wall_id": "left_brick_b1_7",
+      "bare": true
+     }
+    },
+    {
+     "id": "f2_c5_r3",
+     "type": "brick_1x1",
+     "position": {
+      "x": 5,
+      "y": 3
+     },
+     "rotation": 0,
+     "wall": {
+      "wall_id": "right_brick_b1_10",
+      "bare": true
+     }
+    },
+    {
+     "id": "f2_c0_r4",
+     "type": "brick_1x1",
+     "position": {
+      "x": 0,
+      "y": 4
+     },
+     "rotation": 0,
+     "wall": {
+      "wall_id": "left_brick_b1_7",
+      "bare": true
+     }
+    },
+    {
+     "id": "f2_c5_r4",
+     "type": "brick_1x1",
+     "position": {
+      "x": 5,
+      "y": 4
+     },
+     "rotation": 0,
+     "wall": {
+      "wall_id": "right_brick_b1_10",
+      "bare": true
+     }
+    },
+    {
+     "id": "f2_c0_r5",
+     "type": "brick_1x1",
+     "position": {
+      "x": 0,
+      "y": 5
+     },
+     "rotation": 0,
+     "wall": {
+      "wall_id": "left_brick_b1_7",
+      "bare": true
+     }
+    },
+    {
+     "id": "f2_c5_r5",
+     "type": "brick_1x1",
+     "position": {
+      "x": 5,
+      "y": 5
+     },
+     "rotation": 0,
+     "wall": {
+      "wall_id": "right_brick_b1_10",
+      "bare": true
+     }
+    },
+    {
+     "id": "f2_c0_r6",
+     "type": "brick_1x1",
+     "position": {
+      "x": 0,
+      "y": 6
+     },
+     "rotation": 0,
+     "wall": {
+      "wall_id": "left_brick_b2_8",
+      "bare": true
+     }
+    },
+    {
+     "id": "f2_c5_r6",
+     "type": "brick_1x1",
+     "position": {
+      "x": 5,
+      "y": 6
+     },
+     "rotation": 0,
+     "wall": {
+      "wall_id": "right_brick_b2_11",
+      "bare": true
+     }
+    },
+    {
+     "id": "f2_c0_r7",
+     "type": "brick_1x1",
+     "position": {
+      "x": 0,
+      "y": 7
+     },
+     "rotation": 0
+    }
+   ]
+  },
+  {
+   "level": 3,
+   "blocks": [
+    {
+     "id": "f3_c0_r0",
+     "type": "brick_1x1",
+     "position": {
+      "x": 0,
+      "y": 0
+     },
+     "rotation": 0,
+     "wall": {
+      "wall_id": "left_brick_b0_6",
+      "bare": true
+     }
+    },
+    {
+     "id": "f3_c5_r0",
+     "type": "brick_1x1",
+     "position": {
+      "x": 5,
+      "y": 0
+     },
+     "rotation": 0,
+     "wall": {
+      "wall_id": "right_brick_b0_9",
+      "bare": true
+     }
+    },
+    {
+     "id": "f3_c0_r1",
+     "type": "brick_1x1",
+     "position": {
+      "x": 0,
+      "y": 1
+     },
+     "rotation": 0,
+     "wall": {
+      "wall_id": "left_brick_b0_6",
+      "bare": true
+     }
+    },
+    {
+     "id": "f3_c5_r1",
+     "type": "brick_1x1",
+     "position": {
+      "x": 5,
+      "y": 1
+     },
+     "rotation": 0,
+     "wall": {
+      "wall_id": "right_brick_b0_9",
+      "bare": true
+     }
+    },
+    {
+     "id": "f3_c0_r2",
+     "type": "brick_1x1",
+     "position": {
+      "x": 0,
+      "y": 2
+     },
+     "rotation": 0,
+     "wall": {
+      "wall_id": "left_brick_b0_6",
+      "bare": true
+     }
+    },
+    {
+     "id": "f3_c5_r2",
+     "type": "brick_1x1",
+     "position": {
+      "x": 5,
+      "y": 2
+     },
+     "rotation": 0,
+     "wall": {
+      "wall_id": "right_brick_b0_9",
+      "bare": true
+     }
+    },
+    {
+     "id": "f3_c0_r3",
+     "type": "brick_1x1",
+     "position": {
+      "x": 0,
+      "y": 3
+     },
+     "rotation": 0,
+     "wall": {
+      "wall_id": "left_brick_b1_7",
+      "bare": true
+     }
+    },
+    {
+     "id": "f3_c5_r3",
+     "type": "brick_1x1",
+     "position": {
+      "x": 5,
+      "y": 3
+     },
+     "rotation": 0,
+     "wall": {
+      "wall_id": "right_brick_b1_10",
+      "bare": true
+     }
+    },
+    {
+     "id": "f3_c0_r4",
+     "type": "brick_1x1",
+     "position": {
+      "x": 0,
+      "y": 4
+     },
+     "rotation": 0,
+     "wall": {
+      "wall_id": "left_brick_b1_7",
+      "bare": true
+     }
+    },
+    {
+     "id": "f3_c5_r4",
+     "type": "brick_1x1",
+     "position": {
+      "x": 5,
+      "y": 4
+     },
+     "rotation": 0,
+     "wall": {
+      "wall_id": "right_brick_b1_10",
+      "bare": true
+     }
+    },
+    {
+     "id": "f3_c0_r5",
+     "type": "brick_1x1",
+     "position": {
+      "x": 0,
+      "y": 5
+     },
+     "rotation": 0,
+     "wall": {
+      "wall_id": "left_brick_b1_7",
+      "bare": true
+     }
+    },
+    {
+     "id": "f3_c5_r5",
+     "type": "brick_1x1",
+     "position": {
+      "x": 5,
+      "y": 5
+     },
+     "rotation": 0,
+     "wall": {
+      "wall_id": "right_brick_b1_10",
+      "bare": true
+     }
+    },
+    {
+     "id": "f3_c0_r6",
+     "type": "brick_1x1",
+     "position": {
+      "x": 0,
+      "y": 6
+     },
+     "rotation": 0,
+     "wall": {
+      "wall_id": "left_brick_b2_8",
+      "bare": true
+     }
+    },
+    {
+     "id": "f3_c5_r6",
+     "type": "brick_1x1",
+     "position": {
+      "x": 5,
+      "y": 6
+     },
+     "rotation": 0,
+     "wall": {
+      "wall_id": "right_brick_b2_11",
+      "bare": true
+     }
+    },
+    {
+     "id": "f3_c5_r7",
+     "type": "brick_1x1",
+     "position": {
+      "x": 5,
+      "y": 7
+     },
+     "rotation": 0
+    }
+   ]
+  },
+  {
+   "level": 4,
+   "blocks": [
+    {
+     "id": "f4_c0_r0",
+     "type": "brick_1x1",
+     "position": {
+      "x": 0,
+      "y": 0
+     },
+     "rotation": 0,
+     "wall": {
+      "wall_id": "left_brick_b0_6",
+      "bare": true
+     }
+    },
+    {
+     "id": "f4_c1_r0",
+     "type": "brick_2x1",
+     "position": {
+      "x": 1,
+      "y": 0
+     },
+     "rotation": 0,
+     "wall": {
+      "wall_id": "back_brick_b0_0",
+      "bare": true
+     }
+    },
+    {
+     "id": "f4_c3_r0",
+     "type": "brick_2x1",
+     "position": {
+      "x": 3,
+      "y": 0
+     },
+     "rotation": 0,
+     "wall": {
+      "wall_id": "back_brick_b0_0",
+      "bare": true
+     }
+    },
+    {
+     "id": "f4_c5_r0",
+     "type": "brick_1x1",
+     "position": {
+      "x": 5,
+      "y": 0
+     },
+     "rotation": 0,
+     "wall": {
+      "wall_id": "right_brick_b0_9",
+      "bare": true
+     }
+    },
+    {
+     "id": "f4_c0_r1",
+     "type": "brick_1x1",
+     "position": {
+      "x": 0,
+      "y": 1
+     },
+     "rotation": 0,
+     "wall": {
+      "wall_id": "left_brick_b0_6",
+      "bare": true
+     }
+    },
+    {
+     "id": "f4_c1_r1",
+     "type": "brick_2x1",
+     "position": {
+      "x": 1,
+      "y": 1
+     },
+     "rotation": 0,
+     "wall": {
+      "wall_id": "back_brick_b0_0",
+      "bare": true
+     }
+    },
+    {
+     "id": "f4_c3_r1",
+     "type": "brick_2x1",
+     "position": {
+      "x": 3,
+      "y": 1
+     },
+     "rotation": 0,
+     "wall": {
+      "wall_id": "back_brick_b0_0",
+      "bare": true
+     }
+    },
+    {
+     "id": "f4_c5_r1",
+     "type": "brick_1x1",
+     "position": {
+      "x": 5,
+      "y": 1
+     },
+     "rotation": 0,
+     "wall": {
+      "wall_id": "right_brick_b0_9",
+      "bare": true
+     }
+    },
+    {
+     "id": "f4_c0_r2",
+     "type": "brick_1x1",
+     "position": {
+      "x": 0,
+      "y": 2
+     },
+     "rotation": 0,
+     "wall": {
+      "wall_id": "left_brick_b0_6",
+      "bare": true
+     }
+    },
+    {
+     "id": "f4_c1_r2",
+     "type": "brick_2x1",
+     "position": {
+      "x": 1,
+      "y": 2
+     },
+     "rotation": 0,
+     "wall": {
+      "wall_id": "back_brick_b0_0",
+      "bare": true
+     }
+    },
+    {
+     "id": "f4_c3_r2",
+     "type": "brick_2x1",
+     "position": {
+      "x": 3,
+      "y": 2
+     },
+     "rotation": 0,
+     "wall": {
+      "wall_id": "back_brick_b0_0",
+      "bare": true
+     }
+    },
+    {
+     "id": "f4_c5_r2",
+     "type": "brick_1x1",
+     "position": {
+      "x": 5,
+      "y": 2
+     },
+     "rotation": 0,
+     "wall": {
+      "wall_id": "right_brick_b0_9",
+      "bare": true
+     }
+    },
+    {
+     "id": "f4_c0_r3",
+     "type": "brick_1x1",
+     "position": {
+      "x": 0,
+      "y": 3
+     },
+     "rotation": 0,
+     "wall": {
+      "wall_id": "left_brick_b1_7",
+      "bare": true
+     }
+    },
+    {
+     "id": "f4_c1_r3",
+     "type": "brick_2x1",
+     "position": {
+      "x": 1,
+      "y": 3
+     },
+     "rotation": 0,
+     "wall": {
+      "wall_id": "back_brick_b1_1",
+      "bare": true
+     }
+    },
+    {
+     "id": "f4_c3_r3",
+     "type": "brick_2x1",
+     "position": {
+      "x": 3,
+      "y": 3
+     },
+     "rotation": 0,
+     "wall": {
+      "wall_id": "back_brick_b1_1",
+      "bare": true
+     }
+    },
+    {
+     "id": "f4_c5_r3",
+     "type": "brick_1x1",
+     "position": {
+      "x": 5,
+      "y": 3
+     },
+     "rotation": 0,
+     "wall": {
+      "wall_id": "right_brick_b1_10",
+      "bare": true
+     }
+    },
+    {
+     "id": "f4_c0_r4",
+     "type": "brick_1x1",
+     "position": {
+      "x": 0,
+      "y": 4
+     },
+     "rotation": 0,
+     "wall": {
+      "wall_id": "left_brick_b1_7",
+      "bare": true
+     }
+    },
+    {
+     "id": "f4_c1_r4",
+     "type": "brick_2x1",
+     "position": {
+      "x": 1,
+      "y": 4
+     },
+     "rotation": 0,
+     "wall": {
+      "wall_id": "back_brick_b1_1",
+      "bare": true
+     }
+    },
+    {
+     "id": "f4_c3_r4",
+     "type": "brick_2x1",
+     "position": {
+      "x": 3,
+      "y": 4
+     },
+     "rotation": 0,
+     "wall": {
+      "wall_id": "back_brick_b1_1",
+      "bare": true
+     }
+    },
+    {
+     "id": "f4_c5_r4",
+     "type": "brick_1x1",
+     "position": {
+      "x": 5,
+      "y": 4
+     },
+     "rotation": 0,
+     "wall": {
+      "wall_id": "right_brick_b1_10",
+      "bare": true
+     }
+    },
+    {
+     "id": "f4_c0_r5",
+     "type": "brick_1x1",
+     "position": {
+      "x": 0,
+      "y": 5
+     },
+     "rotation": 0,
+     "wall": {
+      "wall_id": "left_brick_b1_7",
+      "bare": true
+     }
+    },
+    {
+     "id": "f4_c1_r5",
+     "type": "brick_2x1",
+     "position": {
+      "x": 1,
+      "y": 5
+     },
+     "rotation": 0,
+     "wall": {
+      "wall_id": "back_brick_b1_1",
+      "bare": true
+     }
+    },
+    {
+     "id": "f4_c3_r5",
+     "type": "brick_2x1",
+     "position": {
+      "x": 3,
+      "y": 5
+     },
+     "rotation": 0,
+     "wall": {
+      "wall_id": "back_brick_b1_1",
+      "bare": true
+     }
+    },
+    {
+     "id": "f4_c5_r5",
+     "type": "brick_1x1",
+     "position": {
+      "x": 5,
+      "y": 5
+     },
+     "rotation": 0,
+     "wall": {
+      "wall_id": "right_brick_b1_10",
+      "bare": true
+     }
+    },
+    {
+     "id": "f4_c0_r6",
+     "type": "brick_1x1",
+     "position": {
+      "x": 0,
+      "y": 6
+     },
+     "rotation": 0,
+     "wall": {
+      "wall_id": "left_brick_b2_8",
+      "bare": true
+     }
+    },
+    {
+     "id": "f4_c1_r6",
+     "type": "brick_2x1",
+     "position": {
+      "x": 1,
+      "y": 6
+     },
+     "rotation": 0,
+     "wall": {
+      "wall_id": "back_brick_b2_2",
+      "bare": true
+     }
+    },
+    {
+     "id": "f4_c3_r6",
+     "type": "brick_2x1",
+     "position": {
+      "x": 3,
+      "y": 6
+     },
+     "rotation": 0,
+     "wall": {
+      "wall_id": "back_brick_b2_2",
+      "bare": true
+     }
+    },
+    {
+     "id": "f4_c5_r6",
+     "type": "brick_1x1",
+     "position": {
+      "x": 5,
+      "y": 6
+     },
+     "rotation": 0,
+     "wall": {
+      "wall_id": "right_brick_b2_11",
+      "bare": true
+     }
+    },
+    {
+     "id": "f4_c0_r7",
+     "type": "brick_1x1",
+     "position": {
+      "x": 0,
+      "y": 7
+     },
+     "rotation": 0
+    },
+    {
+     "id": "f4_c2_r7",
+     "type": "brick_1x1",
+     "position": {
+      "x": 2,
+      "y": 7
+     },
+     "rotation": 0
+    },
+    {
+     "id": "f4_c4_r7",
+     "type": "brick_1x1",
+     "position": {
+      "x": 4,
+      "y": 7
+     },
+     "rotation": 0
+    }
+   ]
+  }
+ ]
+}

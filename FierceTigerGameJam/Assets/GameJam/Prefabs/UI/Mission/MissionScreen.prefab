@@ -51,31 +51,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameJam.UI.MissionPanelView
   mapSelection: {fileID: 11400000, guid: 4a9040d203d9b4e0d95e653e89e423d5, type: 2}
+  missionConfig: {fileID: 11400000, guid: 73d7a738ff41e410ba14e94444f7ffab, type: 2}
   container: {fileID: 1824914314370134217}
   itemPrefab: {fileID: 5705091405752536821, guid: 6107f7c630a75465984da5ce70eea77e, type: 3}
-  missions:
-  - locked: 0
-    slotMapIds:
-    - map_001_hollow_brick_hut
-    - map_002_brick_courtyard_tower
-    - map_003_three_storey_brick_house
-    - map_004_glass_belt_warehouse
-    - map_005_two_storey_glass_house
-    - map_006_large_glass_school
-    - map_007_concrete_frame_school
-    - 2
-    - map_009_hollow_concrete_tower
-  - locked: 1
-    slotMapIds:
-    - map_004_level_01
-    - map_005_level_02
-    - map_005_two_storey_hollow_courtyard
-    - 
-    - 
-    - 
-    - 
-    - 
-    - 
   missionTitle: {fileID: 7690073280359268874}
   previousMissionButton: {fileID: 5119333212499603365}
   nextMissionButton: {fileID: 5830249466207725138}
@@ -395,8 +373,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.ScrollRect
   m_Content: {fileID: 1824914314370134217}
-  m_Horizontal: 0
-  m_Vertical: 1
+  m_Horizontal: 1
+  m_Vertical: 0
   m_MovementType: 2
   m_Elasticity: 0.1
   m_Inertia: 1
@@ -1039,11 +1017,11 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 8955429088703325780}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 1, y: 1}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
-  m_Pivot: {x: 0.5, y: 1}
+  m_Pivot: {x: 0, y: 0.5}
 --- !u!114 &5781738375373141957
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1060,14 +1038,14 @@ MonoBehaviour:
     m_Left: 0
     m_Right: 0
     m_Top: 0
-    m_Bottom: 10
-  m_ChildAlignment: 1
+    m_Bottom: 0
+  m_ChildAlignment: 3
   m_StartCorner: 0
   m_StartAxis: 0
   m_CellSize: {x: 143, y: 129}
   m_Spacing: {x: 17, y: 33}
-  m_Constraint: 1
-  m_ConstraintCount: 3
+  m_Constraint: 2
+  m_ConstraintCount: 1
 --- !u!114 &7071234695055470088
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1080,5 +1058,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3245ec927659c4140ac4f8d17403cc18, type: 3}
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.ContentSizeFitter
-  m_HorizontalFit: 0
-  m_VerticalFit: 2
+  m_HorizontalFit: 2
+  m_VerticalFit: 0
