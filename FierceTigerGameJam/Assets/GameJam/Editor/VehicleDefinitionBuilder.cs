@@ -148,6 +148,14 @@ namespace GameJam.EditorTools
         private const float LegacyBarrelHeight = 0.697727f;
 
         /// <summary>
+        /// The old barrel kept as an asset in its own right. Measuring this beats the constant
+        /// above in every way that matters: it is the art itself rather than a number recovered
+        /// from what the art used to be, and if anyone re-authors it the fit follows.
+        /// </summary>
+        private const string LegacyBarrelPrefabPath =
+            "Assets/GameJam/Imported/LunaSmashdown/Models/CannonA.prefab";
+
+        /// <summary>
         /// A fitted model may be a twentieth of the pack's size or twice it; anything outside
         /// that is a measurement gone wrong (an empty prefab, a stray renderer a kilometre away)
         /// and a clamp keeps it from writing a scale that makes the vehicle invisible.
@@ -696,13 +704,32 @@ namespace GameJam.EditorTools
             height = 0f;
 
             Transform barrel = FindDescendant(root, BarrelObjectName);
+            GameObject loaded = null;
+
+            if (barrel == null)
+            {
+                // The old cannon was deleted from the prefab but survives as an asset, so the
+                // yardstick is measurable again rather than merely remembered. Preferred over the
+                // recorded constant below for the obvious reason: a number recovered by arithmetic
+                // cannot notice that the art has since changed, and this can.
+                GameObject asset = AssetDatabase.LoadAssetAtPath<GameObject>(LegacyBarrelPrefabPath);
+                if (asset != null)
+                {
+                    // Instantiated, not measured where it lies. Renderer bounds on an asset that
+                    // has never been in a scene are meaningless, and switching an asset active to
+                    // read them would edit the asset on disk. The copy is destroyed below.
+                    loaded = Object.Instantiate(asset);
+                    barrel = loaded.transform;
+                }
+            }
+
             if (barrel == null)
             {
                 height = LegacyBarrelHeight;
                 Debug.Log(
                     $"{nameof(VehicleDefinitionBuilder)} found no \"{BarrelObjectName}\" inside "
-                    + $"{SlingshotPrefabPath} - the old cannon art has been deleted - so the models were "
-                    + $"fitted to its recorded height of {LegacyBarrelHeight:0.000}.");
+                    + $"{SlingshotPrefabPath} and no asset at {LegacyBarrelPrefabPath}, so the models "
+                    + $"were fitted to its recorded height of {LegacyBarrelHeight:0.000}.");
                 return true;
             }
 
@@ -717,6 +744,12 @@ namespace GameJam.EditorTools
             // the mount hides are parts of the pack models, not of it.
             bool measured = TryMeasureHeight(barrel.gameObject, null, out float worldHeight);
             barrel.gameObject.SetActive(wasActive);
+
+            if (loaded != null)
+            {
+                // The throwaway copy of the asset, gone the moment it has been measured.
+                Object.DestroyImmediate(loaded);
+            }
 
             if (!measured)
             {

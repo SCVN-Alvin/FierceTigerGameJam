@@ -54,8 +54,9 @@ namespace GameJam.Gameplay.Cannon
                  + "nose-up. 31.44 is what the old cannon rested at: the whole vehicle used to "
                  + "inherit that tilt, which swung its rear wheels through the floor, so the "
                  + "barrel carries it alone now and the chassis stays level. Zero leaves the "
-                 + "barrel wherever the model authored it.")]
-        [SerializeField] private float barrelRestPitchDegrees = 31.44f;
+                 + "barrel wherever the model authored it. 37.35 is the angle the reference "
+                 + "CannonA sits at, which is what the barrel-only look is matched to.")]
+        [SerializeField] private float barrelRestPitchDegrees = 37.35f;
 
         [Tooltip("Replaces the pack's own controller on every spawned model. Theirs holds one "
                  + "looping state, so an unmounted-over model fires its shot animation forever; "
@@ -81,8 +82,9 @@ namespace GameJam.Gameplay.Cannon
                  + "equally so they stay in line with each other. To bring the barrel low in frame "
                  + "the way the reference shot has it, move it towards the camera on z rather than "
                  + "down on y: the reference barrel is cut off by the edge of the screen, not sunk "
-                 + "into the floor.")]
-        [SerializeField] private Vector3 barrelAlignmentOffset = Vector3.zero;
+                 + "into the floor. The z here is the reference CannonA's own offset inside "
+                 + "CannonRoot, so the barrel lands where that object sits.")]
+        [SerializeField] private Vector3 barrelAlignmentOffset = new Vector3(0f, 0f, 0.5292f);
 
         [Tooltip("Lifts the model if anything it draws would end up under the floor. The barrel is "
                  + "positioned by its breech, and the mesh hangs around that point, so pushing the "
