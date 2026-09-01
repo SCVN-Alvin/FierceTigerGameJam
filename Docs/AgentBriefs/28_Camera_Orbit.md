@@ -1,3 +1,6 @@
+> **Completed and merged.** Originally numbered 24; renumbered when a later set of briefs
+> reused that number. Kept for the record - the work described here is already on `main`.
+
 # Task Brief 24 — The drag orbits the camera and cannon; the structure never moves
 
 Branch **`Fix/CameraOrbit`** from `main`, one-line commits, no body. House rules as always.

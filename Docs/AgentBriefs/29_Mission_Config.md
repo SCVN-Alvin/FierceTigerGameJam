@@ -1,3 +1,6 @@
+> **Completed and merged.** Originally numbered 25; renumbered when a later set of briefs
+> reused that number. Kept for the record - the work described here is already on `main`.
+
 # Task Brief 25 — Missions become data: a MissionConfig, a scrolling map row, and ids that mean something
 
 Branch **`Feature/MissionConfig`** from `main`, one-line commits, no body, one commit per numbered section so the
