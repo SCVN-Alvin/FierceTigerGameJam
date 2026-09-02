@@ -15,13 +15,11 @@ MonoBehaviour:
   entries:
   - type: concrete_1x1
     prefab: {fileID: 8273714671908165584, guid: da190a6e154f34d8892b4f22d6d3ebfc, type: 3}
-    wallPanel: {fileID: 2315751927417646278, guid: 414f3c38fdc77411e95c8f6bb1e20d3b, type: 3}
   - type: brick_1x1
     prefab: {fileID: 6583969056837762699, guid: c750fe06265124e6a8af1f60e0f5250b, type: 3}
-    wallPanel: {fileID: 3548551341503236699, guid: 34df15f37701549d687c62c2a48ee5bb, type: 3}
   - type: glass_1x1
     prefab: {fileID: 2387664125528167900, guid: 140f33e86a568470b9a2622d91cfea49, type: 3}
-    wallPanel: {fileID: 8817840327698952329, guid: 79843abeeaca34915a70e544c70da1b7, type: 3}
   - type: brick_2x1
     prefab: {fileID: 7269983298211945928, guid: 2a0c1d88634c24e949b0f2898b5f124e, type: 3}
-    wallPanel: {fileID: 3548551341503236699, guid: 34df15f37701549d687c62c2a48ee5bb, type: 3}
+  - type: brick_2x1_reinforced
+    prefab: {fileID: 6201153173749401336, guid: f4f6d152997c7421b98621b738ed28f8, type: 3}

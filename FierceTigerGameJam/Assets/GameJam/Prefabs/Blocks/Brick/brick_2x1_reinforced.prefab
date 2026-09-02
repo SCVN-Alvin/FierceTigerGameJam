@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1 &3374137082399659876
+--- !u!1 &4183463644350974936
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -8,9 +8,9 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 3975834345135092696}
-  - component: {fileID: 1714320395013817467}
-  - component: {fileID: 6913451037357926083}
+  - component: {fileID: 1781972596472516184}
+  - component: {fileID: 6037125140359675710}
+  - component: {fileID: 8175776791050136212}
   m_Layer: 0
   m_Name: Visual
   m_TagString: Untagged
@@ -18,36 +18,36 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &3975834345135092696
+--- !u!4 &1781972596472516184
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3374137082399659876}
+  m_GameObject: {fileID: 4183463644350974936}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.63417435, y: 0.4618218, z: -0.12942415}
-  m_LocalScale: {x: 0.76646006, y: 0.64451444, z: 0.25357136}
+  m_LocalPosition: {x: -1.2683487, y: 0.4618218, z: -0.12942415}
+  m_LocalScale: {x: 1.5329201, y: 0.64451444, z: 0.25357136}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 6939059185922452596}
+  m_Father: {fileID: 6179779714508131758}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!33 &1714320395013817467
+--- !u!33 &6037125140359675710
 MeshFilter:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3374137082399659876}
-  m_Mesh: {fileID: 4300000, guid: f739c5a45f7874e26a5b80d61284b0a3, type: 2}
---- !u!23 &6913451037357926083
+  m_GameObject: {fileID: 4183463644350974936}
+  m_Mesh: {fileID: 4300000, guid: e80acf0dab5794bc5aebaf946beec72b, type: 2}
+--- !u!23 &8175776791050136212
 MeshRenderer:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3374137082399659876}
+  m_GameObject: {fileID: 4183463644350974936}
   m_Enabled: 1
   m_CastShadows: 1
   m_ReceiveShadows: 1
@@ -90,7 +90,7 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!1 &6583969056837762699
+--- !u!1 &6201153173749401336
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -98,42 +98,42 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 6939059185922452596}
-  - component: {fileID: 3460024810494842006}
-  - component: {fileID: 3185764614563772407}
-  - component: {fileID: 1326079735355689199}
-  - component: {fileID: 2509887106160866496}
-  - component: {fileID: 8145027330375482389}
+  - component: {fileID: 6179779714508131758}
+  - component: {fileID: 3502680365772205201}
+  - component: {fileID: 5904772954494959962}
+  - component: {fileID: 8098815199843638778}
+  - component: {fileID: 1055183736888598491}
+  - component: {fileID: 8366877516641785009}
   m_Layer: 0
-  m_Name: brick_1x1
+  m_Name: brick_2x1_reinforced
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &6939059185922452596
+--- !u!4 &6179779714508131758
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6583969056837762699}
+  m_GameObject: {fileID: 6201153173749401336}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 3975834345135092696}
+  - {fileID: 1781972596472516184}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!65 &3460024810494842006
+--- !u!65 &3502680365772205201
 BoxCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6583969056837762699}
+  m_GameObject: {fileID: 6201153173749401336}
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
@@ -146,39 +146,39 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 0.25, y: 0.25, z: 0.24999999}
+  m_Size: {x: 0.5, y: 0.25, z: 0.24999999}
   m_Center: {x: 0, y: 0, z: 0}
---- !u!114 &3185764614563772407
+--- !u!114 &5904772954494959962
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6583969056837762699}
+  m_GameObject: {fileID: 6201153173749401336}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6fba6cd0f75247a18a7f5763e0d00b2e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameJam.Gameplay.Wall.KnockdownBlockAuthoring
   countsTowardKnockdown: 1
-  mass: 1.2
+  mass: 2.4
   allowCollisionCascade: 1
   collisionActivationVelocity: 1.75
   supportCascadeMode: 2
   supportReleaseImpulse: 0.35
-  logicalSize: {x: 1, y: 1, z: 1}
+  logicalSize: {x: 2, y: 1, z: 1}
   maxKnockHorizontalSpeed: 8.5
   maxKnockVerticalSpeed: 1.35
   gridPosition: {x: 0, y: 0, z: 0}
---- !u!54 &1326079735355689199
+--- !u!54 &8098815199843638778
 Rigidbody:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6583969056837762699}
+  m_GameObject: {fileID: 6201153173749401336}
   serializedVersion: 5
-  m_Mass: 1.2
+  m_Mass: 2.4
   m_LinearDamping: 0
   m_AngularDamping: 0.05
   m_CenterOfMass: {x: 0, y: 0, z: 0}
@@ -197,20 +197,20 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
---- !u!114 &2509887106160866496
+--- !u!114 &1055183736888598491
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6583969056837762699}
+  m_GameObject: {fileID: 6201153173749401336}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b0270ccb3b284da89734b43a6f244243, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameJam.Gameplay.KnockdownBlock
   startAsleep: 1
-  mass: 1.2
+  mass: 2.4
   angularDrag: 0.05
   linearDrag: 0
   collisionActivationVelocity: 1.75
@@ -218,29 +218,29 @@ MonoBehaviour:
   supportCascadeMode: 2
   supportReleaseImpulse: 0.35
   countsTowardKnockdown: 1
-  logicalSize: {x: 1, y: 1, z: 1}
+  logicalSize: {x: 2, y: 1, z: 1}
   maxKnockHorizontalSpeed: 8.5
   maxKnockVerticalSpeed: 1.35
   logClampedKnocks: 0
   gridPosition: {x: 0, y: 0, z: 0}
---- !u!114 &8145027330375482389
+--- !u!114 &8366877516641785009
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6583969056837762699}
+  m_GameObject: {fileID: 6201153173749401336}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d7597f644d66043b9ba0ece252b32233, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameJam.Gameplay.Wall.BreakableBlock
   materialId: brick
-  maxHitPoints: 3
+  maxHitPoints: 7
   minimumImpactSpeed: 2.5
   damagePerImpactSpeed: 0.5
   maxDamagePerImpact: 3
-  shatteredPrefab: {fileID: 4322319278136315632, guid: 771a0a720657a4cfa9bbd32b76f7bf9a, type: 3}
+  shatteredPrefab: {fileID: 8020841253936623434, guid: 003d17c028ab744539da0deabb30f40a, type: 3}
   breakEffectPrefab: {fileID: 0}
   shardOutwardSpeed: 1.2
   shardDirectionalSpeed: 1.8
