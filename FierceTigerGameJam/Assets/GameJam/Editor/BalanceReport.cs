@@ -62,6 +62,12 @@ namespace GameJam.EditorTools
         /// Which ammunition each map is designed to be played with, and at what level. Editor-only
         /// tuning data, so it lives with the tool that checks it rather than in a shipped config:
         /// it describes the intended ladder, and the game never reads it.
+        ///
+        /// There is deliberately no vehicle level here. A vehicle only multiplies the bullet's
+        /// authored damage, and against brick - the only material Cannon Ball can hurt - cannon_a's
+        /// x1.20 at level 2 crosses no hit point threshold that x1.00 does not (brick_1x1 hp 3 dies
+        /// to 3 and to 3.6; brick_2x1 hp 5 survives both and dies to 6 and to 7.2). Adding a column
+        /// for it would print the same number twice and read as a check that was being made.
         /// </summary>
         private sealed class Expectation
         {
@@ -79,7 +85,11 @@ namespace GameJam.EditorTools
         {
             new Expectation { mapId = "tutorial",      gateBulletId = RockId,   gateLevel = 1, rockLevel = 1, cannonLevel = 1 },
             new Expectation { mapId = "mission1_map1", gateBulletId = RockId,   gateLevel = 1, rockLevel = 1, cannonLevel = 1 },
-            new Expectation { mapId = "mission1_map2", gateBulletId = RockId,   gateLevel = 1, rockLevel = 1, cannonLevel = 1 },
+            // The upgrade gate. map2 is authored almost entirely out of brick_2x1 (hp 5), which
+            // Cannon Ball I cannot destroy in one direct hit and Cannon Ball II can, so the map is
+            // where the player is meant to spend the campaign's first upgrade rather than the
+            // first map they can win with what they were given.
+            new Expectation { mapId = "mission1_map2", gateBulletId = RockId,   gateLevel = 2, rockLevel = 2, cannonLevel = 1 },
             new Expectation { mapId = "mission1_map3", gateBulletId = RockId,   gateLevel = 1, rockLevel = 1, cannonLevel = 1 },
             new Expectation { mapId = "mission1_map4", gateBulletId = RockId,   gateLevel = 2, rockLevel = 2, cannonLevel = 1 },
             new Expectation { mapId = "mission1_map5", gateBulletId = RockId,   gateLevel = 2, rockLevel = 2, cannonLevel = 1 },
