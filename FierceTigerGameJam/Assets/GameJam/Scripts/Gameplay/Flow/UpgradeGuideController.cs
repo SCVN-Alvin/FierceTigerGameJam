@@ -317,7 +317,7 @@ namespace GameJam.Gameplay.Flow
             switch (lesson)
             {
                 case Lesson.Garage:
-                    caption = "OPEN THE\nGARAGE";
+                    caption = "THIS ONE NEEDS\nBETTER GEAR -\nOPEN THE GARAGE";
                     Button garage = flow.ShopButton;
                     return garage != null ? (RectTransform)garage.transform : null;
 
@@ -332,7 +332,7 @@ namespace GameJam.Gameplay.Flow
                     RectTransform tab = ResolveClosedTab(ResolveVehicleShop());
                     if (tab != null)
                     {
-                        caption = "OPEN THE\nCANNON TAB";
+                        caption = "OPEN THE\nVEHICLE TAB";
                         return tab;
                     }
 

@@ -815,6 +815,18 @@ namespace GameJam.Gameplay.Flow
         {
             if (ConsumeTutorialExit())
             {
+                // Straight into the first campaign map rather than out to the board. CONTINUE off
+                // the tutorial means "yes, carry on", and answering that with a menu to pick from
+                // makes a brand new player choose before they have anything to choose between.
+                //
+                // Named rather than walked to: the tutorial is not a MapConfig entry, so
+                // EnterNextMap's index walk can never find its successor. The board is still the
+                // fallback if the campaign has no such map.
+                if (mapSelection != null && mapSelection.SelectById(FirstCampaignMapId))
+                {
+                    return;
+                }
+
                 EnterMapSelection();
                 return;
             }
@@ -843,6 +855,9 @@ namespace GameJam.Gameplay.Flow
         /// answers so that a REPLAY of the tutorial map - an ordinary run of it, since the
         /// tutorial itself is over - cannot inherit the answer.
         /// </summary>
+        /// <summary>The campaign map the tutorial hands straight over to.</summary>
+        private const string FirstCampaignMapId = "mission1_map1";
+
         private bool ConsumeTutorialExit()
         {
             bool wasTutorial = clearedRunWasTutorial;

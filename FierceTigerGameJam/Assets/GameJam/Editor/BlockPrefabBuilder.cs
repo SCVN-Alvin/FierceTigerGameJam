@@ -227,6 +227,40 @@ namespace GameJam.EditorTools
                 MaxDamagePerImpact = 3f,
                 ShardChunks = new Vector3Int(3, 2, 2),
             },
+            // The tall pillar: one cell wide, two high, and the toughest thing in mission 1.
+            //
+            // Fourteen hit points is picked off the same threshold logic as the reinforced brick,
+            // one tier up. Cannon Ball II alone is 6, so it needs three shots; the same round off a
+            // level 2 cannon is 7.2 and needs two. The vehicle upgrade therefore still buys a real
+            // step, which a flat 12 would not have - 12 is two shots either way.
+            //
+            // The toughness matters more to the collapse than to the shooting: MaxDamagePerImpact
+            // caps a landing at 3, so a falling pillar needs five knocks to break where a plain 2x1
+            // needs two. That is what stops one lucky topple clearing the map, which is the actual
+            // complaint this block answers.
+            new BlockSpec
+            {
+                BlockName = "brick_1x2",
+                LegacyBlockName = "Block_Brick_1x2",
+                Category = "Brick",
+                ModelPath = "Assets/GameJam/FBX/Brick.fbx",
+                ShardNames = BrickBlockShardNames,
+                MaterialPathOverride = null,
+                LogicalSize = new Vector3Int(1, 2, 1),
+                Mass = 2.4f,
+                AllowCollisionCascade = true,
+                CollisionActivationVelocity = 1.75f,
+                SupportCascadeMode = KnockdownBlock.SupportCascadeMode.ColumnAbove,
+                SupportReleaseImpulse = 0.35f,
+                CountsTowardKnockdown = true,
+                MaxKnockHorizontalSpeed = 8.5f,
+                MaxKnockVerticalSpeed = 1.35f,
+                HitPoints = 14f,
+                MinimumImpactSpeed = 2.5f,
+                DamagePerImpactSpeed = 0.5f,
+                MaxDamagePerImpact = 3f,
+                ShardChunks = new Vector3Int(2, 3, 2),
+            },
         };
 
         [MenuItem("Tools/Smashdown/Build Block Prefabs")]
