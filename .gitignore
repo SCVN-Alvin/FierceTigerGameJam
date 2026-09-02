@@ -58,3 +58,7 @@ mono_crash.*.json
 
 # Agent worktrees, which live inside the repo but are not part of it
 .claude/worktrees/
+
+# Falcon's port pack: 21 MB of maps, textures and reference scripts staged for a
+# port that was decided against. Ignored so a merge cannot quietly bring it back.
+_port_pack/
