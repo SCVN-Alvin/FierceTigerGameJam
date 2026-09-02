@@ -23,3 +23,5 @@ MonoBehaviour:
     prefab: {fileID: 7269983298211945928, guid: 2a0c1d88634c24e949b0f2898b5f124e, type: 3}
   - type: brick_2x1_reinforced
     prefab: {fileID: 6201153173749401336, guid: f4f6d152997c7421b98621b738ed28f8, type: 3}
+  - type: brick_1x2
+    prefab: {fileID: 1181879109256196408, guid: 3f3faba2e579a40caaad4182ab77c5a7, type: 3}
