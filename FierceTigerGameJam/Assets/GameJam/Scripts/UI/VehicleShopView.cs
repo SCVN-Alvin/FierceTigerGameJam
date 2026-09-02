@@ -59,7 +59,12 @@ namespace GameJam.UI
                  + "that level, or no rig in the scene - the icon is what the player sees.")]
         [SerializeField] private ModelPreviewView preview3D;
 
-        private const string RowNamePrefix = "VehicleRow_";
+        /// <summary>
+        /// What every row this shop spawns is named, with the item's id after it. Public because
+        /// the upgrade guide has to find one row to point at, and one definition of the name beats
+        /// a copy of the string in an overlay that would never be told when it changed.
+        /// </summary>
+        public const string RowNamePrefix = "VehicleRow_";
 
         /// <summary>Nothing left to sell. Dimmed rather than hidden, so the row keeps its shape.</summary>
         private const string MaxCaption = "MAX";

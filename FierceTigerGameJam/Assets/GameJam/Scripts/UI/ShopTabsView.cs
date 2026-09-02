@@ -59,6 +59,25 @@ namespace GameJam.UI
         public int Current => current;
 
         /// <summary>
+        /// One tab's button, for an overlay that has to point at it. Null past the end, and null
+        /// for a tab whose button was never assigned, so a caller checks rather than assumes.
+        /// </summary>
+        public Button GetTabButton(int index)
+        {
+            return index >= 0 && index < tabs.Length ? tabs[index]?.button : null;
+        }
+
+        /// <summary>
+        /// One tab's panel. Handed out so a caller can work out WHICH tab holds the section it
+        /// cares about - by asking whether its view sits inside this - rather than hard-coding an
+        /// index that reorders the day someone adds a third section.
+        /// </summary>
+        public GameObject GetTabPanel(int index)
+        {
+            return index >= 0 && index < tabs.Length ? tabs[index]?.panel : null;
+        }
+
+        /// <summary>
         /// Shows one section. Out-of-range indices are clamped rather than refused: the caller
         /// is usually a menu button, and a shop that opens on the wrong tab is better than a
         /// shop that opens on none.

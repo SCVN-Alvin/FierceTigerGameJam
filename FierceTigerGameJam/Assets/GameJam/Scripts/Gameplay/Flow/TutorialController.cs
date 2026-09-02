@@ -51,6 +51,16 @@ namespace GameJam.Gameplay.Flow
         /// </summary>
         public bool IsStarting { get; private set; }
 
+        /// <summary>
+        /// True while the tutorial's own run is the one in progress.
+        ///
+        /// Read by <see cref="GameFlowController.HandleRunFinished"/> at the TOP of that method,
+        /// before it raises RunFinished - which is what clears this again, one frame's worth of
+        /// call stack later, in <see cref="HandleRunFinished"/> below. Reading it any later would
+        /// depend on the order the two subscribers happen to be called in.
+        /// </summary>
+        public bool IsRunning => running;
+
         /// <summary>Set for the length of the tutorial run, so a normal run cannot claim its result.</summary>
         private bool running;
 

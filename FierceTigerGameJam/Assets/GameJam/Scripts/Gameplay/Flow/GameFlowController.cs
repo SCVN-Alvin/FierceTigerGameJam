@@ -192,7 +192,26 @@ namespace GameJam.Gameplay.Flow
         /// <summary>True while a structure is up, so settings can offer a way out of it.</summary>
         public bool IsInRun => State == GameState.Playing || State == GameState.Result;
 
+        /// <summary>
+        /// The gold, the catalogue and the loadouts, for the overlays that have to know what is
+        /// left to buy. Exposed read-only rather than given its own scene reference: the guide
+        /// that reads it is created at runtime, and one more field in the inspector is one more
+        /// field that can be left empty.
+        /// </summary>
+        public EconomyService Economy => economy;
+
+        /// <summary>The bottom bar's garage button, for an overlay that has to point at it.</summary>
+        public Button ShopButton => shopButton;
+
         private GameObject selectionRoot;
+
+        /// <summary>
+        /// True while the cleared screen showing is the tutorial's. The tutorial map is
+        /// standalone - it is not in MapConfig - so "the next map" falls off the end of the
+        /// catalogue and <see cref="EnterNextMap"/> would answer with the main menu. See
+        /// <see cref="HandleClearedContinuePressed"/>.
+        /// </summary>
+        private bool clearedRunWasTutorial;
 
         private void Awake()
         {
@@ -239,8 +258,8 @@ namespace GameJam.Gameplay.Flow
             Wire(closeSettingsButton, CloseSettings);
             Wire(settingsMainMenuButton, AbandonRun);
             Wire(clearedReplayButton, RetryMap);
-            Wire(clearedContinueButton, EnterNextMap);
-            Wire(clearedCloseButton, ReturnToMainMenu);
+            Wire(clearedContinueButton, HandleClearedContinuePressed);
+            Wire(clearedCloseButton, HandleClearedClosePressed);
             Wire(failContinueButton, HandleFailContinuePressed);
             Wire(failCloseButton, ReturnToMainMenu);
         }
@@ -268,8 +287,8 @@ namespace GameJam.Gameplay.Flow
             Unwire(closeSettingsButton, CloseSettings);
             Unwire(settingsMainMenuButton, AbandonRun);
             Unwire(clearedReplayButton, RetryMap);
-            Unwire(clearedContinueButton, EnterNextMap);
-            Unwire(clearedCloseButton, ReturnToMainMenu);
+            Unwire(clearedContinueButton, HandleClearedContinuePressed);
+            Unwire(clearedCloseButton, HandleClearedClosePressed);
             Unwire(failContinueButton, HandleFailContinuePressed);
             Unwire(failCloseButton, ReturnToMainMenu);
         }
@@ -755,6 +774,61 @@ namespace GameJam.Gameplay.Flow
             return bullet != null ? bullet.Id : null;
         }
 
+        /// <summary>
+        /// CONTINUE on the cleared screen. Normally the next map in the catalogue; after the
+        /// TUTORIAL run it is the mission board instead.
+        ///
+        /// The tutorial map is standalone - deliberately not in MapConfig - so IndexOf finds it
+        /// nowhere, "next" comes out as index 0 and <see cref="EnterNextMap"/> answers with the
+        /// main menu, where the player then has to tap TAP TO PLAY to reach the board they were
+        /// always going to. The board is where the team wants them, so they go straight there.
+        ///
+        /// The cleared screen is still shown first, and this is only what its buttons do
+        /// afterwards: the tutorial's 100 gold is paid by the normal reward pipeline and counted
+        /// up on that screen, and skipping it to reach the board a second sooner would be paying
+        /// the prize where nobody sees it.
+        ///
+        /// A normal map's CONTINUE is untouched - the branch is on the tutorial flag alone.
+        /// </summary>
+        private void HandleClearedContinuePressed()
+        {
+            if (ConsumeTutorialExit())
+            {
+                EnterMapSelection();
+                return;
+            }
+
+            EnterNextMap();
+        }
+
+        /// <summary>
+        /// The X on the cleared screen. The main menu as before, except after the tutorial, where
+        /// it lands on the mission board for the same reason CONTINUE does: both ways off that
+        /// screen should reach the next level, not a menu asking to be tapped through.
+        /// </summary>
+        private void HandleClearedClosePressed()
+        {
+            if (ConsumeTutorialExit())
+            {
+                EnterMapSelection();
+                return;
+            }
+
+            ReturnToMainMenu();
+        }
+
+        /// <summary>
+        /// Whether the cleared screen being left is the tutorial's, clearing the flag as it
+        /// answers so that a REPLAY of the tutorial map - an ordinary run of it, since the
+        /// tutorial itself is over - cannot inherit the answer.
+        /// </summary>
+        private bool ConsumeTutorialExit()
+        {
+            bool wasTutorial = clearedRunWasTutorial;
+            clearedRunWasTutorial = false;
+            return wasTutorial;
+        }
+
         /// <summary>Leaves a run early from the settings overlay.</summary>
         public void AbandonRun()
         {
@@ -795,6 +869,13 @@ namespace GameJam.Gameplay.Flow
 
         private void HandleRunFinished(LevelRunController.RunResult result)
         {
+            // Read here, at the top, and not once RunFinished has been raised: the tutorial drops
+            // its own flag inside that event, and which of the two subscribers runs first is not
+            // something this should depend on. Only a PASS is remembered - a failed tutorial shows
+            // the fail screen, whose buttons this flag has nothing to do with, and the tutorial
+            // will simply run again next launch.
+            clearedRunWasTutorial = result.Passed && tutorial != null && tutorial.IsRunning;
+
             // The structure is left standing behind the result: the player should see what they
             // did to it while they read what it was worth.
             //
@@ -821,6 +902,11 @@ namespace GameJam.Gameplay.Flow
             if (!IsPlayState(state))
             {
                 TearDownRun();
+
+                // Whatever else took the player off the result screen - settings' MAIN MENU, the
+                // fail screen's X - has answered the question this was holding, so it must not be
+                // waiting the next time a cleared screen goes up.
+                clearedRunWasTutorial = false;
             }
 
             CloseSettings();
