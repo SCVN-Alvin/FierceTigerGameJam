@@ -18,7 +18,7 @@ MonoBehaviour:
   - displayName: Rock I
     damage:
     - materialId: glass
-      blockDamage: 5
+      blockDamage: 3
       wallDamage: 5
     - materialId: brick
       blockDamage: 3
@@ -26,15 +26,15 @@ MonoBehaviour:
     - materialId: concrete
       blockDamage: 0
       wallDamage: 0
-    splashShare: 0.3
+    splashShare: 0.35
     icon: {fileID: 21300000, guid: 1a91b950011ed42c892d9f4eae97ba31, type: 3}
   - displayName: Rock II
     damage:
     - materialId: glass
-      blockDamage: 6
+      blockDamage: 4
       wallDamage: 6
     - materialId: brick
-      blockDamage: 4
+      blockDamage: 6
       wallDamage: 3
     - materialId: concrete
       blockDamage: 0
