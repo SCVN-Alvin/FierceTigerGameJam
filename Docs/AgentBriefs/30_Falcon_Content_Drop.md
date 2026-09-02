@@ -801,6 +801,64 @@ Falcon's machine, and in the `Falcon/UpdateMapData` branch history.
   the charge (consumed, and in PrepareForRun). A FUTURE paid ads/shop charge calls
   ArmShotBoost(rounds) without the flag and keeps the each-round-pays rule from 02k.
 
+- **2026-09-03g** Tutorial hands over to LEVEL 1 directly (Falcon: "sau tutorial no nhay
+  sang menu thi hoi roi"). `GameFlowController.EnterNextMap` (the cleared screen's Continue)
+  special-cases the tutorial map: it is not a campaign entry, so the existing index+1 walk
+  returned <= 0 and fell into ReturnToMainMenu - now it SelectById's mission1_map1, taking
+  exactly the same select-driven path every other next-level press takes. Menu fallback only
+  if that select fails. Ids are consts TutorialMapId / FirstCampaignMapId at the method.
+
+- **2026-09-03h** TUTORIAL 3: the guided first upgrade (Falcon: after the first fail, walk
+  the user out to the menu, into the shop, up to cannon level 2 - everything else dark and
+  dead like the tutorial, only the lit controls tappable). NEW
+  `Scripts/Gameplay/Flow/UpgradeGuideController.cs` (guid 9f2b7c1de4a648c2a5d0b8e3f6c74a19,
+  scene component 1500100016 on GameFlowController):
+  - Mechanism: FOUR raycast-blocking strips built around a bright hole - outside taps die on
+    the strips, the control inside the hole is the real button untouched (no forwarding, no
+    fakes). Hole + tutorial hand (bobbing) + caption re-laid every frame; steps derive from
+    flow.State, so no step machine to soft-lock: Result -> fail screen's CloseButton ("TAP
+    TO GO BACK"), MainMenu -> flow.ShopButtonRect (new accessor; "OPEN THE SHOP"), Shop ->
+    the whole garage panel ("UPGRADE YOUR CANNON"); every other state hides the overlay.
+  - Engages on a fail screen when: main tutorial done, starter cannon still level 1, wallet
+    already covers the level-2 price (a broke fail waits for a richer one). Completes on
+    `VehicleLoadout.LevelChanged` reaching level 2 -> saves
+    `UserTutorialData.upgradeGuideDone` (new field), never returns; a save already past
+    level 1 marks itself done. Reset/Tutorial re-arms it with the rest.
+  - v2 SAME DAY, four Falcon notes from the first run: (1) hand was upside down - the art
+    points DOWN by nature, so under a hole it now rotates 180 to point up; (2) hard edges -
+    the tutorial Filter sprite is laid over the hole (2.6x span, raycast off) to feather the
+    strip borders; (3+4) the shop step split into TWO focused stops using the garage prefab's
+    real names: "VehicleTypeTab" while the vehicle list is closed ("OPEN VEHICLES"), then the
+    first row under "Rows" -> its "Buy" button ("UPGRADE YOUR CANNON"), with graceful
+    fallbacks row -> panel if the prefab renames. Plus: caption/hand can never be clipped at
+    any screen size - low holes flip the hand+caption group ABOVE the hole (hand unrotated,
+    art already points down), and both are clamped into the canvas horizontally for corner
+    targets like the fail X.
+  - v3, Falcon round 2 (finger off-target on the fail X and the 500 button; edges still hard;
+    finger must sit BESIDE the control, never on it): the hand now STANDS diagonally toward
+    screen centre with its fingertip kissing the hole's rim, and is AIM-ROTATED at the hole
+    centre from wherever the on-screen clamps put it (art's natural direction is down ->
+    aim angle +90), so clamping can no longer point it at nothing. Feather note: the scene
+    gained the dimSprite field in this same batch - the soft edge only appears after the
+    scene is REOPENED (Don't Save); screenshots taken before the reload show bare strips.
+  - v4, Falcon round 3 (X finger not straight under, garage/tab fingers drifted, 500 finger
+    aimed away): the hand art was MEASURED - 324x326, fingertip at (41.4% across, TOP edge),
+    i.e. the sprite naturally points UP and its tip is off-centre, which was the root of every
+    drift. Now: pivot ON the tip (0.414, 1), the tip stands straight on the hole's vertical
+    axis touching the rim (diagonal lean removed), on-screen clamps respect the asymmetric
+    pivot, and the aim formula is angle-90 for the up-pointing art (v3's +90 was the away-
+    pointing finger on the 500 button). Bob now nods the tip toward the control.
+  - v5, Falcon round 4 ("wtfff" - v4 hands tilted wrong at all four stops): the v4 measurement
+    misread the art. Icon_ImageIcon_Tutorial_Hand.png is NOT a pointing finger - it is the
+    pack's GAUNTLET, and its armored index finger points DOWN-RIGHT (tip at 95.4% across,
+    32% up; axis about -24 deg). The pack's own preview (Layer Lab/GUI Pro-CasualGame/
+    Preview/Tutorial_Hand.png) shows the intended use: hand ABOVE-LEFT of the button,
+    UNROTATED, tip on the target. v5 copies that exactly: rotation removed for good
+    (localEulerAngles = zero), pivot moved to the real tip (0.954, 0.32), tip rests on the
+    hole's upper rim slightly left of centre and taps along the finger's own -24 deg axis,
+    clamps redone for the new pivot, caption goes under the hole (above the hand's body only
+    when the hole hugs the bottom edge). No more per-stop cases - one layout everywhere.
+
 ---
 
 ## Audit appendix (2026-09-01g) — evidence, file:line

@@ -461,6 +461,9 @@ namespace GameJam.Gameplay.Flow
             Enter(GameState.IapShop);
         }
 
+        /// <summary>The menu's shop button, for UpgradeGuideController's spotlight.</summary>
+        public RectTransform ShopButtonRect => shopButton != null ? shopButton.transform as RectTransform : null;
+
         public void EnterShop()
         {
             Enter(GameState.Shop);
@@ -606,10 +609,27 @@ namespace GameJam.Gameplay.Flow
         /// takes; there is no second way into a run. Past the last map there is nothing to
         /// continue to, so the menu it is.
         /// </summary>
+        /// <summary>The campaign map the tutorial hands over to, by id.</summary>
+        private const string TutorialMapId = "tutorial";
+        private const string FirstCampaignMapId = "mission1_map1";
+
         [ContextMenu("Next Map")]
         public void EnterNextMap()
         {
             MapConfig config = mapSelection != null ? mapSelection.Config : null;
+
+            // Straight from the finished tutorial into LEVEL 1 (Falcon 2026-09-03: dropping the
+            // brand-new player back at the menu right after the lesson read as getting lost).
+            // The tutorial is not a campaign entry, so the index walk below can never find its
+            // successor - name it instead, and only fall back to the menu if the select fails.
+            if (config != null && mapSelection.HasSelection
+                && mapSelection.Selected != null
+                && mapSelection.Selected.Id == TutorialMapId
+                && mapSelection.SelectById(FirstCampaignMapId))
+            {
+                return;
+            }
+
             int next = config != null && mapSelection.HasSelection ? config.IndexOf(mapSelection.Selected) + 1 : -1;
 
             if (config == null || next <= 0 || next >= config.Count)

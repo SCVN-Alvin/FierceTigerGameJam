@@ -30,5 +30,8 @@ namespace GameJam.Data
 
         /// <summary>Same for "1 FREE Triple Shoot" (first level after a cannon reaches level 3).</summary>
         public bool tripleShotIntroDone;
+
+        /// <summary>The guided first-upgrade walk (fail -> menu -> shop -> upgrade) has finished.</summary>
+        public bool upgradeGuideDone;
     }
 }
