@@ -55,6 +55,26 @@ namespace GameJam.Gameplay.Flow
         [Tooltip("The overlay shows only on this map, once.")]
         [SerializeField] private string targetMapId = "mission1_map1";
 
+        /// <summary>
+        /// The tutorial art, borrowed by <see cref="UpgradeGuideController"/> - which is created
+        /// at runtime and so has no inspector of its own to be given the same four assets in.
+        ///
+        /// Read-only, and read once: the guide takes copies of the references and never writes
+        /// back, so this cannot change what the drag lesson looks like. A serialized field left
+        /// unassigned in this project is a live bug (see the note on GameFlowController's
+        /// fireController), and four more of them on a second component nobody remembers to wire
+        /// is exactly that bug waiting to happen.
+        /// </summary>
+        public RectTransform HintParent => hintParent;
+
+        public Sprite HandSprite => handSprite;
+
+        public Sprite DimSprite => dimSprite;
+
+        public Sprite PanelSprite => panelSprite;
+
+        public TMP_FontAsset LabelFont => labelFont;
+
         private const float DismissDragPixels = 60f;
 
         private RectTransform hintRoot;
@@ -204,98 +224,33 @@ namespace GameJam.Gameplay.Flow
                 return;
             }
 
-            GameObject rootGo = new GameObject("DragHint", typeof(RectTransform), typeof(CanvasGroup));
-            hintRoot = (RectTransform)rootGo.transform;
-            hintRoot.SetParent(hintParent, false);
-            hintRoot.anchorMin = Vector2.zero;
-            hintRoot.anchorMax = Vector2.one;
-            hintRoot.offsetMin = Vector2.zero;
-            hintRoot.offsetMax = Vector2.zero;
-            hintRoot.SetAsLastSibling();
-            rootGo.GetComponent<CanvasGroup>().blocksRaycasts = false;
+            // Built from the shared pieces in TutorialOverlay since the upgrade guide wanted the
+            // same hole and hand. Every value this lesson depends on - which anchor each piece
+            // sits at, and what the words say - is still decided right here; the helper only
+            // knows how to make a dim, a panel and a hand.
+            hintRoot = TutorialOverlay.CreateRoot(hintParent, "DragHint", blocksRaycasts: false);
 
             // The tutorial's own dark filter, oversized so its transparent middle lands on the
             // board and the edges run past the screen: dim everywhere, spotlight on the lesson.
+            // Its pivot is the hole, so anchoring it is what puts the hole over the board.
             if (dimSprite != null)
             {
-                GameObject dimGo = new GameObject("Dim", typeof(RectTransform));
-                RectTransform dimRect = (RectTransform)dimGo.transform;
-                dimRect.SetParent(hintRoot, false);
+                RectTransform dimRect = TutorialOverlay.CreateSpotlight(hintRoot, dimSprite);
                 dimRect.anchorMin = dimRect.anchorMax = new Vector2(0.5f, 0.63f);
-                dimRect.pivot = new Vector2(0.5f, 0.48f);
-                dimRect.anchoredPosition = Vector2.zero;
-                dimRect.sizeDelta = new Vector2(1400f, 2300f);
-                Image dim = dimGo.AddComponent<Image>();
-                dim.sprite = dimSprite;
-                dim.raycastTarget = false;                  // the drag must pass through
             }
 
             // The words live in the same rounded panel the first tutorial speaks from, just
             // below the board.
-            GameObject panelGo = new GameObject("Panel", typeof(RectTransform));
-            RectTransform panelRect = (RectTransform)panelGo.transform;
-            panelRect.SetParent(hintRoot, false);
+            RectTransform panelRect = TutorialOverlay.CreatePanel(hintRoot, panelSprite);
             panelRect.anchorMin = panelRect.anchorMax = new Vector2(0.5f, 0.42f);
-            panelRect.pivot = new Vector2(0.5f, 0.5f);
-            panelRect.anchoredPosition = Vector2.zero;
-            panelRect.sizeDelta = new Vector2(560f, 246f);
-            if (panelSprite != null)
-            {
-                Image panel = panelGo.AddComponent<Image>();
-                panel.sprite = panelSprite;
-                panel.preserveAspect = true;
-                panel.raycastTarget = false;
 
-                // The patch over the baked "Tap to shoot" (see the class comment). Offsets keep
-                // it inside the art's blue rim; colour sampled from the art's paper.
-                GameObject coverGo = new GameObject("Cover", typeof(RectTransform));
-                RectTransform coverRect = (RectTransform)coverGo.transform;
-                coverRect.SetParent(panelRect, false);
-                coverRect.anchorMin = Vector2.zero;
-                coverRect.anchorMax = Vector2.one;
-                coverRect.offsetMin = new Vector2(70f, 55f);
-                coverRect.offsetMax = new Vector2(-70f, -55f);
-                Image cover = coverGo.AddComponent<Image>();
-                cover.color = new Color(0.984f, 0.973f, 0.937f);
-                cover.raycastTarget = false;
-            }
-
-            GameObject labelGo = new GameObject("Label", typeof(RectTransform));
-            RectTransform labelRect = (RectTransform)labelGo.transform;
-            labelRect.SetParent(panelRect, false);
-            labelRect.anchorMin = Vector2.zero;
-            labelRect.anchorMax = Vector2.one;
-            labelRect.offsetMin = new Vector2(30f, 20f);
-            labelRect.offsetMax = new Vector2(-30f, -20f);
-            TMP_Text label = labelGo.AddComponent<TextMeshProUGUI>();
-            if (labelFont != null)
-            {
-                label.font = labelFont;
-            }
-
+            TMP_Text label = TutorialOverlay.CreateLabel(panelRect, labelFont, panelSprite != null);
             label.text = "HOLD & DRAG\nTO ROTATE";
-            label.fontSize = 44f;
-            label.fontStyle = FontStyles.Bold;
-            label.color = panelSprite != null ? new Color(0.13f, 0.25f, 0.55f) : Color.white;
-            label.alignment = TextAlignmentOptions.Center;
-            label.raycastTarget = false;
 
             // The hand demonstrates ON the structure, in the spotlight, not off in a caption.
-            GameObject handGo = new GameObject("Hand", typeof(RectTransform));
-            hand = (RectTransform)handGo.transform;
-            hand.SetParent(hintRoot, false);
+            handImage = TutorialOverlay.CreateHand(hintRoot, handSprite);
+            hand = handImage.rectTransform;
             hand.anchorMin = hand.anchorMax = new Vector2(0.5f, 0.63f);
-            hand.pivot = new Vector2(0.5f, 0.5f);
-            hand.anchoredPosition = Vector2.zero;
-            hand.sizeDelta = new Vector2(140f, 140f);
-            handImage = handGo.AddComponent<Image>();
-            if (handSprite != null)
-            {
-                handImage.sprite = handSprite;
-                handImage.preserveAspect = true;
-            }
-
-            handImage.raycastTarget = false;
         }
 
         /// <summary>
@@ -334,12 +289,7 @@ namespace GameJam.Gameplay.Flow
 
         private void SetHandAlpha(float alpha)
         {
-            if (handImage != null)
-            {
-                Color color = handImage.color;
-                color.a = alpha;
-                handImage.color = color;
-            }
+            TutorialOverlay.SetAlpha(handImage, alpha);
         }
     }
 }
