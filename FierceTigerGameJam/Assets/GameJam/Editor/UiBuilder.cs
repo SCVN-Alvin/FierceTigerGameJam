@@ -29,6 +29,9 @@ namespace GameJam.EditorTools
         private const string HudName = "RunHud";
         private const string GoldName = "GoldPanel";
 
+        /// <summary>Obsolete HUD readouts, cleared from any prefab still carrying them.</summary>
+        private static readonly string[] RetiredHudChildren = { "ClearPercent", "RemainingBullets", "Breakdown" };
+
         private static readonly Color PanelColor = new Color(0.06f, 0.08f, 0.12f, 0.85f);
         private static readonly Color AccentColor = new Color(0.35f, 0.75f, 1f);
 
@@ -87,16 +90,37 @@ namespace GameJam.EditorTools
             // thing the player is aiming at.
             RectTransform root = EnsureRect(HudName, canvas, Vector2.zero, Vector2.one);
 
-            TMP_Text percent = EnsureLabel("ClearPercent", root, "0%", 56, TextAlignmentOptions.Center,
-                new Vector2(0.32f, 0.885f), new Vector2(0.68f, 0.962f));
-
-            RunHudView view = Ensure<RunHudView>(root.gameObject);
-            SerializedObject serialized = new SerializedObject(view);
-            SetIfEmpty(serialized, "progressTracker", tracker);
-            SetIfEmpty(serialized, "clearPercentLabel", percent);
-            serialized.ApplyModifiedPropertiesWithoutUndo();
+            RemoveRetiredHudChildren(root);
 
             return root.gameObject;
+        }
+
+        /// <summary>
+        /// The readouts the HUD no longer carries: the clear percentage, the remaining-bullet text
+        /// and an empty Breakdown holder. Deleted rather than hidden, and cleared on every run so a
+        /// HUD built before they were retired sheds them too - a hidden object is still something
+        /// the next reader has to work out the purpose of.
+        ///
+        /// The ball counter stays: it is the one readout still driven by anything.
+        /// </summary>
+        private static void RemoveRetiredHudChildren(RectTransform root)
+        {
+            for (int i = 0; i < RetiredHudChildren.Length; i++)
+            {
+                Transform child = root.Find(RetiredHudChildren[i]);
+                if (child != null)
+                {
+                    Object.DestroyImmediate(child.gameObject);
+                }
+            }
+
+            // The component went with the label: RunHudView existed only to write that percentage,
+            // so with the label gone it had nothing left to do.
+            RunHudView stale = root.GetComponent<RunHudView>();
+            if (stale != null)
+            {
+                Object.DestroyImmediate(stale);
+            }
         }
 
         private static void WireFlow(

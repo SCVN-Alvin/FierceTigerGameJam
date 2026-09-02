@@ -11,6 +11,15 @@ namespace GameJam.UI
     /// itself on a total clear, and the pass mark matters when the result is judged rather than
     /// while the player is aiming. Bullets are the counter's job.
     /// </summary>
+    /// <summary>
+    /// Obsolete. This existed only to write the clear percentage into the HUD, and that readout has
+    /// been retired along with the remaining-bullet text and the Breakdown holder.
+    ///
+    /// Kept until every RunHud prefab has been rebuilt. Deleting the class while a prefab still
+    /// carries the component would leave a missing-script husk on it - the same trap the wall
+    /// removal hit, where deleting BreakableWall stranded twelve baked maps. UiBuilder strips the
+    /// component on its next run; once that has happened everywhere, this file can go.
+    /// </summary>
     public sealed class RunHudView : MonoBehaviour
     {
         [SerializeField] private LevelProgressTracker progressTracker;
