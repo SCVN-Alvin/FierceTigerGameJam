@@ -160,7 +160,10 @@ namespace GameJam.Gameplay.Flow
         /// </summary>
         private bool ShouldOffer()
         {
-            if (flow == null)
+            // No economy is a wiring problem, and the answer to one is to stay off rather than to
+            // decide there is nothing left to teach: deciding that writes upgradeGuideDone, and
+            // that flag never comes back. A guide that quietly did not run is recoverable.
+            if (flow == null || flow.Economy == null)
             {
                 return false;
             }
@@ -224,11 +227,14 @@ namespace GameJam.Gameplay.Flow
                 }
             }
 
+            // A catalogue with nothing equipped is NOT "satisfied": that would end the guide for
+            // good over a missing asset. It stays unsatisfied, the lesson finds nothing to point
+            // at, and the overlay simply never appears. ShouldOffer has already ruled out a null
+            // economy, so this is the only case left.
             EconomyService economy = flow.Economy;
             VehicleDefinition vehicle = SelectedVehicle();
-            return economy == null
-                   || vehicle == null
-                   || UserData.Vehicles.GetLevel(vehicle.Id) >= economy.GetVehicleMaxLevel(vehicle);
+            return vehicle != null
+                   && UserData.Vehicles.GetLevel(vehicle.Id) >= economy.GetVehicleMaxLevel(vehicle);
         }
 
         /// <summary>The same rule for ammunition; see <see cref="VehicleLessonSatisfied"/>.</summary>
@@ -244,9 +250,8 @@ namespace GameJam.Gameplay.Flow
 
             EconomyService economy = flow.Economy;
             BulletDefinition bullet = SelectedBullet();
-            return economy == null
-                   || bullet == null
-                   || UserData.Bullets.GetLevel(bullet.Id) >= economy.GetMaxLevel(bullet);
+            return bullet != null
+                   && UserData.Bullets.GetLevel(bullet.Id) >= economy.GetMaxLevel(bullet);
         }
 
         private VehicleDefinition SelectedVehicle()
