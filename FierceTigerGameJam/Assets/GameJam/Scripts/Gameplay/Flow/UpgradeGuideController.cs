@@ -66,12 +66,6 @@ namespace GameJam.Gameplay.Flow
         /// <summary>How far outside the control the gap reaches, so a tap on its very edge lands.</summary>
         private const float HoleMargin = 14f;
 
-        /// <summary>
-        /// How much wider than the gap the feather is drawn. Its art is mostly falloff, so it has
-        /// to overhang generously for the soft part to cover where the strips meet.
-        /// </summary>
-        private const float FeatherSpread = 2.6f;
-
         /// <summary>Matches the backdrop the menus already dim to, so the two never disagree.</summary>
         private static readonly Color DimColor = new Color(0f, 0f, 0f, 0.78f);
 
@@ -96,7 +90,6 @@ namespace GameJam.Gameplay.Flow
 
         private RectTransform guideRoot;
         private RectTransform[] blockStrips;
-        private RectTransform featherRect;
         private RectTransform panelRect;
         private TMP_Text label;
         private Image handImage;
@@ -535,6 +528,10 @@ namespace GameJam.Gameplay.Flow
                 label.text = caption;
             }
 
+            // The menu's pulsing TAP TO PLAY sits mid-screen and invites the one tap the lesson is
+            // steering away from, so it goes away while the lesson is up.
+            flow.SetTapToPlayVisible(false);
+
             LayoutAroundTarget(target, out Vector2 holeMin, out Vector2 holeMax);
             PlaceHand(holeMin, holeMax);
             PlaceCaption(holeMin, holeMax);
@@ -558,13 +555,6 @@ namespace GameJam.Gameplay.Flow
             max = ToGuideSpace(corners[2]) + new Vector2(HoleMargin, HoleMargin);
 
             TutorialOverlay.LayoutStripsAround(blockStrips, canvasRect, min, max);
-
-            if (featherRect != null)
-            {
-                float span = Mathf.Max(max.x - min.x, max.y - min.y) * FeatherSpread;
-                featherRect.anchoredPosition = (min + max) * 0.5f;
-                featherRect.sizeDelta = new Vector2(span, span);
-            }
         }
 
         /// <summary>A world point in the overlay's own coordinates, via the screen.</summary>
@@ -685,11 +675,23 @@ namespace GameJam.Gameplay.Flow
             UserData.Save();
         }
 
+        /// <summary>
+        /// Puts the lesson away and gives the menu its invitation back.
+        ///
+        /// Every way out runs through here - the frame the lesson stops applying, the component
+        /// being disabled, and <see cref="Finish"/> - which is the point: TAP TO PLAY must not be
+        /// left hidden by a lesson that ended, whichever way it ended.
+        /// </summary>
         private void Hide()
         {
             if (guideRoot != null && guideRoot.gameObject.activeSelf)
             {
                 guideRoot.gameObject.SetActive(false);
+            }
+
+            if (flow != null)
+            {
+                flow.SetTapToPlayVisible(true);
             }
         }
 
@@ -719,17 +721,16 @@ namespace GameJam.Gameplay.Flow
 
             canvas = parent.GetComponentInParent<Canvas>();
 
-            Sprite dimSprite = dragHint != null ? dragHint.DimSprite : null;
             Sprite handSprite = dragHint != null ? dragHint.HandSprite : null;
             Sprite panelSprite = dragHint != null ? dragHint.PanelSprite : null;
             TMP_FontAsset font = dragHint != null ? dragHint.LabelFont : null;
 
-            if (dimSprite == null || handSprite == null)
+            if (handSprite == null)
             {
                 // Still built: a caption and a hand with no hole still says where to go, and a
                 // lesson that silently did nothing would be blamed on the flag instead of on the
                 // wiring that actually caused it.
-                WarnAboutArtOnce("the drag hint has no dim or hand sprite to borrow");
+                WarnAboutArtOnce("the drag hint has no hand sprite to borrow");
             }
 
             // blocksRaycasts TRUE, which reads backwards until you know what the flag does: a
@@ -741,7 +742,6 @@ namespace GameJam.Gameplay.Flow
             guideRoot = TutorialOverlay.CreateRoot(parent, "UpgradeGuide", blocksRaycasts: true);
 
             blockStrips = TutorialOverlay.CreateBlockingStrips(guideRoot, DimColor);
-            featherRect = TutorialOverlay.CreateFeather(guideRoot, dimSprite);
 
             panelRect = TutorialOverlay.CreatePanel(guideRoot, panelSprite);
             panelRect.anchorMin = panelRect.anchorMax = new Vector2(0.5f, 0.5f);

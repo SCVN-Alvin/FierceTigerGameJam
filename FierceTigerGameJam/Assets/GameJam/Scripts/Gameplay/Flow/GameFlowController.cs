@@ -203,6 +203,27 @@ namespace GameJam.Gameplay.Flow
         /// <summary>The bottom bar's garage button, for an overlay that has to point at it.</summary>
         public Button ShopButton => shopButton;
 
+        /// <summary>The menu's pulsing TAP TO PLAY words, kept so a lesson can put them away.</summary>
+        private RectTransform tapToPlayLabel;
+
+        /// <summary>
+        /// Shows or hides the menu's TAP TO PLAY invitation.
+        ///
+        /// A guided lesson needs it gone: the words sit in the middle of the menu, they pulse to
+        /// draw the eye, and they invite exactly the tap the lesson is trying to steer somewhere
+        /// else. The pulse coroutine keeps running against the hidden transform, which costs
+        /// nothing and means the breathing resumes mid-stride when it comes back.
+        /// </summary>
+        public void SetTapToPlayVisible(bool visible)
+        {
+            if (tapToPlayLabel == null || tapToPlayLabel.gameObject.activeSelf == visible)
+            {
+                return;
+            }
+
+            tapToPlayLabel.gameObject.SetActive(visible);
+        }
+
         private GameObject selectionRoot;
 
         /// <summary>
@@ -388,12 +409,12 @@ namespace GameJam.Gameplay.Flow
 
                 if (mainMenuRoot != null)
                 {
-                    RectTransform menuLabel = MakeTapLabel(mainMenuRoot.transform, "TapToPlayLabel",
+                    tapToPlayLabel = MakeTapLabel(mainMenuRoot.transform, "TapToPlayLabel",
                         new Vector2(0.5f, 0.22f), new Vector2(0.5f, 0.5f), Vector2.zero, 56f,
                         null);
 
                     // A soft breathing pop so the words read as an invitation, not a caption.
-                    StartCoroutine(PulseTapLabel(menuLabel));
+                    StartCoroutine(PulseTapLabel(tapToPlayLabel));
                 }
             }
         }

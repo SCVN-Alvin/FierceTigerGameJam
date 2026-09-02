@@ -132,36 +132,6 @@ namespace GameJam.Gameplay.Flow
         }
 
         /// <summary>
-        /// The soft-edged filter laid over the gap the strips leave, purely to hide their corners.
-        ///
-        /// Four rectangles meeting around a hole read as four rectangles; the tutorial's filter art
-        /// has a feathered transparent middle, so scaling it over the gap turns the join into a
-        /// falloff. Visual only - it never takes a raycast, because the whole point of the gap is
-        /// that the control inside it is still pressable.
-        /// </summary>
-        public static RectTransform CreateFeather(RectTransform root, Sprite dimSprite)
-        {
-            if (dimSprite == null)
-            {
-                // No art is survivable: the strips alone still fence the control off, they just
-                // meet at hard corners. A missing sprite must not cost the lesson its blocking.
-                return null;
-            }
-
-            GameObject featherGo = new GameObject("Feather", typeof(RectTransform));
-            RectTransform feather = (RectTransform)featherGo.transform;
-            feather.SetParent(root, false);
-            feather.anchorMin = new Vector2(0.5f, 0.5f);
-            feather.anchorMax = new Vector2(0.5f, 0.5f);
-            feather.pivot = new Vector2(0.5f, 0.5f);
-
-            Image featherImage = featherGo.AddComponent<Image>();
-            featherImage.sprite = dimSprite;
-            featherImage.raycastTarget = false;
-            return feather;
-        }
-
-        /// <summary>
         /// Lays the four strips around a rect, leaving it uncovered. Coordinates are in the
         /// overlay root's own space, and a strip that comes out empty is switched off rather than
         /// left as a zero-sized raycast target.
