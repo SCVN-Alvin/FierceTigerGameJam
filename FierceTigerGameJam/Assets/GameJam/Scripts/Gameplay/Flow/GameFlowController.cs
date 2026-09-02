@@ -337,8 +337,9 @@ namespace GameJam.Gameplay.Flow
         /// The menu asks for a tap, not a button: the PLAY pill stretches invisible over the
         /// whole menu (first sibling, so the bottom bar's buttons still raycast in front), its
         /// old labels are put away, and a fresh TAP TO PLAY stands in the middle of the lawn.
-        /// The shop hangs the same words just under its blue panel - the label itself is the
-        /// button, nothing is added inside the panel. Runtime-built stopgap UI throughout.
+        /// The menu is the only screen that gets these words: the garage deliberately hangs no
+        /// tap label of its own, because it must not offer a route into mission select.
+        /// Runtime-built stopgap UI throughout.
         /// </summary>
         private void InstallTapToPlay()
         {
@@ -374,28 +375,6 @@ namespace GameJam.Gameplay.Flow
 
                     // A soft breathing pop so the words read as an invitation, not a caption.
                     StartCoroutine(PulseTapLabel(menuLabel));
-                }
-            }
-
-            if (shopRoot != null)
-            {
-                // The shop screen's own rect is a prefab child whose bounds are nothing like the
-                // screen, so the label is pinned by SCREEN fraction instead: parented under the
-                // shop (so it shows and hides with it) but positioned against the canvas - the
-                // strip between the blue panel's foot and the bottom bar.
-                RectTransform label = MakeTapLabel(shopRoot.transform, "TapToPlay",
-                    new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, 44f,
-                    EnterMapSelection);
-                Canvas canvas = shopRoot.GetComponentInParent<Canvas>(true);
-                RectTransform canvasRect = canvas != null ? canvas.transform as RectTransform : null;
-                if (canvasRect != null)
-                {
-                    Vector3[] corners = new Vector3[4];
-                    canvasRect.GetWorldCorners(corners);
-                    Vector3 position = (corners[0] + corners[3]) * 0.5f;   // giữa cạnh đáy
-                    position.y = Mathf.Lerp(corners[0].y, corners[1].y, 0.18f);
-                    label.position = position;
-                    label.SetAsLastSibling();
                 }
             }
         }
