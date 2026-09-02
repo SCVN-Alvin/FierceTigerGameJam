@@ -203,6 +203,9 @@ namespace GameJam.Gameplay.Flow
         /// <summary>The bottom bar's garage button, for an overlay that has to point at it.</summary>
         public Button ShopButton => shopButton;
 
+        /// <summary>The garage's close button, so a lesson can send the player back out of it.</summary>
+        public Button CloseShopButton => closeShopButton;
+
         /// <summary>The menu's pulsing TAP TO PLAY words, kept so a lesson can put them away.</summary>
         private RectTransform tapToPlayLabel;
 

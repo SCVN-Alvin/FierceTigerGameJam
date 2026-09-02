@@ -78,6 +78,7 @@ namespace GameJam.Gameplay.Flow
             Garage,
             Vehicle,
             Ammo,
+            Leave,
             Done,
         }
 
@@ -247,7 +248,7 @@ namespace GameJam.Gameplay.Flow
             {
                 lesson = Lesson.Vehicle;
             }
-            else if (lesson != Lesson.Garage && lesson != Lesson.Done
+            else if (lesson != Lesson.Garage && lesson != Lesson.Done && lesson != Lesson.Leave
                      && flow.State != GameFlowController.GameState.Shop)
             {
                 // Left the garage with buying still to do: back to pointing at the way in.
@@ -260,6 +261,13 @@ namespace GameJam.Gameplay.Flow
             }
 
             if (lesson == Lesson.Ammo && AmmoLessonSatisfied())
+            {
+                lesson = Lesson.Leave;
+            }
+
+            // Both bought: the last thing to say is the way out. It ends when they take it - the
+            // lesson is not finished by the purchase, it is finished by getting back to the map.
+            if (lesson == Lesson.Leave && flow.State != GameFlowController.GameState.Shop)
             {
                 lesson = Lesson.Done;
             }
@@ -344,6 +352,13 @@ namespace GameJam.Gameplay.Flow
                     caption = "THIS ONE NEEDS\nBETTER GEAR -\nOPEN THE GARAGE";
                     Button garage = flow.ShopButton;
                     return garage != null ? (RectTransform)garage.transform : null;
+
+                case Lesson.Leave:
+                {
+                    caption = "LET'S START\nSMASHING!";
+                    Button close = flow.CloseShopButton;
+                    return close != null ? (RectTransform)close.transform : null;
+                }
 
                 case Lesson.Vehicle:
                 {
