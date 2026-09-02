@@ -18,26 +18,26 @@ MonoBehaviour:
   - displayName: Cannon I
     damage:
     - materialId: glass
-      blockDamage: 8
+      blockDamage: 6
       wallDamage: 8
     - materialId: brick
       blockDamage: 6
       wallDamage: 5
     - materialId: concrete
-      blockDamage: 4
+      blockDamage: 3
       wallDamage: 2
     splashShare: 0.4
     icon: {fileID: 21300000, guid: 666059beb35774806af2a54f2a4a518d, type: 3}
   - displayName: Cannon II
     damage:
     - materialId: glass
-      blockDamage: 10
+      blockDamage: 8
       wallDamage: 10
     - materialId: brick
       blockDamage: 8
       wallDamage: 7
     - materialId: concrete
-      blockDamage: 7
+      blockDamage: 6
       wallDamage: 5
     splashShare: 0.45
     icon: {fileID: 21300000, guid: 2b4ab35a7134f42d2ac68ab29841fed3, type: 3}

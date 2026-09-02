@@ -8,10 +8,20 @@ using UnityEngine;
 namespace GameJam.EditorTools
 {
     /// <summary>
-    /// Creates the starting ammunition: a rock that handles glass and loose brick but only chips
-    /// a brick wall and cannot touch concrete, and a cannon that opens concrete up. The numbers
-    /// are a playable starting point rather than a balance pass - they are meant to be edited on
-    /// the assets afterwards.
+    /// Creates the starting ammunition: a rock that handles glass and brick but cannot touch
+    /// concrete, and a cannon that opens concrete up.
+    ///
+    /// The numbers below are the balance pass, not a placeholder any more, so this menu item is
+    /// what a rebuild has to reproduce. They are authored against measured block hit points -
+    /// glass 1, brick_1x1 3, brick_2x1 5, concrete 6 - under three rules:
+    ///
+    /// - a tier one-shots what it is about (Rock I takes a 1x1 brick, Rock II takes a 2x1,
+    ///   Cannon II takes concrete);
+    /// - splash finishes glass neighbours, so every level's splashShare times its glass damage
+    ///   clears glass's single hit point;
+    /// - concrete stays flatly Rock-proof at 0. It is the unlock gate the campaign is built
+    ///   around rather than a grind, and a vehicle multiplier cannot open it because zero times
+    ///   anything is still zero.
     /// </summary>
     public static class BulletDefinitionBuilder
     {
@@ -28,8 +38,10 @@ namespace GameJam.EditorTools
         {
             EnsureFolder(ConfigFolder);
 
-            // Block hit points for reference: glass 1, brick 3, concrete 6. A wall's hit points
-            // are the sum of its blocks', so a four-brick wall holds 12.
+            // Block hit points, read off the prefabs rather than remembered: glass_1x1 1,
+            // brick_1x1 3, brick_2x1 5, concrete_1x1 6. Damage is authored per material, so
+            // brick_1x1 and brick_2x1 share one "brick" number and differ only in what it takes
+            // to get through them.
             BulletDefinition rock = CreateBullet(
                 "Rock",
                 "rock_type",
@@ -37,17 +49,21 @@ namespace GameJam.EditorTools
                 RockProjectilePath,
                 new[]
                 {
-                    // Takes glass and a lone brick in one shot. Against a brick wall it is a
-                    // chip - 12 hit points at 1 a shot is not a route, it is a hint to upgrade.
-                    Level("Rock I", 0.3f,
-                        Damage("glass", 5f, 5f),
+                    // 3 takes a 1x1 brick and glass in one shot, and needs exactly two on a 2x1.
+                    // splashShare is 0.35 rather than the 0.3 it used to be so that splash on
+                    // glass is 3 x 0.35 = 1.05, over glass's single hit point: at 0.3 it landed
+                    // on 0.9 and a glass neighbour survived by a tenth, which is the difference
+                    // between a pane that chains and one that does not.
+                    Level("Rock I", 0.35f,
+                        Damage("glass", 3f, 5f),
                         Damage("brick", 3f, 1f),
                         Damage("concrete", 0f, 0f)),
 
-                    // Now it does real work on brick walls, but concrete is still untouchable.
+                    // 6 clears brick_2x1's 5 in one shot, which is what the level is bought for.
+                    // Concrete is still untouchable, whatever vehicle it is fired from.
                     Level("Rock II", 0.35f,
-                        Damage("glass", 6f, 6f),
-                        Damage("brick", 4f, 3f),
+                        Damage("glass", 4f, 6f),
+                        Damage("brick", 6f, 3f),
                         Damage("concrete", 0f, 0f)),
                 });
 
@@ -58,15 +74,19 @@ namespace GameJam.EditorTools
                 CannonProjectilePath,
                 new[]
                 {
+                    // Concrete at 3 against 6 hit points is two shots bare, and one from a
+                    // vehicle at x2 or better. That is the upsell made visible: the unlock buys
+                    // the matchup, the vehicle buys the speed of it.
                     Level("Cannon I", 0.4f,
-                        Damage("glass", 8f, 8f),
+                        Damage("glass", 6f, 8f),
                         Damage("brick", 6f, 5f),
-                        Damage("concrete", 4f, 2f)),
+                        Damage("concrete", 3f, 2f)),
 
+                    // 6 takes concrete in a single shot, and 8 covers every brick going.
                     Level("Cannon II", 0.45f,
-                        Damage("glass", 10f, 10f),
+                        Damage("glass", 8f, 10f),
                         Damage("brick", 8f, 7f),
-                        Damage("concrete", 7f, 5f)),
+                        Damage("concrete", 6f, 5f)),
                 });
 
             CreateLoadout(rock, cannon);
