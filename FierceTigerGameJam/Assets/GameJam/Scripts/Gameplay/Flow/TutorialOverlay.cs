@@ -38,6 +38,16 @@ namespace GameJam.Gameplay.Flow
 
         public static readonly Vector2 PanelSize = new Vector2(560f, 246f);
 
+        /// <summary>
+        /// Where the fingertip sits in the hand art: hard against the right edge, 32% up. Measured
+        /// off the sprite by Falcon rather than guessed, and the reason the art is never rotated -
+        /// the finger already points down-right, so the tip goes above what it indicates.
+        /// </summary>
+        public static readonly Vector2 HandFingertipPivot = new Vector2(0.954f, 0.32f);
+
+        /// <summary>The finger's own axis in that art, for tapping along it rather than straight down.</summary>
+        public static readonly Vector2 HandFingerAxis = new Vector2(0.91f, -0.41f);
+
         /// <summary>Sampled from the panel art's paper, for the patch over its baked words.</summary>
         public static readonly Color PanelPaper = new Color(0.984f, 0.973f, 0.937f);
 
@@ -251,14 +261,20 @@ namespace GameJam.Gameplay.Flow
         /// The pointing hand. Returned as its Image because every lesson animates its alpha; the
         /// rect comes off the Image when one needs to move it too.
         /// </summary>
-        public static Image CreateHand(RectTransform root, Sprite handSprite)
+        /// <summary>
+        /// The pointing hand. <paramref name="pivot"/> defaults to the middle, which is what a
+        /// caller positioning the hand by its centre wants; pass <see cref="HandFingertipPivot"/>
+        /// to position it by the fingertip instead, so the tip lands exactly where it points
+        /// rather than the sprite's centre landing there and the finger falling somewhere else.
+        /// </summary>
+        public static Image CreateHand(RectTransform root, Sprite handSprite, Vector2? pivot = null, float size = 140f)
         {
             GameObject handGo = new GameObject("Hand", typeof(RectTransform));
             RectTransform hand = (RectTransform)handGo.transform;
             hand.SetParent(root, false);
-            hand.pivot = new Vector2(0.5f, 0.5f);
+            hand.pivot = pivot ?? new Vector2(0.5f, 0.5f);
             hand.anchoredPosition = Vector2.zero;
-            hand.sizeDelta = new Vector2(140f, 140f);
+            hand.sizeDelta = new Vector2(size, size);
 
             Image handImage = handGo.AddComponent<Image>();
             if (handSprite != null)

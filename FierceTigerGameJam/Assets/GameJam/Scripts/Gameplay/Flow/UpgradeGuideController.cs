@@ -44,13 +44,24 @@ namespace GameJam.Gameplay.Flow
         private const string TargetMapId = "mission1_map2";
 
         /// <summary>Clear space between the spotlit control and the caption panel.</summary>
-        private const float PanelGap = 250f;
-
         /// <summary>How long one loop of the hand's tap takes.</summary>
         private const float TapPeriod = 1.15f;
 
         /// <summary>Where the hand rests relative to the control it is pointing at.</summary>
-        private static readonly Vector2 HandRest = new Vector2(46f, -66f);
+        /// <summary>Drawn small enough that it points at a Buy button without covering the row.</summary>
+        private const float HandSize = 110f;
+
+        /// <summary>How far above the gap's top edge the fingertip rests.</summary>
+        private const float HandTipGap = 4f;
+
+        /// <summary>How far the fingertip travels back along its own axis on each tap.</summary>
+        private const float HandTapTravel = 14f;
+
+        /// <summary>Clear air between the gap and the caption, and between the caption and the edge.</summary>
+        private const float CaptionGap = 70f;
+
+        /// <summary>Room kept under the caption for the SKIP chip, which hangs off its bottom.</summary>
+        private const float SkipReserve = 96f;
 
         /// <summary>How far outside the control the gap reaches, so a tap on its very edge lands.</summary>
         private const float HoleMargin = 14f;
@@ -524,9 +535,9 @@ namespace GameJam.Gameplay.Flow
                 label.text = caption;
             }
 
-            LayoutAroundTarget(target, out Vector2 centre);
-            PlacePanel(centre);
-            AnimateHand(centre);
+            LayoutAroundTarget(target, out Vector2 holeMin, out Vector2 holeMax);
+            PlaceHand(holeMin, holeMax);
+            PlaceCaption(holeMin, holeMax);
         }
 
         /// <summary>
@@ -537,22 +548,21 @@ namespace GameJam.Gameplay.Flow
         /// from the target's own rect is also what makes the gap fit a small Buy button and a wide
         /// tab equally well - the old single filter sprite was one size whatever it was over.
         /// </summary>
-        private void LayoutAroundTarget(RectTransform target, out Vector2 centre)
+        private void LayoutAroundTarget(RectTransform target, out Vector2 min, out Vector2 max)
         {
             Rect canvasRect = guideRoot.rect;
 
             Vector3[] corners = new Vector3[4];
             target.GetWorldCorners(corners);
-            Vector2 min = ToGuideSpace(corners[0]) - new Vector2(HoleMargin, HoleMargin);
-            Vector2 max = ToGuideSpace(corners[2]) + new Vector2(HoleMargin, HoleMargin);
-            centre = (min + max) * 0.5f;
+            min = ToGuideSpace(corners[0]) - new Vector2(HoleMargin, HoleMargin);
+            max = ToGuideSpace(corners[2]) + new Vector2(HoleMargin, HoleMargin);
 
             TutorialOverlay.LayoutStripsAround(blockStrips, canvasRect, min, max);
 
             if (featherRect != null)
             {
                 float span = Mathf.Max(max.x - min.x, max.y - min.y) * FeatherSpread;
-                featherRect.anchoredPosition = centre;
+                featherRect.anchoredPosition = (min + max) * 0.5f;
                 featherRect.sizeDelta = new Vector2(span, span);
             }
         }
@@ -570,35 +580,15 @@ namespace GameJam.Gameplay.Flow
         }
 
         /// <summary>
-        /// The caption goes above the control, or below it when there is no room above. Clamped
-        /// to the canvas either way, so a control near a corner does not push the words off it.
+        /// The fingertip rests just above the gap's top edge, a little left of its middle, and taps
+        /// back and forth along the finger's own axis.
+        ///
+        /// Placed off the gap's EDGE, never its centre. Pointing at a centre put the hand squarely
+        /// on top of the control it was pointing at, which is what made the lesson read as a bug -
+        /// and it got worse the bigger the control, because the offset was a fixed number of units
+        /// while the button underneath was not.
         /// </summary>
-        private void PlacePanel(Vector2 centre)
-        {
-            if (panelRect == null)
-            {
-                return;
-            }
-
-            Rect canvasRect = guideRoot.rect;
-            float halfPanelY = TutorialOverlay.PanelSize.y * 0.5f;
-            float halfPanelX = TutorialOverlay.PanelSize.x * 0.5f;
-
-            float above = centre.y + PanelGap + halfPanelY;
-            float below = centre.y - PanelGap - halfPanelY;
-            float y = above + halfPanelY <= canvasRect.yMax ? above : below;
-
-            y = Mathf.Clamp(y, canvasRect.yMin + halfPanelY, canvasRect.yMax - halfPanelY);
-            float x = Mathf.Clamp(centre.x, canvasRect.xMin + halfPanelX, canvasRect.xMax - halfPanelX);
-
-            panelRect.anchoredPosition = new Vector2(x, y);
-        }
-
-        /// <summary>
-        /// The hand taps, over and over, on the thing to be tapped. Driven from Update rather than
-        /// a coroutine so it follows a target that moves - the garage's rows sit in a scroll view.
-        /// </summary>
-        private void AnimateHand(Vector2 centre)
+        private void PlaceHand(Vector2 holeMin, Vector2 holeMax)
         {
             if (handRect == null)
             {
@@ -608,9 +598,53 @@ namespace GameJam.Gameplay.Flow
             float phase = Mathf.Repeat(Time.unscaledTime, TapPeriod) / TapPeriod;
             float press = Mathf.Sin(phase * Mathf.PI);
 
-            handRect.anchoredPosition = centre + HandRest + new Vector2(0f, -press * 20f);
-            handRect.localScale = Vector3.one * (1f - (press * 0.1f));
+            Vector2 tip = new Vector2(
+                Mathf.Lerp(holeMin.x, (holeMin.x + holeMax.x) * 0.5f, 0.55f),
+                holeMax.y + HandTipGap);
+            tip -= TutorialOverlay.HandFingerAxis * (press * HandTapTravel);
+
+            // Kept whole on screen. The body hangs left of and below the tip, so the margins are
+            // the pivot's own fractions of the sprite rather than half of it.
+            Rect canvasRect = guideRoot.rect;
+            Vector2 pivot = TutorialOverlay.HandFingertipPivot;
+            Vector2 size = handRect.sizeDelta;
+            tip.x = Mathf.Clamp(tip.x, canvasRect.xMin + (size.x * pivot.x), canvasRect.xMax - (size.x * (1f - pivot.x)));
+            tip.y = Mathf.Clamp(tip.y, canvasRect.yMin + (size.y * pivot.y), canvasRect.yMax - (size.y * (1f - pivot.y)));
+
+            handRect.anchoredPosition = tip;
             TutorialOverlay.SetAlpha(handImage, Mathf.Clamp01(0.35f + (press * 0.65f)));
+        }
+
+        /// <summary>
+        /// The words go UNDER the gap by preference, because the hand already owns the air directly
+        /// above it - putting both in the same place was the other half of the overlap. When the
+        /// gap sits too low for that, the caption goes above the hand instead, clear of it.
+        /// </summary>
+        private void PlaceCaption(Vector2 holeMin, Vector2 holeMax)
+        {
+            if (panelRect == null)
+            {
+                return;
+            }
+
+            Rect canvasRect = guideRoot.rect;
+            float halfY = TutorialOverlay.PanelSize.y * 0.5f;
+            float halfX = TutorialOverlay.PanelSize.x * 0.5f;
+            float handTop = handRect != null
+                ? handRect.sizeDelta.y * (1f - TutorialOverlay.HandFingertipPivot.y)
+                : 0f;
+
+            // SkipReserve is the chip hanging off the caption's bottom edge: without it the panel
+            // can sit low enough to fit while the SKIP under it runs off the screen.
+            float below = holeMin.y - CaptionGap - halfY;
+            float above = holeMax.y + handTop + CaptionGap + halfY;
+            float y = below - halfY - SkipReserve > canvasRect.yMin ? below : above;
+
+            y = Mathf.Clamp(y, canvasRect.yMin + halfY + SkipReserve, canvasRect.yMax - halfY);
+            float x = Mathf.Clamp((holeMin.x + holeMax.x) * 0.5f,
+                canvasRect.xMin + halfX, canvasRect.xMax - halfX);
+
+            panelRect.anchoredPosition = new Vector2(x, y);
         }
 
         /// <summary>
@@ -713,7 +747,8 @@ namespace GameJam.Gameplay.Flow
             panelRect.anchorMin = panelRect.anchorMax = new Vector2(0.5f, 0.5f);
             label = TutorialOverlay.CreateLabel(panelRect, font, panelSprite != null);
 
-            handImage = TutorialOverlay.CreateHand(guideRoot, handSprite);
+            handImage = TutorialOverlay.CreateHand(
+                guideRoot, handSprite, TutorialOverlay.HandFingertipPivot, HandSize);
             handRect = handImage.rectTransform;
             handRect.anchorMin = handRect.anchorMax = new Vector2(0.5f, 0.5f);
 
