@@ -197,7 +197,8 @@ namespace GameJam.Gameplay.Flow
 
             if (fireController != null)
             {
-                fireController.ArmShotBoost(offeredRounds);
+                // freeAmmo: this popup is the one-time gift, so the burst it arms costs nothing.
+                fireController.ArmShotBoost(offeredRounds, freeAmmo: true);
             }
 
             UserTutorialData tutorial = UserData.Tutorial;

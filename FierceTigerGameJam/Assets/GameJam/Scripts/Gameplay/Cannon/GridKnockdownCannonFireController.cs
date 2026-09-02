@@ -130,6 +130,7 @@ namespace GameJam.Gameplay.Cannon
         {
             reloadReadyAt = 0f;                            // a fresh run never starts mid-reload
             armedBoostRounds = 0;                          // nor with a stale boost charge
+            armedBoostFree = false;
             muzzleCycle = 0;                               // first shot leaves barrel one (top/left)
 
             if (projectilePool == null)
@@ -179,8 +180,10 @@ namespace GameJam.Gameplay.Cannon
         public event System.Action OutOfAmmunition;
 
         /// <summary>
-        /// Raised once per shot actually fired, after it is paid for and after it has left the
-        /// muzzle, for one-shot UI like the tutorial's prompt. A shot refused for want of
+        /// Raised once per tap that actually fired, after it has left the muzzle, for one-shot UI
+        /// like the tutorial's prompt. Once per tap rather than per round, so a burst counts as
+        /// the single shot it reads as; and not conditional on payment, so a gifted burst is
+        /// announced like any other. A shot refused for want of
         /// ammunition raises <see cref="OutOfAmmunition"/> instead, and one refused by the aim or
         /// by an empty projectile pool raises neither: nothing left the cannon, so there is
         /// nothing for a listener to answer.
@@ -208,6 +211,11 @@ namespace GameJam.Gameplay.Cannon
         // spends its own bullet (Falcon 2026-09-02: "moi vien ton 1 dan").
         private int armedBoostRounds;
 
+        // Whether that charge is a gift. The intro popup hands out its Double/Triple for nothing
+        // (Falcon 2026-09-03: "vi la free nen phat do ko ton dan"); a charge bought from an ad or
+        // the shop later leaves this false and every round pays its own bullet as before.
+        private bool armedBoostFree;
+
         // Which authored barrel fires next. Single shots on a multi-barrel cannon walk the
         // authored muzzleOffsets in order - left then right, top then bottom, exactly as the
         // asset lists them - instead of always leaving barrel one (Falcon 2026-09-02: shots
@@ -215,10 +223,16 @@ namespace GameJam.Gameplay.Cannon
         // the rotation stays continuous, and every run starts back at barrel one.
         private int muzzleCycle;
 
-        /// <summary>Arm the NEXT shot to fire this many rounds (2 = Double, 3 = Triple).</summary>
-        public void ArmShotBoost(int rounds)
+        /// <summary>
+        /// Arm the NEXT shot to fire this many rounds (2 = Double, 3 = Triple). Pass
+        /// <paramref name="freeAmmo"/> for a charge that was given away rather than bought: the
+        /// whole burst then costs nothing. It only applies to a real burst, so a "free single" is
+        /// still an ordinary paid shot rather than a way to fire with an empty pouch.
+        /// </summary>
+        public void ArmShotBoost(int rounds, bool freeAmmo = false)
         {
             armedBoostRounds = Mathf.Clamp(rounds, 0, 3);
+            armedBoostFree = freeAmmo && armedBoostRounds > 1;
         }
 
         /// <summary>Rounds the next shot will fire if a charge is armed; 0/1 = plain single.</summary>
@@ -357,15 +371,18 @@ namespace GameJam.Gameplay.Cannon
         /// </summary>
         private void FireAtAimPoint(Vector3 muzzlePosition, Vector3 aimPoint)
         {
-            // An armed Double/Triple charge outranks everything: its rounds each pay a bullet.
+            // An armed Double/Triple charge outranks everything: its rounds each pay a bullet,
+            // unless the charge was a gift, in which case the whole burst is free.
             // Otherwise the retired per-level burst (if switched back on) fires level rounds on
             // one bullet; the shipping default is a plain single.
             int rounds;
             bool spendPerRound;
+            bool freeCharge = false;
             if (armedBoostRounds > 1)
             {
                 rounds = armedBoostRounds;
-                spendPerRound = true;
+                freeCharge = armedBoostFree;
+                spendPerRound = !freeCharge;
             }
             else
             {
@@ -376,10 +393,14 @@ namespace GameJam.Gameplay.Cannon
             }
 
             armedBoostRounds = 0;                           // one tap consumes the charge
+            armedBoostFree = false;
             float share = 1f / rounds;
             Vector3[] spawns = ResolveBurstSpawns(muzzlePosition, aimPoint, rounds);
 
-            if (!FireRound(spawns[0], aimPoint, share, true))
+            // Announced on the first round whether or not it was paid for. Announcing and paying
+            // used to be the same flag, which would have left a gifted burst firing silently -
+            // and the tutorial, which counts taps off this event, never seeing the shot.
+            if (!FireRound(spawns[0], aimPoint, share, !freeCharge, true))
             {
                 return;
             }
@@ -423,7 +444,12 @@ namespace GameJam.Gameplay.Cannon
         /// itself, it is pushed forward along its own heading first, and re-solving from where it
         /// really starts is what keeps that offset from becoming a miss.
         /// </summary>
-        private bool FireRound(Vector3 barrelPosition, Vector3 aimPoint, float damageShare, bool spendAmmo)
+        private bool FireRound(
+            Vector3 barrelPosition,
+            Vector3 aimPoint,
+            float damageShare,
+            bool spendAmmo,
+            bool announceShot)
         {
             BulletDefinition ammunition = ResolveShotAmmunition();
             GridKnockdownCannonProjectile prefab = ResolveProjectilePrefab(ammunition);
@@ -446,7 +472,8 @@ namespace GameJam.Gameplay.Cannon
                     gravity);
             }
 
-            return Fire(ammunition, prefab, spawnPosition, launchVelocity, damageShare, spendAmmo);
+            return Fire(
+                ammunition, prefab, spawnPosition, launchVelocity, damageShare, spendAmmo, announceShot);
         }
 
         /// <summary>
@@ -463,7 +490,7 @@ namespace GameJam.Gameplay.Cannon
 
                 // A boosted round pays for itself; when the pouch runs dry mid-burst, FireRound
                 // refuses and the remaining rounds simply never leave.
-                FireRound(spawns[i], aimPoint, share, spendPerRound);
+                FireRound(spawns[i], aimPoint, share, spendPerRound, false);
             }
 
             burstRoutine = null;
@@ -552,6 +579,7 @@ namespace GameJam.Gameplay.Cannon
                 muzzlePosition + (direction * muzzleSpawnOffset),
                 direction * projectileSpeed,
                 1f,
+                true,
                 true);
         }
 
@@ -585,7 +613,8 @@ namespace GameJam.Gameplay.Cannon
             Vector3 spawnPosition,
             Vector3 launchVelocity,
             float damageShare,
-            bool spendAmmo)
+            bool spendAmmo,
+            bool announceShot)
         {
             if (spendAmmo && ammunition != null && !bulletInventory.TrySpend(ammunition.Id))
             {
@@ -645,10 +674,11 @@ namespace GameJam.Gameplay.Cannon
             AudioService.Play(AudioSlot.Fire);
 
             // Last, so a listener that tears something down cannot run before the shot it is
-            // answering has actually been launched and presented. Once per PAID tap: the
-            // burst's follow-up rounds are the same logical shot, and a listener counting
-            // shots (the tutorial) must not count one tap three times.
-            if (spendAmmo)
+            // answering has actually been launched and presented. Once per TAP: the burst's
+            // follow-up rounds are the same logical shot, and a listener counting shots (the
+            // tutorial) must not count one tap three times. Deliberately not tied to whether the
+            // round was paid for - a gifted burst is still a shot that happened.
+            if (announceShot)
             {
                 Fired?.Invoke();
             }
