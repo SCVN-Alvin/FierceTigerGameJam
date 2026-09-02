@@ -602,7 +602,7 @@ MonoBehaviour:
   failCloseButton: {fileID: 1151793893}
   aimController: {fileID: 2066028395}
   cameraOrbit: {fileID: 1361037494}
-  fireController: {fileID: 0}
+  fireController: {fileID: 2066028396}
   tutorial: {fileID: 307929677}
 --- !u!114 &307929677
 MonoBehaviour:
