@@ -18,11 +18,11 @@ MonoBehaviour:
   - rewardId: replay_pass_bonus
     gold: 25
   - rewardId: tutorial_complete
-    gold: 100
+    gold: 200
   - rewardId: pass_map_1
-    gold: 100
-  - rewardId: clear_map_1
     gold: 250
+  - rewardId: clear_map_1
+    gold: 450
   - rewardId: pass_map_2
     gold: 150
   - rewardId: clear_map_2
