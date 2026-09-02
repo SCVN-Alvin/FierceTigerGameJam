@@ -199,6 +199,30 @@ namespace GameJam.Gameplay.Flow
         }
 
         /// <summary>
+        /// Whether this map should be run as the scripted loss that sets the lesson up.
+        ///
+        /// True for the gate map until the lesson is finished. The first visit is meant to be lost:
+        /// it is what registers the failed attempt the guide arms on, and losing it is what gives
+        /// the player the question the garage answers. Tuning the map to be "hard enough to lose"
+        /// could never be reliable - a lucky collapse would skip the whole lesson - so the run is
+        /// simply dealt a hand it cannot win instead.
+        ///
+        /// It keeps answering true until the lesson ends, so a retry before upgrading is also
+        /// unwinnable rather than a second chance to slip past the teaching. Finishing the lesson
+        /// OR skipping it both write the flag, so there is always a way out.
+        ///
+        /// Gated on the tutorial being done for the same reason the guide is: a player who somehow
+        /// reaches this map with no lesson waiting must not be handed an unwinnable run.
+        /// </summary>
+        public static bool WantsScriptedLoss(string mapId)
+        {
+            return !string.IsNullOrEmpty(mapId)
+                   && string.Equals(mapId, TargetMapId, System.StringComparison.Ordinal)
+                   && UserData.Tutorial.completed
+                   && !UserData.Tutorial.upgradeGuideDone;
+        }
+
+        /// <summary>
         /// Whether the player has taken this map on and not beaten it.
         ///
         /// Read off the save with no new field: a map only gets a progress record when a run on it

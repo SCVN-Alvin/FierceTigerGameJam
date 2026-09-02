@@ -292,6 +292,12 @@ namespace GameJam.Gameplay.Flow
         /// <summary>One shared RewardConfig entry pays every map's 2-star bonus.</summary>
         private const string TwoStarRewardId = "two_star_bonus";
 
+        /// <summary>Rounds dealt for the scripted loss - enough to feel the map, not to beat it.</summary>
+        private const int ScriptedLossBullets = 5;
+
+        /// <summary>The bar for that run: everything standing, which five rounds cannot reach.</summary>
+        private const float ScriptedLossClearPercent = 1f;
+
         /// <summary>Paid on EVERY pass after the map's own pass reward was claimed - the small
         /// "worth replaying" trickle (Falcon 2026-09-02: 25 gold). Not claim-once by design.</summary>
         private const string ReplayPassRewardId = "replay_pass_bonus";
@@ -347,11 +353,35 @@ namespace GameJam.Gameplay.Flow
             RequiredClearPercent = 0.8f;
             BulletPickLimit = 10;
 
-            if (TryGetRules(ResolveMapId(), out MapProgressionConfig.Entry rules))
+            string mapId = ResolveMapId();
+            if (TryGetRules(mapId, out MapProgressionConfig.Entry rules))
             {
                 RequiredClearPercent = rules.requiredClearPercent;
                 BulletPickLimit = rules.bulletPickLimit;
             }
+
+            ApplyScriptedLoss(mapId);
+        }
+
+        /// <summary>
+        /// Overrides the authored rules for the run that is meant to be lost.
+        ///
+        /// Five rounds against a hundred percent is not a difficulty setting, it is a scripted
+        /// defeat: the upgrade lesson needs a failed attempt to arm on, and leaving that to the
+        /// map's own difficulty would mean a lucky collapse could skip the teaching entirely.
+        /// Applied last so it wins over the config, and only while
+        /// <see cref="UpgradeGuideController.WantsScriptedLoss"/> says the lesson is still owed -
+        /// after that the map plays at whatever the progression config authors.
+        /// </summary>
+        private void ApplyScriptedLoss(string mapId)
+        {
+            if (!UpgradeGuideController.WantsScriptedLoss(mapId))
+            {
+                return;
+            }
+
+            RequiredClearPercent = ScriptedLossClearPercent;
+            BulletPickLimit = ScriptedLossBullets;
         }
 
         private bool TryGetRules(string mapId, out MapProgressionConfig.Entry rules)
