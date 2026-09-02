@@ -76,6 +76,7 @@ namespace GameJam.Gameplay.Wall
         /// </summary>
         public void Unregister(KnockdownBlock block)
         {
+            floodPending = true;
             if (block == null)
             {
                 return;
@@ -163,6 +164,114 @@ namespace GameJam.Gameplay.Wall
             if (results == scratch)
             {
                 scratchInUse = false;
+            }
+        }
+
+        private bool floodPending;
+
+        /// <summary>
+        /// Asks for one connectivity pass on the next physics step. Batched on purpose: a volley
+        /// or a collapse activates dozens of blocks in one frame, and one flood serves them all.
+        /// </summary>
+        public void RequestSupportFlood()
+        {
+            floodPending = true;
+        }
+
+        private void FixedUpdate()
+        {
+            if (!floodPending)
+            {
+                return;
+            }
+
+            floodPending = false;
+            RunSupportFlood();
+        }
+
+        /// <summary>
+        /// The one structural rule, run whole: everything still standing must REACH THE GROUND
+        /// through standing blocks - up, down or sideways, the way the structure was authored to
+        /// carry itself. Whatever cannot is released together.
+        ///
+        /// This replaced two per-block rules that were each wrong in one direction. Climbing the
+        /// column above a fallen block left laterally-held overhangs floating forever; releasing
+        /// any neighbour without direct support brought a dish standing on four legs down the
+        /// moment ONE leg was touched, because every interior plate cell "lacked support" the
+        /// instant its neighbour moved. Reachability is the semantic both of those were
+        /// approximating: a plate on three remaining legs stays whole, and only a piece truly
+        /// cut off from the ground lets go - which is also what makes a 100 percent clear
+        /// reachable on every map.
+        /// </summary>
+        private void RunSupportFlood()
+        {
+            // Live set first: a block is in play while it is registered and not yet activated.
+            HashSet<KnockdownBlock> alive = new HashSet<KnockdownBlock>();
+            foreach (KeyValuePair<Vector3Int, KnockdownBlock> entry in byCell)
+            {
+                if (entry.Value != null && !entry.Value.IsActivated)
+                {
+                    alive.Add(entry.Value);
+                }
+            }
+
+            if (alive.Count == 0)
+            {
+                return;
+            }
+
+            Queue<KnockdownBlock> frontier = new Queue<KnockdownBlock>();
+            HashSet<KnockdownBlock> reached = new HashSet<KnockdownBlock>();
+            foreach (KnockdownBlock block in alive)
+            {
+                if (block.GridPosition.y <= 0)
+                {
+                    reached.Add(block);
+                    frontier.Enqueue(block);
+                }
+            }
+
+            while (frontier.Count > 0)
+            {
+                KnockdownBlock current = frontier.Dequeue();
+                Vector3Int origin = current.GridPosition;
+                Vector3Int size = ResolveSize(current.LogicalSize);
+
+                for (int x = 0; x < size.x; x++)
+                {
+                    for (int y = 0; y < size.y; y++)
+                    {
+                        for (int z = 0; z < size.z; z++)
+                        {
+                            Vector3Int cell = new Vector3Int(origin.x + x, origin.y + y, origin.z + z);
+                            Visit(cell + Vector3Int.up, reached, frontier);
+                            Visit(cell + Vector3Int.down, reached, frontier);
+                            Visit(cell + Vector3Int.left, reached, frontier);
+                            Visit(cell + Vector3Int.right, reached, frontier);
+                            Visit(cell + new Vector3Int(0, 0, 1), reached, frontier);
+                            Visit(cell + new Vector3Int(0, 0, -1), reached, frontier);
+                        }
+                    }
+                }
+            }
+
+            foreach (KnockdownBlock block in alive)
+            {
+                if (!reached.Contains(block))
+                {
+                    block.ReleaseFromFlood();
+                }
+            }
+        }
+
+        private void Visit(Vector3Int cell, HashSet<KnockdownBlock> reached, Queue<KnockdownBlock> frontier)
+        {
+            if (byCell.TryGetValue(cell, out KnockdownBlock neighbour)
+                && neighbour != null
+                && !neighbour.IsActivated
+                && reached.Add(neighbour))
+            {
+                frontier.Enqueue(neighbour);
             }
         }
 

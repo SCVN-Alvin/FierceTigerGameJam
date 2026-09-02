@@ -284,9 +284,10 @@ namespace GameJam.UI
 
             return string.Format(
                 CultureInfo.InvariantCulture,
-                "{0} \u00b7 DAMAGE \u00d7{1:0.00}",
+                "{0} · DAMAGE ×{1:0.00} · AMMO +{2}",
                 displayName.ToUpperInvariant(),
-                vehicle.GetDamageMultiplier(level));
+                vehicle.GetDamageMultiplier(level),
+                vehicle.ResolveAmmoBonus(level));
         }
 
         /// <summary>

@@ -20,6 +20,13 @@ namespace GameJam.UI
 
         private void OnEnable()
         {
+            // The percent readout is decoration, but as a raycast target it silently ate
+            // every tap in its corner of the screen - the cannon simply did not fire there.
+            if (clearPercentLabel != null)
+            {
+                clearPercentLabel.raycastTarget = false;
+            }
+
             if (progressTracker != null)
             {
                 progressTracker.ProgressChanged += HandleProgressChanged;

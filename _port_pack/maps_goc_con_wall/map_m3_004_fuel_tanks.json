@@ -1,0 +1,3631 @@
+{
+  "schemaVersion": 1,
+  "id": "map_m3_004_fuel_tanks",
+  "grid": {
+    "width": 16,
+    "height": 11,
+    "cellSize": 0.25,
+    "layerDepth": 0.25
+  },
+  "layers": [
+    {
+      "level": 0,
+      "blocks": []
+    },
+    {
+      "level": 1,
+      "blocks": [
+        {
+          "id": "f1_c0_r0",
+          "type": "concrete_1x1",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "bund_1a"
+          }
+        },
+        {
+          "id": "f1_c1_r0",
+          "type": "concrete_1x1",
+          "position": {
+            "x": 1,
+            "y": 0
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "bund_1a"
+          }
+        },
+        {
+          "id": "f1_c2_r0",
+          "type": "concrete_1x1",
+          "position": {
+            "x": 2,
+            "y": 0
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "bund_1a"
+          }
+        },
+        {
+          "id": "f1_c3_r0",
+          "type": "concrete_1x1",
+          "position": {
+            "x": 3,
+            "y": 0
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "bund_1a"
+          }
+        },
+        {
+          "id": "f1_c4_r0",
+          "type": "concrete_1x1",
+          "position": {
+            "x": 4,
+            "y": 0
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "bund_1a"
+          }
+        },
+        {
+          "id": "f1_c5_r0",
+          "type": "concrete_1x1",
+          "position": {
+            "x": 5,
+            "y": 0
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "bund_1a"
+          }
+        },
+        {
+          "id": "f1_c6_r0",
+          "type": "concrete_1x1",
+          "position": {
+            "x": 6,
+            "y": 0
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "bund_1a"
+          }
+        },
+        {
+          "id": "f1_c7_r0",
+          "type": "concrete_1x1",
+          "position": {
+            "x": 7,
+            "y": 0
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "bund_1a"
+          }
+        },
+        {
+          "id": "f1_c8_r0",
+          "type": "concrete_1x1",
+          "position": {
+            "x": 8,
+            "y": 0
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "bund_1b"
+          }
+        },
+        {
+          "id": "f1_c9_r0",
+          "type": "concrete_1x1",
+          "position": {
+            "x": 9,
+            "y": 0
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "bund_1b"
+          }
+        },
+        {
+          "id": "f1_c10_r0",
+          "type": "concrete_1x1",
+          "position": {
+            "x": 10,
+            "y": 0
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "bund_1b"
+          }
+        },
+        {
+          "id": "f1_c11_r0",
+          "type": "concrete_1x1",
+          "position": {
+            "x": 11,
+            "y": 0
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "bund_1b"
+          }
+        },
+        {
+          "id": "f1_c12_r0",
+          "type": "concrete_1x1",
+          "position": {
+            "x": 12,
+            "y": 0
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "bund_1b"
+          }
+        },
+        {
+          "id": "f1_c13_r0",
+          "type": "concrete_1x1",
+          "position": {
+            "x": 13,
+            "y": 0
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "bund_1b"
+          }
+        },
+        {
+          "id": "f1_c14_r0",
+          "type": "concrete_1x1",
+          "position": {
+            "x": 14,
+            "y": 0
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "bund_1b"
+          }
+        },
+        {
+          "id": "f1_c15_r0",
+          "type": "concrete_1x1",
+          "position": {
+            "x": 15,
+            "y": 0
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "bund_1b"
+          }
+        }
+      ]
+    },
+    {
+      "level": 2,
+      "blocks": [
+        {
+          "id": "f2_c0_r0",
+          "type": "concrete_1x1",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "bund_1a"
+          }
+        },
+        {
+          "id": "f2_c2_r0",
+          "type": "brick_1x1",
+          "position": {
+            "x": 2,
+            "y": 0
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_a_2a"
+          }
+        },
+        {
+          "id": "f2_c3_r0",
+          "type": "brick_1x1",
+          "position": {
+            "x": 3,
+            "y": 0
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_a_2a"
+          }
+        },
+        {
+          "id": "f2_c4_r0",
+          "type": "brick_1x1",
+          "position": {
+            "x": 4,
+            "y": 0
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_a_2a"
+          }
+        },
+        {
+          "id": "f2_c15_r0",
+          "type": "concrete_1x1",
+          "position": {
+            "x": 15,
+            "y": 0
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "bund_1b"
+          }
+        },
+        {
+          "id": "f2_c2_r1",
+          "type": "brick_1x1",
+          "position": {
+            "x": 2,
+            "y": 1
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_a_2a"
+          }
+        },
+        {
+          "id": "f2_c3_r1",
+          "type": "brick_1x1",
+          "position": {
+            "x": 3,
+            "y": 1
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_a_2a"
+          }
+        },
+        {
+          "id": "f2_c4_r1",
+          "type": "brick_1x1",
+          "position": {
+            "x": 4,
+            "y": 1
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_a_2a"
+          }
+        },
+        {
+          "id": "f2_c2_r2",
+          "type": "brick_1x1",
+          "position": {
+            "x": 2,
+            "y": 2
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_a_2a"
+          }
+        },
+        {
+          "id": "f2_c3_r2",
+          "type": "brick_1x1",
+          "position": {
+            "x": 3,
+            "y": 2
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_a_2a"
+          }
+        },
+        {
+          "id": "f2_c4_r2",
+          "type": "brick_1x1",
+          "position": {
+            "x": 4,
+            "y": 2
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_a_2a"
+          }
+        },
+        {
+          "id": "f2_c2_r3",
+          "type": "brick_1x1",
+          "position": {
+            "x": 2,
+            "y": 3
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_a_2a"
+          }
+        },
+        {
+          "id": "f2_c3_r3",
+          "type": "brick_1x1",
+          "position": {
+            "x": 3,
+            "y": 3
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_a_2a"
+          }
+        },
+        {
+          "id": "f2_c4_r3",
+          "type": "brick_1x1",
+          "position": {
+            "x": 4,
+            "y": 3
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_a_2a"
+          }
+        },
+        {
+          "id": "f2_c2_r4",
+          "type": "brick_1x1",
+          "position": {
+            "x": 2,
+            "y": 4
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_a_2a"
+          }
+        },
+        {
+          "id": "f2_c3_r4",
+          "type": "brick_1x1",
+          "position": {
+            "x": 3,
+            "y": 4
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_a_2a"
+          }
+        },
+        {
+          "id": "f2_c4_r4",
+          "type": "brick_1x1",
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_a_2a"
+          }
+        },
+        {
+          "id": "f2_c2_r5",
+          "type": "glass_1x1",
+          "position": {
+            "x": 2,
+            "y": 5
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "gauge_a"
+          }
+        },
+        {
+          "id": "f2_c3_r5",
+          "type": "glass_1x1",
+          "position": {
+            "x": 3,
+            "y": 5
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "gauge_a"
+          }
+        },
+        {
+          "id": "f2_c4_r5",
+          "type": "glass_1x1",
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "gauge_a"
+          }
+        },
+        {
+          "id": "f2_c2_r6",
+          "type": "glass_1x1",
+          "position": {
+            "x": 2,
+            "y": 6
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "gauge_a"
+          }
+        },
+        {
+          "id": "f2_c3_r6",
+          "type": "glass_1x1",
+          "position": {
+            "x": 3,
+            "y": 6
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "gauge_a"
+          }
+        },
+        {
+          "id": "f2_c4_r6",
+          "type": "glass_1x1",
+          "position": {
+            "x": 4,
+            "y": 6
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "gauge_a"
+          }
+        },
+        {
+          "id": "f2_c2_r7",
+          "type": "brick_1x1",
+          "position": {
+            "x": 2,
+            "y": 7
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_a_4a"
+          }
+        },
+        {
+          "id": "f2_c3_r7",
+          "type": "brick_1x1",
+          "position": {
+            "x": 3,
+            "y": 7
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_a_4a"
+          }
+        },
+        {
+          "id": "f2_c4_r7",
+          "type": "brick_1x1",
+          "position": {
+            "x": 4,
+            "y": 7
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_a_4a"
+          }
+        },
+        {
+          "id": "f2_c2_r8",
+          "type": "brick_1x1",
+          "position": {
+            "x": 2,
+            "y": 8
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_a_4a"
+          }
+        },
+        {
+          "id": "f2_c3_r8",
+          "type": "brick_1x1",
+          "position": {
+            "x": 3,
+            "y": 8
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_a_4a"
+          }
+        },
+        {
+          "id": "f2_c4_r8",
+          "type": "brick_1x1",
+          "position": {
+            "x": 4,
+            "y": 8
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_a_4a"
+          }
+        },
+        {
+          "id": "f2_c1_r9",
+          "type": "concrete_1x1",
+          "position": {
+            "x": 1,
+            "y": 9
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "cap_a"
+          }
+        },
+        {
+          "id": "f2_c2_r9",
+          "type": "concrete_1x1",
+          "position": {
+            "x": 2,
+            "y": 9
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "cap_a"
+          }
+        },
+        {
+          "id": "f2_c3_r9",
+          "type": "concrete_1x1",
+          "position": {
+            "x": 3,
+            "y": 9
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "cap_a"
+          }
+        },
+        {
+          "id": "f2_c4_r9",
+          "type": "concrete_1x1",
+          "position": {
+            "x": 4,
+            "y": 9
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "cap_a"
+          }
+        },
+        {
+          "id": "f2_c5_r9",
+          "type": "concrete_1x1",
+          "position": {
+            "x": 5,
+            "y": 9
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "cap_a"
+          }
+        }
+      ]
+    },
+    {
+      "level": 3,
+      "blocks": [
+        {
+          "id": "f3_c0_r0",
+          "type": "concrete_1x1",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "bund_1a"
+          }
+        },
+        {
+          "id": "f3_c1_r0",
+          "type": "brick_1x1",
+          "position": {
+            "x": 1,
+            "y": 0
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_a_1a"
+          }
+        },
+        {
+          "id": "f3_c5_r0",
+          "type": "brick_1x1",
+          "position": {
+            "x": 5,
+            "y": 0
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_a_5a"
+          }
+        },
+        {
+          "id": "f3_c8_r0",
+          "type": "brick_1x1",
+          "position": {
+            "x": 8,
+            "y": 0
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_b_2a"
+          }
+        },
+        {
+          "id": "f3_c9_r0",
+          "type": "brick_1x1",
+          "position": {
+            "x": 9,
+            "y": 0
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_b_2a"
+          }
+        },
+        {
+          "id": "f3_c13_r0",
+          "type": "brick_1x1",
+          "position": {
+            "x": 13,
+            "y": 0
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_c_2a"
+          }
+        },
+        {
+          "id": "f3_c14_r0",
+          "type": "brick_1x1",
+          "position": {
+            "x": 14,
+            "y": 0
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_c_2a"
+          }
+        },
+        {
+          "id": "f3_c15_r0",
+          "type": "concrete_1x1",
+          "position": {
+            "x": 15,
+            "y": 0
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "bund_1b"
+          }
+        },
+        {
+          "id": "f3_c1_r1",
+          "type": "brick_1x1",
+          "position": {
+            "x": 1,
+            "y": 1
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_a_1a"
+          }
+        },
+        {
+          "id": "f3_c5_r1",
+          "type": "brick_1x1",
+          "position": {
+            "x": 5,
+            "y": 1
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_a_5a"
+          }
+        },
+        {
+          "id": "f3_c8_r1",
+          "type": "brick_1x1",
+          "position": {
+            "x": 8,
+            "y": 1
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_b_2a"
+          }
+        },
+        {
+          "id": "f3_c9_r1",
+          "type": "brick_1x1",
+          "position": {
+            "x": 9,
+            "y": 1
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_b_2a"
+          }
+        },
+        {
+          "id": "f3_c13_r1",
+          "type": "brick_1x1",
+          "position": {
+            "x": 13,
+            "y": 1
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_c_2a"
+          }
+        },
+        {
+          "id": "f3_c14_r1",
+          "type": "brick_1x1",
+          "position": {
+            "x": 14,
+            "y": 1
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_c_2a"
+          }
+        },
+        {
+          "id": "f3_c1_r2",
+          "type": "brick_1x1",
+          "position": {
+            "x": 1,
+            "y": 2
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_a_1a"
+          }
+        },
+        {
+          "id": "f3_c5_r2",
+          "type": "brick_1x1",
+          "position": {
+            "x": 5,
+            "y": 2
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_a_5a"
+          }
+        },
+        {
+          "id": "f3_c8_r2",
+          "type": "brick_1x1",
+          "position": {
+            "x": 8,
+            "y": 2
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_b_2a"
+          }
+        },
+        {
+          "id": "f3_c9_r2",
+          "type": "brick_1x1",
+          "position": {
+            "x": 9,
+            "y": 2
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_b_2a"
+          }
+        },
+        {
+          "id": "f3_c13_r2",
+          "type": "glass_1x1",
+          "position": {
+            "x": 13,
+            "y": 2
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "gauge_c"
+          }
+        },
+        {
+          "id": "f3_c14_r2",
+          "type": "glass_1x1",
+          "position": {
+            "x": 14,
+            "y": 2
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "gauge_c"
+          }
+        },
+        {
+          "id": "f3_c1_r3",
+          "type": "brick_1x1",
+          "position": {
+            "x": 1,
+            "y": 3
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_a_1a"
+          }
+        },
+        {
+          "id": "f3_c5_r3",
+          "type": "brick_1x1",
+          "position": {
+            "x": 5,
+            "y": 3
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_a_5a"
+          }
+        },
+        {
+          "id": "f3_c8_r3",
+          "type": "glass_1x1",
+          "position": {
+            "x": 8,
+            "y": 3
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "gauge_b"
+          }
+        },
+        {
+          "id": "f3_c9_r3",
+          "type": "glass_1x1",
+          "position": {
+            "x": 9,
+            "y": 3
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "gauge_b"
+          }
+        },
+        {
+          "id": "f3_c13_r3",
+          "type": "glass_1x1",
+          "position": {
+            "x": 13,
+            "y": 3
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "gauge_c"
+          }
+        },
+        {
+          "id": "f3_c14_r3",
+          "type": "glass_1x1",
+          "position": {
+            "x": 14,
+            "y": 3
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "gauge_c"
+          }
+        },
+        {
+          "id": "f3_c1_r4",
+          "type": "brick_1x1",
+          "position": {
+            "x": 1,
+            "y": 4
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_a_1a"
+          }
+        },
+        {
+          "id": "f3_c5_r4",
+          "type": "brick_1x1",
+          "position": {
+            "x": 5,
+            "y": 4
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_a_5a"
+          }
+        },
+        {
+          "id": "f3_c8_r4",
+          "type": "glass_1x1",
+          "position": {
+            "x": 8,
+            "y": 4
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "gauge_b"
+          }
+        },
+        {
+          "id": "f3_c9_r4",
+          "type": "glass_1x1",
+          "position": {
+            "x": 9,
+            "y": 4
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "gauge_b"
+          }
+        },
+        {
+          "id": "f3_c12_r4",
+          "type": "concrete_1x1",
+          "position": {
+            "x": 12,
+            "y": 4
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "cap_c"
+          }
+        },
+        {
+          "id": "f3_c13_r4",
+          "type": "concrete_1x1",
+          "position": {
+            "x": 13,
+            "y": 4
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "cap_c"
+          }
+        },
+        {
+          "id": "f3_c14_r4",
+          "type": "concrete_1x1",
+          "position": {
+            "x": 14,
+            "y": 4
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "cap_c"
+          }
+        },
+        {
+          "id": "f3_c15_r4",
+          "type": "concrete_1x1",
+          "position": {
+            "x": 15,
+            "y": 4
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "cap_c"
+          }
+        },
+        {
+          "id": "f3_c1_r5",
+          "type": "brick_1x1",
+          "position": {
+            "x": 1,
+            "y": 5
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_a_1a"
+          }
+        },
+        {
+          "id": "f3_c5_r5",
+          "type": "brick_1x1",
+          "position": {
+            "x": 5,
+            "y": 5
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_a_5a"
+          }
+        },
+        {
+          "id": "f3_c8_r5",
+          "type": "brick_1x1",
+          "position": {
+            "x": 8,
+            "y": 5
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_b_4a"
+          }
+        },
+        {
+          "id": "f3_c9_r5",
+          "type": "brick_1x1",
+          "position": {
+            "x": 9,
+            "y": 5
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_b_4a"
+          }
+        },
+        {
+          "id": "f3_c1_r6",
+          "type": "brick_1x1",
+          "position": {
+            "x": 1,
+            "y": 6
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_a_1a"
+          }
+        },
+        {
+          "id": "f3_c5_r6",
+          "type": "brick_1x1",
+          "position": {
+            "x": 5,
+            "y": 6
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_a_5a"
+          }
+        },
+        {
+          "id": "f3_c7_r6",
+          "type": "concrete_1x1",
+          "position": {
+            "x": 7,
+            "y": 6
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "cap_b"
+          }
+        },
+        {
+          "id": "f3_c8_r6",
+          "type": "concrete_1x1",
+          "position": {
+            "x": 8,
+            "y": 6
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "cap_b"
+          }
+        },
+        {
+          "id": "f3_c9_r6",
+          "type": "concrete_1x1",
+          "position": {
+            "x": 9,
+            "y": 6
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "cap_b"
+          }
+        },
+        {
+          "id": "f3_c10_r6",
+          "type": "concrete_1x1",
+          "position": {
+            "x": 10,
+            "y": 6
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "cap_b"
+          }
+        },
+        {
+          "id": "f3_c1_r7",
+          "type": "brick_1x1",
+          "position": {
+            "x": 1,
+            "y": 7
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_a_1a"
+          }
+        },
+        {
+          "id": "f3_c5_r7",
+          "type": "brick_1x1",
+          "position": {
+            "x": 5,
+            "y": 7
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_a_5a"
+          }
+        },
+        {
+          "id": "f3_c1_r8",
+          "type": "brick_1x1",
+          "position": {
+            "x": 1,
+            "y": 8
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_a_1b"
+          }
+        },
+        {
+          "id": "f3_c5_r8",
+          "type": "brick_1x1",
+          "position": {
+            "x": 5,
+            "y": 8
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_a_5b"
+          }
+        },
+        {
+          "id": "f3_c1_r9",
+          "type": "concrete_1x1",
+          "position": {
+            "x": 1,
+            "y": 9
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "cap_a"
+          }
+        },
+        {
+          "id": "f3_c2_r9",
+          "type": "concrete_1x1",
+          "position": {
+            "x": 2,
+            "y": 9
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "cap_a"
+          }
+        },
+        {
+          "id": "f3_c3_r9",
+          "type": "concrete_1x1",
+          "position": {
+            "x": 3,
+            "y": 9
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "cap_a"
+          }
+        },
+        {
+          "id": "f3_c4_r9",
+          "type": "concrete_1x1",
+          "position": {
+            "x": 4,
+            "y": 9
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "cap_a"
+          }
+        },
+        {
+          "id": "f3_c5_r9",
+          "type": "concrete_1x1",
+          "position": {
+            "x": 5,
+            "y": 9
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "cap_a"
+          }
+        }
+      ]
+    },
+    {
+      "level": 4,
+      "blocks": [
+        {
+          "id": "f4_c0_r0",
+          "type": "concrete_1x1",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "bund_1a"
+          }
+        },
+        {
+          "id": "f4_c1_r0",
+          "type": "brick_1x1",
+          "position": {
+            "x": 1,
+            "y": 0
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_a_1a"
+          }
+        },
+        {
+          "id": "f4_c5_r0",
+          "type": "brick_1x1",
+          "position": {
+            "x": 5,
+            "y": 0
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_a_5a"
+          }
+        },
+        {
+          "id": "f4_c6_r0",
+          "type": "brick_1x1",
+          "position": {
+            "x": 6,
+            "y": 0
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "pipe_hi_post"
+          }
+        },
+        {
+          "id": "f4_c7_r0",
+          "type": "brick_1x1",
+          "position": {
+            "x": 7,
+            "y": 0
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_b"
+          }
+        },
+        {
+          "id": "f4_c10_r0",
+          "type": "brick_1x1",
+          "position": {
+            "x": 10,
+            "y": 0
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_b_5a"
+          }
+        },
+        {
+          "id": "f4_c11_r0",
+          "type": "brick_1x1",
+          "position": {
+            "x": 11,
+            "y": 0
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "pipe_lo_post"
+          }
+        },
+        {
+          "id": "f4_c12_r0",
+          "type": "brick_1x1",
+          "position": {
+            "x": 12,
+            "y": 0
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_c"
+          }
+        },
+        {
+          "id": "f4_c15_r0",
+          "type": "concrete_1x1",
+          "position": {
+            "x": 15,
+            "y": 0
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "bund_1b"
+          }
+        },
+        {
+          "id": "f4_c1_r1",
+          "type": "brick_1x1",
+          "position": {
+            "x": 1,
+            "y": 1
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_a_1a"
+          }
+        },
+        {
+          "id": "f4_c5_r1",
+          "type": "brick_1x1",
+          "position": {
+            "x": 5,
+            "y": 1
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_a_5a"
+          }
+        },
+        {
+          "id": "f4_c6_r1",
+          "type": "brick_1x1",
+          "position": {
+            "x": 6,
+            "y": 1
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "pipe_hi_post"
+          }
+        },
+        {
+          "id": "f4_c7_r1",
+          "type": "brick_1x1",
+          "position": {
+            "x": 7,
+            "y": 1
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_b"
+          }
+        },
+        {
+          "id": "f4_c10_r1",
+          "type": "brick_1x1",
+          "position": {
+            "x": 10,
+            "y": 1
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_b_5a"
+          }
+        },
+        {
+          "id": "f4_c11_r1",
+          "type": "brick_1x1",
+          "position": {
+            "x": 11,
+            "y": 1
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "pipe_lo_post"
+          }
+        },
+        {
+          "id": "f4_c12_r1",
+          "type": "brick_1x1",
+          "position": {
+            "x": 12,
+            "y": 1
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_c"
+          }
+        },
+        {
+          "id": "f4_c15_r1",
+          "type": "brick_1x1",
+          "position": {
+            "x": 15,
+            "y": 1
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_c_4a"
+          }
+        },
+        {
+          "id": "f4_c1_r2",
+          "type": "brick_1x1",
+          "position": {
+            "x": 1,
+            "y": 2
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_a_1a"
+          }
+        },
+        {
+          "id": "f4_c5_r2",
+          "type": "brick_1x1",
+          "position": {
+            "x": 5,
+            "y": 2
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_a_5a"
+          }
+        },
+        {
+          "id": "f4_c6_r2",
+          "type": "brick_1x1",
+          "position": {
+            "x": 6,
+            "y": 2
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "pipe_hi_post"
+          }
+        },
+        {
+          "id": "f4_c7_r2",
+          "type": "brick_1x1",
+          "position": {
+            "x": 7,
+            "y": 2
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_b"
+          }
+        },
+        {
+          "id": "f4_c10_r2",
+          "type": "brick_1x1",
+          "position": {
+            "x": 10,
+            "y": 2
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_b_5a"
+          }
+        },
+        {
+          "id": "f4_c11_r2",
+          "type": "brick_1x1",
+          "position": {
+            "x": 11,
+            "y": 2
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "pipe_lo"
+          }
+        },
+        {
+          "id": "f4_c12_r2",
+          "type": "brick_1x1",
+          "position": {
+            "x": 12,
+            "y": 2
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_c"
+          }
+        },
+        {
+          "id": "f4_c15_r2",
+          "type": "brick_1x1",
+          "position": {
+            "x": 15,
+            "y": 2
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_c_4a"
+          }
+        },
+        {
+          "id": "f4_c1_r3",
+          "type": "brick_1x1",
+          "position": {
+            "x": 1,
+            "y": 3
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_a_1a"
+          }
+        },
+        {
+          "id": "f4_c5_r3",
+          "type": "brick_1x1",
+          "position": {
+            "x": 5,
+            "y": 3
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_a_5a"
+          }
+        },
+        {
+          "id": "f4_c6_r3",
+          "type": "brick_1x1",
+          "position": {
+            "x": 6,
+            "y": 3
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "pipe_hi_post"
+          }
+        },
+        {
+          "id": "f4_c7_r3",
+          "type": "brick_1x1",
+          "position": {
+            "x": 7,
+            "y": 3
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_b"
+          }
+        },
+        {
+          "id": "f4_c10_r3",
+          "type": "brick_1x1",
+          "position": {
+            "x": 10,
+            "y": 3
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_b_5a"
+          }
+        },
+        {
+          "id": "f4_c11_r3",
+          "type": "brick_1x1",
+          "position": {
+            "x": 11,
+            "y": 3
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "pipe_lo"
+          }
+        },
+        {
+          "id": "f4_c12_r3",
+          "type": "brick_1x1",
+          "position": {
+            "x": 12,
+            "y": 3
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_c"
+          }
+        },
+        {
+          "id": "f4_c15_r3",
+          "type": "brick_1x1",
+          "position": {
+            "x": 15,
+            "y": 3
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_c_4a"
+          }
+        },
+        {
+          "id": "f4_c1_r4",
+          "type": "brick_1x1",
+          "position": {
+            "x": 1,
+            "y": 4
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_a_1a"
+          }
+        },
+        {
+          "id": "f4_c5_r4",
+          "type": "brick_1x1",
+          "position": {
+            "x": 5,
+            "y": 4
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_a_5a"
+          }
+        },
+        {
+          "id": "f4_c6_r4",
+          "type": "brick_1x1",
+          "position": {
+            "x": 6,
+            "y": 4
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "pipe_hi_post"
+          }
+        },
+        {
+          "id": "f4_c7_r4",
+          "type": "brick_1x1",
+          "position": {
+            "x": 7,
+            "y": 4
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_b"
+          }
+        },
+        {
+          "id": "f4_c10_r4",
+          "type": "brick_1x1",
+          "position": {
+            "x": 10,
+            "y": 4
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_b_5a"
+          }
+        },
+        {
+          "id": "f4_c12_r4",
+          "type": "concrete_1x1",
+          "position": {
+            "x": 12,
+            "y": 4
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "cap_c"
+          }
+        },
+        {
+          "id": "f4_c13_r4",
+          "type": "concrete_1x1",
+          "position": {
+            "x": 13,
+            "y": 4
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "cap_c"
+          }
+        },
+        {
+          "id": "f4_c14_r4",
+          "type": "concrete_1x1",
+          "position": {
+            "x": 14,
+            "y": 4
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "cap_c"
+          }
+        },
+        {
+          "id": "f4_c15_r4",
+          "type": "concrete_1x1",
+          "position": {
+            "x": 15,
+            "y": 4
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "cap_c"
+          }
+        },
+        {
+          "id": "f4_c1_r5",
+          "type": "brick_1x1",
+          "position": {
+            "x": 1,
+            "y": 5
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_a_1a"
+          }
+        },
+        {
+          "id": "f4_c5_r5",
+          "type": "brick_1x1",
+          "position": {
+            "x": 5,
+            "y": 5
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_a_5a"
+          }
+        },
+        {
+          "id": "f4_c6_r5",
+          "type": "brick_1x1",
+          "position": {
+            "x": 6,
+            "y": 5
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "pipe_hi_post"
+          }
+        },
+        {
+          "id": "f4_c7_r5",
+          "type": "brick_1x1",
+          "position": {
+            "x": 7,
+            "y": 5
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_b"
+          }
+        },
+        {
+          "id": "f4_c10_r5",
+          "type": "brick_1x1",
+          "position": {
+            "x": 10,
+            "y": 5
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_b_5a"
+          }
+        },
+        {
+          "id": "f4_c1_r6",
+          "type": "brick_1x1",
+          "position": {
+            "x": 1,
+            "y": 6
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_a_1a"
+          }
+        },
+        {
+          "id": "f4_c5_r6",
+          "type": "brick_1x1",
+          "position": {
+            "x": 5,
+            "y": 6
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_a_5a"
+          }
+        },
+        {
+          "id": "f4_c6_r6",
+          "type": "brick_1x1",
+          "position": {
+            "x": 6,
+            "y": 6
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "pipe_hi"
+          }
+        },
+        {
+          "id": "f4_c7_r6",
+          "type": "concrete_1x1",
+          "position": {
+            "x": 7,
+            "y": 6
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "cap_b"
+          }
+        },
+        {
+          "id": "f4_c8_r6",
+          "type": "concrete_1x1",
+          "position": {
+            "x": 8,
+            "y": 6
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "cap_b"
+          }
+        },
+        {
+          "id": "f4_c9_r6",
+          "type": "concrete_1x1",
+          "position": {
+            "x": 9,
+            "y": 6
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "cap_b"
+          }
+        },
+        {
+          "id": "f4_c10_r6",
+          "type": "concrete_1x1",
+          "position": {
+            "x": 10,
+            "y": 6
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "cap_b"
+          }
+        },
+        {
+          "id": "f4_c1_r7",
+          "type": "brick_1x1",
+          "position": {
+            "x": 1,
+            "y": 7
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_a_1a"
+          }
+        },
+        {
+          "id": "f4_c5_r7",
+          "type": "brick_1x1",
+          "position": {
+            "x": 5,
+            "y": 7
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_a_5a"
+          }
+        },
+        {
+          "id": "f4_c6_r7",
+          "type": "brick_1x1",
+          "position": {
+            "x": 6,
+            "y": 7
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "pipe_hi"
+          }
+        },
+        {
+          "id": "f4_c7_r7",
+          "type": "brick_1x1",
+          "position": {
+            "x": 7,
+            "y": 7
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "pipe_hi"
+          }
+        },
+        {
+          "id": "f4_c1_r8",
+          "type": "brick_1x1",
+          "position": {
+            "x": 1,
+            "y": 8
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_a_1b"
+          }
+        },
+        {
+          "id": "f4_c5_r8",
+          "type": "brick_1x1",
+          "position": {
+            "x": 5,
+            "y": 8
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_a_5b"
+          }
+        },
+        {
+          "id": "f4_c1_r9",
+          "type": "concrete_1x1",
+          "position": {
+            "x": 1,
+            "y": 9
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "cap_a"
+          }
+        },
+        {
+          "id": "f4_c2_r9",
+          "type": "concrete_1x1",
+          "position": {
+            "x": 2,
+            "y": 9
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "cap_a"
+          }
+        },
+        {
+          "id": "f4_c3_r9",
+          "type": "concrete_1x1",
+          "position": {
+            "x": 3,
+            "y": 9
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "cap_a"
+          }
+        },
+        {
+          "id": "f4_c4_r9",
+          "type": "concrete_1x1",
+          "position": {
+            "x": 4,
+            "y": 9
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "cap_a"
+          }
+        },
+        {
+          "id": "f4_c5_r9",
+          "type": "concrete_1x1",
+          "position": {
+            "x": 5,
+            "y": 9
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "cap_a"
+          }
+        }
+      ]
+    },
+    {
+      "level": 5,
+      "blocks": [
+        {
+          "id": "f5_c0_r0",
+          "type": "concrete_1x1",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "bund_1a"
+          }
+        },
+        {
+          "id": "f5_c1_r0",
+          "type": "brick_1x1",
+          "position": {
+            "x": 1,
+            "y": 0
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_a_1a"
+          }
+        },
+        {
+          "id": "f5_c5_r0",
+          "type": "brick_1x1",
+          "position": {
+            "x": 5,
+            "y": 0
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_a_5a"
+          }
+        },
+        {
+          "id": "f5_c7_r0",
+          "type": "brick_1x1",
+          "position": {
+            "x": 7,
+            "y": 0
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_b"
+          }
+        },
+        {
+          "id": "f5_c10_r0",
+          "type": "brick_1x1",
+          "position": {
+            "x": 10,
+            "y": 0
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_b_5a"
+          }
+        },
+        {
+          "id": "f5_c12_r0",
+          "type": "brick_1x1",
+          "position": {
+            "x": 12,
+            "y": 0
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_c"
+          }
+        },
+        {
+          "id": "f5_c15_r0",
+          "type": "concrete_1x1",
+          "position": {
+            "x": 15,
+            "y": 0
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "bund_1b"
+          }
+        },
+        {
+          "id": "f5_c1_r1",
+          "type": "brick_1x1",
+          "position": {
+            "x": 1,
+            "y": 1
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_a_1a"
+          }
+        },
+        {
+          "id": "f5_c5_r1",
+          "type": "brick_1x1",
+          "position": {
+            "x": 5,
+            "y": 1
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_a_5a"
+          }
+        },
+        {
+          "id": "f5_c7_r1",
+          "type": "brick_1x1",
+          "position": {
+            "x": 7,
+            "y": 1
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_b"
+          }
+        },
+        {
+          "id": "f5_c10_r1",
+          "type": "brick_1x1",
+          "position": {
+            "x": 10,
+            "y": 1
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_b_5a"
+          }
+        },
+        {
+          "id": "f5_c12_r1",
+          "type": "brick_1x1",
+          "position": {
+            "x": 12,
+            "y": 1
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_c"
+          }
+        },
+        {
+          "id": "f5_c15_r1",
+          "type": "brick_1x1",
+          "position": {
+            "x": 15,
+            "y": 1
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_c_4a"
+          }
+        },
+        {
+          "id": "f5_c1_r2",
+          "type": "brick_1x1",
+          "position": {
+            "x": 1,
+            "y": 2
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_a_1a"
+          }
+        },
+        {
+          "id": "f5_c5_r2",
+          "type": "brick_1x1",
+          "position": {
+            "x": 5,
+            "y": 2
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_a_5a"
+          }
+        },
+        {
+          "id": "f5_c7_r2",
+          "type": "brick_1x1",
+          "position": {
+            "x": 7,
+            "y": 2
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_b"
+          }
+        },
+        {
+          "id": "f5_c10_r2",
+          "type": "brick_1x1",
+          "position": {
+            "x": 10,
+            "y": 2
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_b_5a"
+          }
+        },
+        {
+          "id": "f5_c12_r2",
+          "type": "brick_1x1",
+          "position": {
+            "x": 12,
+            "y": 2
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_c"
+          }
+        },
+        {
+          "id": "f5_c15_r2",
+          "type": "brick_1x1",
+          "position": {
+            "x": 15,
+            "y": 2
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_c_4a"
+          }
+        },
+        {
+          "id": "f5_c1_r3",
+          "type": "brick_1x1",
+          "position": {
+            "x": 1,
+            "y": 3
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_a_1a"
+          }
+        },
+        {
+          "id": "f5_c5_r3",
+          "type": "brick_1x1",
+          "position": {
+            "x": 5,
+            "y": 3
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_a_5a"
+          }
+        },
+        {
+          "id": "f5_c7_r3",
+          "type": "brick_1x1",
+          "position": {
+            "x": 7,
+            "y": 3
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_b"
+          }
+        },
+        {
+          "id": "f5_c10_r3",
+          "type": "brick_1x1",
+          "position": {
+            "x": 10,
+            "y": 3
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_b_5a"
+          }
+        },
+        {
+          "id": "f5_c12_r3",
+          "type": "brick_1x1",
+          "position": {
+            "x": 12,
+            "y": 3
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_c"
+          }
+        },
+        {
+          "id": "f5_c15_r3",
+          "type": "brick_1x1",
+          "position": {
+            "x": 15,
+            "y": 3
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_c_4a"
+          }
+        },
+        {
+          "id": "f5_c1_r4",
+          "type": "brick_1x1",
+          "position": {
+            "x": 1,
+            "y": 4
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_a_1a"
+          }
+        },
+        {
+          "id": "f5_c5_r4",
+          "type": "brick_1x1",
+          "position": {
+            "x": 5,
+            "y": 4
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_a_5a"
+          }
+        },
+        {
+          "id": "f5_c7_r4",
+          "type": "brick_1x1",
+          "position": {
+            "x": 7,
+            "y": 4
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_b"
+          }
+        },
+        {
+          "id": "f5_c10_r4",
+          "type": "brick_1x1",
+          "position": {
+            "x": 10,
+            "y": 4
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_b_5a"
+          }
+        },
+        {
+          "id": "f5_c12_r4",
+          "type": "concrete_1x1",
+          "position": {
+            "x": 12,
+            "y": 4
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "cap_c"
+          }
+        },
+        {
+          "id": "f5_c13_r4",
+          "type": "concrete_1x1",
+          "position": {
+            "x": 13,
+            "y": 4
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "cap_c"
+          }
+        },
+        {
+          "id": "f5_c14_r4",
+          "type": "concrete_1x1",
+          "position": {
+            "x": 14,
+            "y": 4
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "cap_c"
+          }
+        },
+        {
+          "id": "f5_c15_r4",
+          "type": "concrete_1x1",
+          "position": {
+            "x": 15,
+            "y": 4
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "cap_c"
+          }
+        },
+        {
+          "id": "f5_c1_r5",
+          "type": "brick_1x1",
+          "position": {
+            "x": 1,
+            "y": 5
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_a_1a"
+          }
+        },
+        {
+          "id": "f5_c5_r5",
+          "type": "brick_1x1",
+          "position": {
+            "x": 5,
+            "y": 5
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_a_5a"
+          }
+        },
+        {
+          "id": "f5_c7_r5",
+          "type": "brick_1x1",
+          "position": {
+            "x": 7,
+            "y": 5
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_b"
+          }
+        },
+        {
+          "id": "f5_c10_r5",
+          "type": "brick_1x1",
+          "position": {
+            "x": 10,
+            "y": 5
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_b_5a"
+          }
+        },
+        {
+          "id": "f5_c1_r6",
+          "type": "brick_1x1",
+          "position": {
+            "x": 1,
+            "y": 6
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_a_1a"
+          }
+        },
+        {
+          "id": "f5_c5_r6",
+          "type": "brick_1x1",
+          "position": {
+            "x": 5,
+            "y": 6
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_a_5a"
+          }
+        },
+        {
+          "id": "f5_c7_r6",
+          "type": "concrete_1x1",
+          "position": {
+            "x": 7,
+            "y": 6
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "cap_b"
+          }
+        },
+        {
+          "id": "f5_c8_r6",
+          "type": "concrete_1x1",
+          "position": {
+            "x": 8,
+            "y": 6
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "cap_b"
+          }
+        },
+        {
+          "id": "f5_c9_r6",
+          "type": "concrete_1x1",
+          "position": {
+            "x": 9,
+            "y": 6
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "cap_b"
+          }
+        },
+        {
+          "id": "f5_c10_r6",
+          "type": "concrete_1x1",
+          "position": {
+            "x": 10,
+            "y": 6
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "cap_b"
+          }
+        },
+        {
+          "id": "f5_c1_r7",
+          "type": "brick_1x1",
+          "position": {
+            "x": 1,
+            "y": 7
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_a_1a"
+          }
+        },
+        {
+          "id": "f5_c5_r7",
+          "type": "brick_1x1",
+          "position": {
+            "x": 5,
+            "y": 7
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_a_5a"
+          }
+        },
+        {
+          "id": "f5_c1_r8",
+          "type": "brick_1x1",
+          "position": {
+            "x": 1,
+            "y": 8
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_a_1b"
+          }
+        },
+        {
+          "id": "f5_c5_r8",
+          "type": "brick_1x1",
+          "position": {
+            "x": 5,
+            "y": 8
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_a_5b"
+          }
+        },
+        {
+          "id": "f5_c1_r9",
+          "type": "concrete_1x1",
+          "position": {
+            "x": 1,
+            "y": 9
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "cap_a"
+          }
+        },
+        {
+          "id": "f5_c2_r9",
+          "type": "concrete_1x1",
+          "position": {
+            "x": 2,
+            "y": 9
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "cap_a"
+          }
+        },
+        {
+          "id": "f5_c3_r9",
+          "type": "concrete_1x1",
+          "position": {
+            "x": 3,
+            "y": 9
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "cap_a"
+          }
+        },
+        {
+          "id": "f5_c4_r9",
+          "type": "concrete_1x1",
+          "position": {
+            "x": 4,
+            "y": 9
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "cap_a"
+          }
+        },
+        {
+          "id": "f5_c5_r9",
+          "type": "concrete_1x1",
+          "position": {
+            "x": 5,
+            "y": 9
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "cap_a"
+          }
+        }
+      ]
+    },
+    {
+      "level": 6,
+      "blocks": [
+        {
+          "id": "f6_c0_r0",
+          "type": "concrete_1x1",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "bund_1a"
+          }
+        },
+        {
+          "id": "f6_c2_r0",
+          "type": "brick_1x1",
+          "position": {
+            "x": 2,
+            "y": 0
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_a_3a"
+          }
+        },
+        {
+          "id": "f6_c3_r0",
+          "type": "brick_1x1",
+          "position": {
+            "x": 3,
+            "y": 0
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_a_3a"
+          }
+        },
+        {
+          "id": "f6_c4_r0",
+          "type": "brick_1x1",
+          "position": {
+            "x": 4,
+            "y": 0
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_a_3a"
+          }
+        },
+        {
+          "id": "f6_c8_r0",
+          "type": "brick_1x1",
+          "position": {
+            "x": 8,
+            "y": 0
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_b_3a"
+          }
+        },
+        {
+          "id": "f6_c9_r0",
+          "type": "brick_1x1",
+          "position": {
+            "x": 9,
+            "y": 0
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_b_3a"
+          }
+        },
+        {
+          "id": "f6_c13_r0",
+          "type": "brick_1x1",
+          "position": {
+            "x": 13,
+            "y": 0
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_c_3a"
+          }
+        },
+        {
+          "id": "f6_c14_r0",
+          "type": "brick_1x1",
+          "position": {
+            "x": 14,
+            "y": 0
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_c_3a"
+          }
+        },
+        {
+          "id": "f6_c15_r0",
+          "type": "concrete_1x1",
+          "position": {
+            "x": 15,
+            "y": 0
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "bund_1b"
+          }
+        },
+        {
+          "id": "f6_c2_r1",
+          "type": "brick_1x1",
+          "position": {
+            "x": 2,
+            "y": 1
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_a_3a"
+          }
+        },
+        {
+          "id": "f6_c3_r1",
+          "type": "brick_1x1",
+          "position": {
+            "x": 3,
+            "y": 1
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_a_3a"
+          }
+        },
+        {
+          "id": "f6_c4_r1",
+          "type": "brick_1x1",
+          "position": {
+            "x": 4,
+            "y": 1
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_a_3a"
+          }
+        },
+        {
+          "id": "f6_c8_r1",
+          "type": "brick_1x1",
+          "position": {
+            "x": 8,
+            "y": 1
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_b_3a"
+          }
+        },
+        {
+          "id": "f6_c9_r1",
+          "type": "brick_1x1",
+          "position": {
+            "x": 9,
+            "y": 1
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_b_3a"
+          }
+        },
+        {
+          "id": "f6_c13_r1",
+          "type": "brick_1x1",
+          "position": {
+            "x": 13,
+            "y": 1
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_c_3a"
+          }
+        },
+        {
+          "id": "f6_c14_r1",
+          "type": "brick_1x1",
+          "position": {
+            "x": 14,
+            "y": 1
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_c_3a"
+          }
+        },
+        {
+          "id": "f6_c2_r2",
+          "type": "brick_1x1",
+          "position": {
+            "x": 2,
+            "y": 2
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_a_3a"
+          }
+        },
+        {
+          "id": "f6_c3_r2",
+          "type": "brick_1x1",
+          "position": {
+            "x": 3,
+            "y": 2
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_a_3a"
+          }
+        },
+        {
+          "id": "f6_c4_r2",
+          "type": "brick_1x1",
+          "position": {
+            "x": 4,
+            "y": 2
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_a_3a"
+          }
+        },
+        {
+          "id": "f6_c8_r2",
+          "type": "brick_1x1",
+          "position": {
+            "x": 8,
+            "y": 2
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_b_3a"
+          }
+        },
+        {
+          "id": "f6_c9_r2",
+          "type": "brick_1x1",
+          "position": {
+            "x": 9,
+            "y": 2
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_b_3a"
+          }
+        },
+        {
+          "id": "f6_c13_r2",
+          "type": "brick_1x1",
+          "position": {
+            "x": 13,
+            "y": 2
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_c_3a"
+          }
+        },
+        {
+          "id": "f6_c14_r2",
+          "type": "brick_1x1",
+          "position": {
+            "x": 14,
+            "y": 2
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_c_3a"
+          }
+        },
+        {
+          "id": "f6_c2_r3",
+          "type": "brick_1x1",
+          "position": {
+            "x": 2,
+            "y": 3
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_a_3a"
+          }
+        },
+        {
+          "id": "f6_c3_r3",
+          "type": "brick_1x1",
+          "position": {
+            "x": 3,
+            "y": 3
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_a_3a"
+          }
+        },
+        {
+          "id": "f6_c4_r3",
+          "type": "brick_1x1",
+          "position": {
+            "x": 4,
+            "y": 3
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_a_3a"
+          }
+        },
+        {
+          "id": "f6_c8_r3",
+          "type": "brick_1x1",
+          "position": {
+            "x": 8,
+            "y": 3
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_b_3a"
+          }
+        },
+        {
+          "id": "f6_c9_r3",
+          "type": "brick_1x1",
+          "position": {
+            "x": 9,
+            "y": 3
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_b_3a"
+          }
+        },
+        {
+          "id": "f6_c13_r3",
+          "type": "brick_1x1",
+          "position": {
+            "x": 13,
+            "y": 3
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_c_3a"
+          }
+        },
+        {
+          "id": "f6_c14_r3",
+          "type": "brick_1x1",
+          "position": {
+            "x": 14,
+            "y": 3
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_c_3a"
+          }
+        },
+        {
+          "id": "f6_c2_r4",
+          "type": "brick_1x1",
+          "position": {
+            "x": 2,
+            "y": 4
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_a_3a"
+          }
+        },
+        {
+          "id": "f6_c3_r4",
+          "type": "brick_1x1",
+          "position": {
+            "x": 3,
+            "y": 4
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_a_3a"
+          }
+        },
+        {
+          "id": "f6_c4_r4",
+          "type": "brick_1x1",
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_a_3a"
+          }
+        },
+        {
+          "id": "f6_c8_r4",
+          "type": "brick_1x1",
+          "position": {
+            "x": 8,
+            "y": 4
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_b_3a"
+          }
+        },
+        {
+          "id": "f6_c9_r4",
+          "type": "brick_1x1",
+          "position": {
+            "x": 9,
+            "y": 4
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_b_3a"
+          }
+        },
+        {
+          "id": "f6_c12_r4",
+          "type": "concrete_1x1",
+          "position": {
+            "x": 12,
+            "y": 4
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "cap_c"
+          }
+        },
+        {
+          "id": "f6_c13_r4",
+          "type": "concrete_1x1",
+          "position": {
+            "x": 13,
+            "y": 4
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "cap_c"
+          }
+        },
+        {
+          "id": "f6_c14_r4",
+          "type": "concrete_1x1",
+          "position": {
+            "x": 14,
+            "y": 4
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "cap_c"
+          }
+        },
+        {
+          "id": "f6_c15_r4",
+          "type": "concrete_1x1",
+          "position": {
+            "x": 15,
+            "y": 4
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "cap_c"
+          }
+        },
+        {
+          "id": "f6_c2_r5",
+          "type": "brick_1x1",
+          "position": {
+            "x": 2,
+            "y": 5
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_a_3a"
+          }
+        },
+        {
+          "id": "f6_c3_r5",
+          "type": "brick_1x1",
+          "position": {
+            "x": 3,
+            "y": 5
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_a_3a"
+          }
+        },
+        {
+          "id": "f6_c4_r5",
+          "type": "brick_1x1",
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_a_3a"
+          }
+        },
+        {
+          "id": "f6_c8_r5",
+          "type": "brick_1x1",
+          "position": {
+            "x": 8,
+            "y": 5
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_b_3a"
+          }
+        },
+        {
+          "id": "f6_c9_r5",
+          "type": "brick_1x1",
+          "position": {
+            "x": 9,
+            "y": 5
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_b_3a"
+          }
+        },
+        {
+          "id": "f6_c2_r6",
+          "type": "brick_1x1",
+          "position": {
+            "x": 2,
+            "y": 6
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_a_3a"
+          }
+        },
+        {
+          "id": "f6_c3_r6",
+          "type": "brick_1x1",
+          "position": {
+            "x": 3,
+            "y": 6
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_a_3a"
+          }
+        },
+        {
+          "id": "f6_c4_r6",
+          "type": "brick_1x1",
+          "position": {
+            "x": 4,
+            "y": 6
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_a_3a"
+          }
+        },
+        {
+          "id": "f6_c7_r6",
+          "type": "concrete_1x1",
+          "position": {
+            "x": 7,
+            "y": 6
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "cap_b"
+          }
+        },
+        {
+          "id": "f6_c8_r6",
+          "type": "concrete_1x1",
+          "position": {
+            "x": 8,
+            "y": 6
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "cap_b"
+          }
+        },
+        {
+          "id": "f6_c9_r6",
+          "type": "concrete_1x1",
+          "position": {
+            "x": 9,
+            "y": 6
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "cap_b"
+          }
+        },
+        {
+          "id": "f6_c10_r6",
+          "type": "concrete_1x1",
+          "position": {
+            "x": 10,
+            "y": 6
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "cap_b"
+          }
+        },
+        {
+          "id": "f6_c2_r7",
+          "type": "brick_1x1",
+          "position": {
+            "x": 2,
+            "y": 7
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_a_3a"
+          }
+        },
+        {
+          "id": "f6_c3_r7",
+          "type": "brick_1x1",
+          "position": {
+            "x": 3,
+            "y": 7
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_a_3a"
+          }
+        },
+        {
+          "id": "f6_c4_r7",
+          "type": "brick_1x1",
+          "position": {
+            "x": 4,
+            "y": 7
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_a_3a"
+          }
+        },
+        {
+          "id": "f6_c2_r8",
+          "type": "brick_1x1",
+          "position": {
+            "x": 2,
+            "y": 8
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_a_3b"
+          }
+        },
+        {
+          "id": "f6_c3_r8",
+          "type": "brick_1x1",
+          "position": {
+            "x": 3,
+            "y": 8
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_a_3b"
+          }
+        },
+        {
+          "id": "f6_c4_r8",
+          "type": "brick_1x1",
+          "position": {
+            "x": 4,
+            "y": 8
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "tank_a_3b"
+          }
+        },
+        {
+          "id": "f6_c1_r9",
+          "type": "concrete_1x1",
+          "position": {
+            "x": 1,
+            "y": 9
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "cap_a"
+          }
+        },
+        {
+          "id": "f6_c2_r9",
+          "type": "concrete_1x1",
+          "position": {
+            "x": 2,
+            "y": 9
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "cap_a"
+          }
+        },
+        {
+          "id": "f6_c3_r9",
+          "type": "concrete_1x1",
+          "position": {
+            "x": 3,
+            "y": 9
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "cap_a"
+          }
+        },
+        {
+          "id": "f6_c4_r9",
+          "type": "concrete_1x1",
+          "position": {
+            "x": 4,
+            "y": 9
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "cap_a"
+          }
+        },
+        {
+          "id": "f6_c5_r9",
+          "type": "concrete_1x1",
+          "position": {
+            "x": 5,
+            "y": 9
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "cap_a"
+          }
+        }
+      ]
+    },
+    {
+      "level": 7,
+      "blocks": [
+        {
+          "id": "f7_c0_r0",
+          "type": "concrete_1x1",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "bund_1a"
+          }
+        },
+        {
+          "id": "f7_c1_r0",
+          "type": "concrete_1x1",
+          "position": {
+            "x": 1,
+            "y": 0
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "bund_1a"
+          }
+        },
+        {
+          "id": "f7_c2_r0",
+          "type": "concrete_1x1",
+          "position": {
+            "x": 2,
+            "y": 0
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "bund_1a"
+          }
+        },
+        {
+          "id": "f7_c3_r0",
+          "type": "concrete_1x1",
+          "position": {
+            "x": 3,
+            "y": 0
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "bund_1a"
+          }
+        },
+        {
+          "id": "f7_c4_r0",
+          "type": "concrete_1x1",
+          "position": {
+            "x": 4,
+            "y": 0
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "bund_1a"
+          }
+        },
+        {
+          "id": "f7_c5_r0",
+          "type": "concrete_1x1",
+          "position": {
+            "x": 5,
+            "y": 0
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "bund_1a"
+          }
+        },
+        {
+          "id": "f7_c6_r0",
+          "type": "concrete_1x1",
+          "position": {
+            "x": 6,
+            "y": 0
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "bund_1a"
+          }
+        },
+        {
+          "id": "f7_c7_r0",
+          "type": "concrete_1x1",
+          "position": {
+            "x": 7,
+            "y": 0
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "bund_1a"
+          }
+        },
+        {
+          "id": "f7_c8_r0",
+          "type": "concrete_1x1",
+          "position": {
+            "x": 8,
+            "y": 0
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "bund_1b"
+          }
+        },
+        {
+          "id": "f7_c9_r0",
+          "type": "concrete_1x1",
+          "position": {
+            "x": 9,
+            "y": 0
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "bund_1b"
+          }
+        },
+        {
+          "id": "f7_c10_r0",
+          "type": "concrete_1x1",
+          "position": {
+            "x": 10,
+            "y": 0
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "bund_1b"
+          }
+        },
+        {
+          "id": "f7_c11_r0",
+          "type": "concrete_1x1",
+          "position": {
+            "x": 11,
+            "y": 0
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "bund_1b"
+          }
+        },
+        {
+          "id": "f7_c12_r0",
+          "type": "concrete_1x1",
+          "position": {
+            "x": 12,
+            "y": 0
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "bund_1b"
+          }
+        },
+        {
+          "id": "f7_c13_r0",
+          "type": "concrete_1x1",
+          "position": {
+            "x": 13,
+            "y": 0
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "bund_1b"
+          }
+        },
+        {
+          "id": "f7_c14_r0",
+          "type": "concrete_1x1",
+          "position": {
+            "x": 14,
+            "y": 0
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "bund_1b"
+          }
+        },
+        {
+          "id": "f7_c15_r0",
+          "type": "concrete_1x1",
+          "position": {
+            "x": 15,
+            "y": 0
+          },
+          "rotation": 0,
+          "wall": {
+            "wall_id": "bund_1b"
+          }
+        }
+      ]
+    },
+    {
+      "level": 8,
+      "blocks": []
+    }
+  ]
+}

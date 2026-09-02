@@ -83,6 +83,21 @@ namespace GameJam.Economy
         /// <summary>Rounds one continue buys, of whatever ammunition is loaded.</summary>
         public int ContinueAmmo => loseConfig != null ? loseConfig.continueAmmo : 0;
 
+        /// <summary>Gold per round on the first-failure purchase screen.</summary>
+        public int LoseBulletPrice => loseConfig != null ? loseConfig.bulletPrice : 0;
+
+        /// <summary>Cap on rounds bought in one first-failure purchase.</summary>
+        public int FirstLoseMaxBullets => loseConfig != null ? loseConfig.firstLoseMaxBullets : 20;
+
+        /// <summary>
+        /// Charges for a first-failure purchase of this many rounds. Same spend path as every
+        /// other charge, so the save and GoldChanged behave identically.
+        /// </summary>
+        public bool TryPayLoseBullets(int count)
+        {
+            return count > 0 && loseConfig != null && TrySpendGold(count * loseConfig.bulletPrice);
+        }
+
         /// <summary>
         /// Whether the player could pay for a continue this instant. False with no config: nothing
         /// is sold unpriced, and a missing config must read as "not for sale" rather than "free".

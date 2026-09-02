@@ -16,6 +16,6 @@ MonoBehaviour:
   - vehicleId: cannon_a
     goldPrice: 0
   - vehicleId: cannon_b
-    goldPrice: 800
+    goldPrice: 1200
   - vehicleId: cannon_c
-    goldPrice: 2000
+    goldPrice: 2500

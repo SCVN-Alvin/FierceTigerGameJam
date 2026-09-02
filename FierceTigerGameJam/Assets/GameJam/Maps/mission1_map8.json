@@ -202,7 +202,7 @@
     },
     {
      "id": "f0_c4_r3",
-     "type": "concrete_1x1",
+     "type": "brick_1x1",
      "position": {
       "x": 4,
       "y": 3
@@ -211,7 +211,7 @@
     },
     {
      "id": "f0_c7_r3",
-     "type": "concrete_1x1",
+     "type": "brick_1x1",
      "position": {
       "x": 7,
       "y": 3
@@ -274,7 +274,7 @@
     },
     {
      "id": "f0_c4_r4",
-     "type": "concrete_1x1",
+     "type": "brick_1x1",
      "position": {
       "x": 4,
       "y": 4
@@ -283,7 +283,7 @@
     },
     {
      "id": "f0_c7_r4",
-     "type": "concrete_1x1",
+     "type": "brick_1x1",
      "position": {
       "x": 7,
       "y": 4
@@ -346,7 +346,7 @@
     },
     {
      "id": "f0_c4_r5",
-     "type": "concrete_1x1",
+     "type": "brick_1x1",
      "position": {
       "x": 4,
       "y": 5
@@ -364,7 +364,7 @@
     },
     {
      "id": "f0_c7_r5",
-     "type": "concrete_1x1",
+     "type": "brick_1x1",
      "position": {
       "x": 7,
       "y": 5
@@ -2725,7 +2725,7 @@
     },
     {
      "id": "f6_c4_r3",
-     "type": "concrete_1x1",
+     "type": "brick_1x1",
      "position": {
       "x": 4,
       "y": 3
@@ -2734,7 +2734,7 @@
     },
     {
      "id": "f6_c7_r3",
-     "type": "concrete_1x1",
+     "type": "brick_1x1",
      "position": {
       "x": 7,
       "y": 3
@@ -2797,7 +2797,7 @@
     },
     {
      "id": "f6_c4_r4",
-     "type": "concrete_1x1",
+     "type": "brick_1x1",
      "position": {
       "x": 4,
       "y": 4
@@ -2806,7 +2806,7 @@
     },
     {
      "id": "f6_c7_r4",
-     "type": "concrete_1x1",
+     "type": "brick_1x1",
      "position": {
       "x": 7,
       "y": 4
@@ -2869,7 +2869,7 @@
     },
     {
      "id": "f6_c4_r5",
-     "type": "concrete_1x1",
+     "type": "brick_1x1",
      "position": {
       "x": 4,
       "y": 5
@@ -2887,7 +2887,7 @@
     },
     {
      "id": "f6_c7_r5",
-     "type": "concrete_1x1",
+     "type": "brick_1x1",
      "position": {
       "x": 7,
       "y": 5

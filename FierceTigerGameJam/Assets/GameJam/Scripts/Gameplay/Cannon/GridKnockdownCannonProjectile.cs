@@ -353,8 +353,43 @@ namespace GameJam.Gameplay.Cannon
             projectileRigidbody.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
             Vector3 launchVelocity = direction.normalized * speed;
             projectileRigidbody.linearVelocity = launchVelocity;
+            muzzleBlendRemaining = Vector3.zero;            // every rent starts blend-free
+            muzzleBlendSecondsLeft = 0f;
             ApplyFlightTumble(launchVelocity, speed);
             IgnoreSpawnOverlaps();
+        }
+
+        // ----- muzzle blend (Falcon 2026-09-03) ---------------------------------------------
+        // Sequence firing wants the ball to LEAVE the current barrel, but a ball that flies
+        // from a side barrel can only hit the tapped block by flying diagonally - which read
+        // as missing. The trick: spawn at the barrel, fly the CENTRE-LINE velocity, and slide
+        // the lateral gap away over the first fraction of a second. After the blend the ball
+        // is exactly on the solved trajectory, so it lands exactly on the tap.
+        private Vector3 muzzleBlendRemaining;
+        private float muzzleBlendSecondsLeft;
+
+        /// <summary>Call right after Launch: slide the ball by this world offset over the
+        /// given seconds (the barrel-to-centre gap, typically ~0.1s worth of flight).</summary>
+        public void SetMuzzleBlend(Vector3 worldOffset, float seconds)
+        {
+            muzzleBlendRemaining = worldOffset;
+            muzzleBlendSecondsLeft = Mathf.Max(0.01f, seconds);
+        }
+
+        private void FixedUpdate()
+        {
+            if (muzzleBlendSecondsLeft <= 0f || hasHit)
+            {
+                muzzleBlendRemaining = Vector3.zero;
+                muzzleBlendSecondsLeft = 0f;
+                return;
+            }
+
+            float dt = Mathf.Min(Time.fixedDeltaTime, muzzleBlendSecondsLeft);
+            Vector3 step = muzzleBlendRemaining * (dt / muzzleBlendSecondsLeft);
+            projectileRigidbody.MovePosition(projectileRigidbody.position + step);
+            muzzleBlendRemaining -= step;
+            muzzleBlendSecondsLeft -= dt;
         }
 
         /// <summary>

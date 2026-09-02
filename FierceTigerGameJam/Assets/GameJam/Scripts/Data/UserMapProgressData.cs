@@ -24,6 +24,9 @@ namespace GameJam.Data
         public bool passRewardClaimed;
 
         public bool clearRewardClaimed;
+
+        /// <summary>The one-off +gold for first reaching the 2-star bar (75%) has been paid.</summary>
+        public bool twoStarRewardClaimed;
     }
 
     /// <summary>What changed as a result of one attempt, so the caller knows what to pay out.</summary>
@@ -38,6 +41,9 @@ namespace GameJam.Data
         public bool NewlyPassed;
 
         public bool NewlyCleared;
+
+        /// <summary>First time at or above the 2-star bar, and its bonus not yet paid.</summary>
+        public bool NewlyTwoStar;
     }
 
     /// <summary>
@@ -47,6 +53,15 @@ namespace GameJam.Data
     [Serializable]
     public sealed class UserMapProgressData
     {
+        /// <summary>
+        /// The clear bonus's bar. Falcon 2026-09-02: dropped from 100% to 95% so it lands with
+        /// the 3rd star - keep it equal to MissionConfig.threeStarClearPercent.
+        /// </summary>
+        public const float ClearRewardPercent = 0.95f;
+
+        /// <summary>The 2-star bonus's bar - keep equal to MissionConfig.twoStarClearPercent.</summary>
+        public const float TwoStarRewardPercent = 0.75f;
+
         /// <summary>Bumped when the shape of this record changes, so old saves can be migrated.</summary>
         public int version = 1;
 
@@ -115,7 +130,7 @@ namespace GameJam.Data
             }
 
             bool passedNow = clearPercent >= requiredClearPercent;
-            bool clearedNow = clearPercent >= 1f;
+            bool clearedNow = clearPercent >= ClearRewardPercent;
 
             MapAttemptResult result = new MapAttemptResult
             {
@@ -125,6 +140,7 @@ namespace GameJam.Data
                 FullyCleared = clearedNow,
                 NewlyPassed = passedNow && !progress.passRewardClaimed,
                 NewlyCleared = clearedNow && !progress.clearRewardClaimed,
+                NewlyTwoStar = clearPercent >= TwoStarRewardPercent && !progress.twoStarRewardClaimed,
             };
 
             progress.passed |= passedNow;
@@ -136,6 +152,11 @@ namespace GameJam.Data
         /// Called once the reward has actually been handed over, so a run that is interrupted
         /// between earning and being paid can still be paid next time.
         /// </summary>
+        public void MarkTwoStarRewardClaimed(string mapId)
+        {
+            GetOrCreate(mapId).twoStarRewardClaimed = true;
+        }
+
         public void MarkPassRewardClaimed(string mapId)
         {
             GetOrCreate(mapId).passRewardClaimed = true;

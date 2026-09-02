@@ -173,6 +173,7 @@ namespace GameJam.Gameplay
             blockRigidbody.WakeUp();
             Activated?.Invoke(this);
             ReleaseSupportedBlocksAbove();
+            RequestSupportFlood();
         }
 
         private void OnCollisionEnter(Collision collision)
@@ -406,6 +407,23 @@ namespace GameJam.Gameplay
             blockRigidbody.WakeUp();
             Activated?.Invoke(this);
             ApplySupportReleaseImpulse(releasedBy);
+            RequestSupportFlood();
+        }
+
+        /// <summary>The registry re-checks who still stands, once, on the next physics step.</summary>
+        private void RequestSupportFlood()
+        {
+            StructureRegistry structure = ResolveRegistry();
+            if (structure != null)
+            {
+                structure.RequestSupportFlood();
+            }
+        }
+
+        /// <summary>The registry's way in when its flood finds this block cut off from the ground.</summary>
+        internal void ReleaseFromFlood()
+        {
+            ActivateFromSupportRelease(null);
         }
 
         private void ApplySupportReleaseImpulse(KnockdownBlock releasedBy)

@@ -1,5 +1,6 @@
 using System.Collections;
 using GameJam.Audio;
+using GameJam.Config;
 using GameJam.Gameplay.Flow;
 using GameJam.Gameplay.Wall;
 using TMPro;
@@ -34,11 +35,25 @@ namespace GameJam.UI
 
         [SerializeField] private TMP_Text rewardLabel;
 
+        [Header("Stars")]
+        [Tooltip("Where the star thresholds live. The screen shows THIS run's stars - the board "
+                 + "shows the best ever; both come from the same StarsFor so they can never "
+                 + "disagree about what a star means.")]
+        [SerializeField] private MissionConfig missionConfig;
+
+        [SerializeField] private Sprite starOnSprite;
+
+        [SerializeField] private Sprite starOffSprite;
+
         [Tooltip("Seconds the reward number takes to count up. Counting it up is what makes the "
                  + "reward land; zero shows it immediately.")]
         [SerializeField] private float rewardCountUpSeconds = 0.55f;
 
         private Coroutine countUpRoutine;
+        private RectTransform starRow;
+        private readonly Image[] starImages = new Image[3];
+        private readonly Image[] goldImages = new Image[3];
+        private Coroutine starDropRoutine;
 
         private void OnEnable()
         {
@@ -56,6 +71,11 @@ namespace GameJam.UI
             }
 
             StopCountUp();
+            if (starDropRoutine != null)
+            {
+                StopCoroutine(starDropRoutine);
+                starDropRoutine = null;
+            }
         }
 
         /// <summary>Fills the screen in from a finished run.</summary>
@@ -74,6 +94,147 @@ namespace GameJam.UI
 
             ShowMapPicture(result.MapId);
             ShowReward(result.GoldAwarded);
+            ShowStars(result.ClearPercent);
+        }
+
+        /// <summary>
+        /// The stars THIS run earned, under the banner. The three grey slots stand there from
+        /// the first frame; each EARNED star then drops onto its slot one after another, slams
+        /// to size, and knocks the whole screen - the juice is in the landing, not the layout.
+        /// </summary>
+        private void ShowStars(float clearPercent)
+        {
+            if (missionConfig == null)
+            {
+                return;
+            }
+
+            int stars = missionConfig.StarsFor(true, clearPercent);
+            EnsureStarRow();
+            if (starRow == null)
+            {
+                return;
+            }
+
+            for (int i = 0; i < starImages.Length; i++)
+            {
+                if (starImages[i] != null)
+                {
+                    starImages[i].gameObject.SetActive(true);
+                }
+
+                if (goldImages[i] != null)
+                {
+                    goldImages[i].gameObject.SetActive(false);
+                }
+            }
+
+            if (starDropRoutine != null)
+            {
+                StopCoroutine(starDropRoutine);
+            }
+
+            starDropRoutine = StartCoroutine(DropStars(stars));
+        }
+
+        private System.Collections.IEnumerator DropStars(int stars)
+        {
+            yield return new WaitForSeconds(0.35f);   // let the banner land first
+
+            for (int i = 0; i < stars && i < goldImages.Length; i++)
+            {
+                Image gold = goldImages[i];
+                if (gold == null)
+                {
+                    continue;
+                }
+
+                RectTransform rect = gold.rectTransform;
+                Vector2 target = SlotPosition(i);
+                gold.gameObject.SetActive(true);
+
+                // The fall: big and high to seated, fast, accelerating - a stamp, not a float.
+                const float fall = 0.16f;
+                for (float t = 0f; t < fall; t += Time.deltaTime)
+                {
+                    float k = t / fall;
+                    k *= k;                            // ease in, gravity-like
+                    rect.anchoredPosition = target + new Vector2(0f, (1f - k) * 170f);
+                    rect.localScale = Vector3.one * Mathf.Lerp(2.4f, 1f, k);
+                    gold.color = new Color(1f, 1f, 1f, Mathf.Clamp01(k * 3f));
+                    yield return null;
+                }
+
+                rect.anchoredPosition = target;
+                gold.color = Color.white;
+                AudioService.Play(AudioSlot.StarLand);
+
+                // The squash on landing. The shake was tried and retired - Falcon's call: at
+                // card size it read as jank, and the slam carries the weight on its own.
+                const float slam = 0.14f;
+                for (float t = 0f; t < slam; t += Time.deltaTime)
+                {
+                    float k = 1f - t / slam;
+                    rect.localScale = Vector3.one * (1f + 0.3f * k * k);
+                    yield return null;
+                }
+
+                rect.localScale = Vector3.one;
+                yield return new WaitForSeconds(0.12f);
+            }
+
+            starDropRoutine = null;
+        }
+
+        private static Vector2 SlotPosition(int index)
+        {
+            bool middle = index == 1;
+            return new Vector2((index - 1) * 150f, middle ? 18f : 0f);
+        }
+
+        private void EnsureStarRow()
+        {
+            if (starRow != null || starOnSprite == null)
+            {
+                return;
+            }
+
+            GameObject go = new GameObject("Stars", typeof(RectTransform));
+            starRow = (RectTransform)go.transform;
+            starRow.SetParent(transform, false);
+            starRow.anchorMin = starRow.anchorMax = new Vector2(0.5f, 0.695f);
+            starRow.pivot = new Vector2(0.5f, 0.5f);
+            starRow.anchoredPosition = Vector2.zero;
+            starRow.sizeDelta = new Vector2(480f, 170f);
+
+            for (int i = 0; i < starImages.Length; i++)
+            {
+                // The slot is the ON art tinted grey rather than the pack's Off sprite: the Off
+                // art is a dark navy that all but disappears against a night backdrop, and a
+                // slot the player cannot see fails at its one job - showing what is missing.
+                starImages[i] = MakeStar(starRow, "Slot" + i, i, starOnSprite);
+                starImages[i].color = new Color(0.42f, 0.47f, 0.58f, 0.95f);
+                goldImages[i] = MakeStar(starRow, "Gold" + i, i, starOnSprite);
+                goldImages[i].gameObject.SetActive(false);
+            }
+        }
+
+        private static Image MakeStar(RectTransform parent, string name, int index, Sprite sprite)
+        {
+            GameObject go = new GameObject(name, typeof(RectTransform));
+            RectTransform rect = (RectTransform)go.transform;
+            rect.SetParent(parent, false);
+            rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 0.5f);
+            rect.pivot = new Vector2(0.5f, 0.5f);
+            rect.anchoredPosition = SlotPosition(index);
+            bool middle = index == 1;
+            rect.sizeDelta = middle ? new Vector2(156f, 156f) : new Vector2(128f, 128f);
+
+            Image image = go.AddComponent<Image>();
+            image.sprite = sprite;
+            image.preserveAspect = true;
+            image.raycastTarget = false;
+            return image;
         }
 
         /// <summary>
