@@ -202,6 +202,21 @@ namespace GameJam.EditorTools
         /// both are built the same way and differ only in what fills the list. The bottom of the
         /// panel stops above the tab bar, which is on screen at the same time.
         /// </summary>
+        /// <summary>
+        /// The mission board's frame, reused as the panel behind the settings and the gold shop so
+        /// the three read as one game rather than one authored screen and two placeholders. It is
+        /// nine-sliced now, so it takes any panel shape without the corners stretching.
+        /// </summary>
+        private const string PanelFrameSprite = UiTextures + "/SelectMission/UI_Mission_Frame.png";
+
+        /// <summary>
+        /// Layer Lab's sky button, nine-sliced by its author. Chosen over the plain colour block
+        /// the settings buttons used because MAIN MENU and CLOSE are the only two things on that
+        /// panel a player can act on, and they were the least visible things on it.
+        /// </summary>
+        private const string PanelButtonSprite =
+            "Assets/Layer Lab/GUI Pro-CasualGame/ResourcesData/Sprites/Components/Button/Button01_225_Sky.png";
+
         private static RectTransform EnsureShopPanel(
             string name,
             Transform canvas,
@@ -210,17 +225,27 @@ namespace GameJam.EditorTools
             out TMP_Text goldLabel)
         {
             RectTransform root = EnsureRect(name, canvas, new Vector2(0f, 0.135f), new Vector2(1f, 1f));
-            EnsureColorImage("Background", root, PanelColor, Vector2.zero, Vector2.one);
 
-            EnsureLabel("Title", root, title, 52, TextAlignmentOptions.Center,
-                new Vector2(0.1f, 0.88f), new Vector2(0.9f, 0.96f));
+            // The menu's own ground, then the frame on top of it - the same two layers the garage
+            // and the mission board stand on, so the gold shop stops being the one screen you can
+            // see the playfield through.
+            EnsureSpriteImage("Background", root, $"{MenuTextures}/UI_MainMenu_BG.png", Vector2.zero, Vector2.one);
 
-            RectTransform money = EnsureSpriteImage("MoneyChip", root, $"{MenuTextures}/UI_Money.png",
-                new Vector2(0.55f, 0.885f), new Vector2(0.78f, 0.95f));
+            RectTransform frame = EnsureSlicedImage("Frame", root, PanelFrameSprite,
+                new Vector2(0.06f, 0.10f), new Vector2(0.94f, 0.92f));
+
+            EnsureLabel("Title", frame, title, 52, TextAlignmentOptions.Center,
+                new Vector2(0.1f, 0.86f), new Vector2(0.9f, 0.96f));
+
+            EnsureLabel("ComingSoon", frame, "COMING SOON", 44, TextAlignmentOptions.Center,
+                new Vector2(0.1f, 0.44f), new Vector2(0.9f, 0.60f));
+
+            RectTransform money = EnsureSpriteImage("MoneyChip", frame, $"{MenuTextures}/UI_Money.png",
+                new Vector2(0.55f, 0.865f), new Vector2(0.78f, 0.94f));
             goldLabel = EnsureLabel("GoldLabel", money, "0", 36, TextAlignmentOptions.Center,
                 new Vector2(0.2f, 0.1f), new Vector2(0.82f, 0.9f));
 
-            rows = EnsureRect("Rows", root, new Vector2(0.06f, 0.06f), new Vector2(0.94f, 0.85f));
+            rows = EnsureRect("Rows", frame, new Vector2(0.08f, 0.08f), new Vector2(0.92f, 0.40f));
             return root;
         }
 
@@ -231,17 +256,23 @@ namespace GameJam.EditorTools
         private static GameObject BuildSettings(Transform canvas, out Button closeButton, out Button mainMenuButton)
         {
             RectTransform root = EnsureRect("SettingsOverlay", canvas, Vector2.zero, Vector2.one);
-            EnsureSpriteImage("Dim", root, $"{UiTextures}/Tutorial/Filter.png", Vector2.zero, Vector2.one);
+
+            // The same black the garage and the mission board dim to, rather than Filter.png. That
+            // sprite is the tutorial spotlight - it carries a transparent ellipse punched through
+            // the middle, so the settings panel sat in a hole in its own dim.
+            EnsureColorImage("Dim", root, BackdropColor, Vector2.zero, Vector2.one);
 
             RectTransform panel = EnsureRect("Panel", root, new Vector2(0.12f, 0.32f), new Vector2(0.88f, 0.68f));
-            EnsureColorImage("PanelBackground", panel, PanelColor, Vector2.zero, Vector2.one);
+            EnsureSlicedImage("PanelBackground", panel, PanelFrameSprite, Vector2.zero, Vector2.one);
             EnsureLabel("Title", panel, "SETTINGS", 48, TextAlignmentOptions.Center,
                 new Vector2(0.05f, 0.78f), new Vector2(0.95f, 0.95f));
             EnsureLabel("Note", panel, "Nothing to configure yet.", 26, TextAlignmentOptions.Center,
                 new Vector2(0.05f, 0.6f), new Vector2(0.95f, 0.75f));
 
-            mainMenuButton = EnsureButton("MainMenuButton", panel, "MAIN MENU", new Vector2(0.15f, 0.34f), new Vector2(0.85f, 0.5f));
-            closeButton = EnsureButton("CloseButton", panel, "CLOSE", new Vector2(0.15f, 0.1f), new Vector2(0.85f, 0.26f));
+            mainMenuButton = EnsureSlicedButton("MainMenuButton", panel, "MAIN MENU",
+                new Vector2(0.15f, 0.30f), new Vector2(0.85f, 0.46f));
+            closeButton = EnsureSlicedButton("CloseButton", panel, "CLOSE",
+                new Vector2(0.15f, 0.08f), new Vector2(0.85f, 0.24f));
 
             SettingsPanelView view = Ensure<SettingsPanelView>(root.gameObject);
             SerializedObject serialized = new SerializedObject(view);
@@ -301,6 +332,68 @@ namespace GameJam.EditorTools
             }
 
             return rect;
+        }
+
+        /// <summary>
+        /// A sprite drawn nine-sliced, so a panel frame keeps its corners and its rim at whatever
+        /// size the rect is. Sliced rather than Simple is the whole reason the frame art was given
+        /// a border - stretched Simple is what makes a reused frame look melted.
+        /// </summary>
+        internal static RectTransform EnsureSlicedImage(
+            string name,
+            Transform parent,
+            string spritePath,
+            Vector2 anchorMin,
+            Vector2 anchorMax)
+        {
+            bool created = parent.Find(name) == null;
+            RectTransform rect = EnsureSpriteImage(name, parent, spritePath, anchorMin, anchorMax);
+
+            Image image = rect != null ? rect.GetComponent<Image>() : null;
+            if (image != null && created)
+            {
+                image.type = Image.Type.Sliced;
+
+                // The frame is the panel, so it has to take the taps that are not on a control -
+                // otherwise a press lands on whatever is behind the screen.
+                image.raycastTarget = true;
+            }
+
+            return rect;
+        }
+
+        /// <summary>
+        /// A button wearing sliced art with a caption on top, for the two controls the settings
+        /// panel actually offers. Built from the sprite button helper so the label placement and
+        /// the transition match every other authored button in the game.
+        /// </summary>
+        internal static Button EnsureSlicedButton(
+            string name,
+            Transform parent,
+            string caption,
+            Vector2 anchorMin,
+            Vector2 anchorMax)
+        {
+            bool created = parent.Find(name) == null;
+            Button button = EnsureSpriteButton(name, parent, PanelButtonSprite, anchorMin, anchorMax);
+            if (button == null)
+            {
+                return null;
+            }
+
+            if (created && button.targetGraphic is Image image)
+            {
+                image.type = Image.Type.Sliced;
+
+                // preserveAspect off on purpose: the art is 64x225 and these buttons are wide, so
+                // preserving it would letterbox them into a sliver.
+                image.preserveAspect = false;
+            }
+
+            EnsureLabel("Label", (RectTransform)button.transform, caption, 34, TextAlignmentOptions.Center,
+                new Vector2(0.05f, 0.15f), new Vector2(0.95f, 0.85f));
+
+            return button;
         }
 
         internal static RectTransform EnsureColorImage(string name, Transform parent, Color color, Vector2 anchorMin, Vector2 anchorMax)

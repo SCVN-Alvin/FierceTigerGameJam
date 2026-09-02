@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 using GameJam.Gameplay.Wall;
 
@@ -37,6 +38,12 @@ namespace GameJam.Gameplay.Cannon
             }
         }
 
+        /// <summary>
+        /// Whether the gesture in progress began on a UI element. The cannon ignores the whole of
+        /// such a gesture: no aim, no rotation, no shot.
+        /// </summary>
+        private bool pressStartedOverUi;
+
         private void Update()
         {
             Pointer pointer = Pointer.current;
@@ -50,7 +57,28 @@ namespace GameJam.Gameplay.Cannon
 
             if (pointer.press.wasPressedThisFrame)
             {
+                // A press that starts on a screen belongs to that screen. Judged once, here, and
+                // remembered for the whole gesture: testing again on release would let a drag that
+                // began on the gear end as a shot the moment the finger left the button, and a drag
+                // that began on the playfield die the moment it crossed one.
+                if (IsPointerOverUi(currentScreenPosition))
+                {
+                    pressStartedOverUi = true;
+                    return;
+                }
+
+                pressStartedOverUi = false;
                 BeginPress(currentScreenPosition);
+            }
+
+            if (pressStartedOverUi)
+            {
+                if (pointer.press.wasReleasedThisFrame)
+                {
+                    pressStartedOverUi = false;
+                }
+
+                return;
             }
 
             if (isPointerDown && pointer.press.isPressed)
@@ -68,6 +96,43 @@ namespace GameJam.Gameplay.Cannon
         {
             StopStructureRotation();
         }
+
+        /// <summary>
+        /// Whether a screen position is over an interactive UI element.
+        ///
+        /// Asked of the EventSystem by raycast rather than the parameterless
+        /// <c>IsPointerOverGameObject</c>: that overload answers for the mouse pointer id and is
+        /// unreliable on touch, where each finger has an id of its own, and it is documented to
+        /// return the previous frame's answer inside an input callback. Raycasting the position we
+        /// already have is exact for both.
+        ///
+        /// Anything with raycastTarget on counts, which is why the backdrops behind the menus take
+        /// raycasts deliberately: a tap on the dim around a panel is a tap on that screen, not a
+        /// shot through it.
+        /// </summary>
+        private bool IsPointerOverUi(Vector2 screenPosition)
+        {
+            EventSystem events = EventSystem.current;
+            if (events == null)
+            {
+                // No EventSystem means no UI can be hit at all, so nothing can be blocking.
+                return false;
+            }
+
+            pointerEventData ??= new PointerEventData(events);
+            pointerEventData.Reset();
+            pointerEventData.position = screenPosition;
+
+            uiHits.Clear();
+            events.RaycastAll(pointerEventData, uiHits);
+            return uiHits.Count > 0;
+        }
+
+        /// <summary>Reused so a press costs no allocation; both are cleared before every use.</summary>
+        private PointerEventData pointerEventData;
+
+        private readonly System.Collections.Generic.List<RaycastResult> uiHits =
+            new System.Collections.Generic.List<RaycastResult>();
 
         private void BeginPress(Vector2 screenPosition)
         {
