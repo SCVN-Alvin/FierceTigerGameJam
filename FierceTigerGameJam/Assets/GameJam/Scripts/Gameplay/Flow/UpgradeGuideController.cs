@@ -35,7 +35,13 @@ namespace GameJam.Gameplay.Flow
     public sealed class UpgradeGuideController : MonoBehaviour
     {
         /// <summary>Passing this is what arms the guide.</summary>
-        private const string TargetMapId = "mission1_map1";
+        /// <summary>
+        /// The map whose failure arms the lesson. Map 2 is authored to need both upgrades, so
+        /// losing it is the moment the player has a question the garage answers - offering the
+        /// walk after a WIN on map 1 taught the same thing to someone who had not yet met the
+        /// problem.
+        /// </summary>
+        private const string TargetMapId = "mission1_map2";
 
         /// <summary>Clear space between the spotlit control and the caption panel.</summary>
         private const float PanelGap = 250f;
@@ -45,6 +51,18 @@ namespace GameJam.Gameplay.Flow
 
         /// <summary>Where the hand rests relative to the control it is pointing at.</summary>
         private static readonly Vector2 HandRest = new Vector2(46f, -66f);
+
+        /// <summary>How far outside the control the gap reaches, so a tap on its very edge lands.</summary>
+        private const float HoleMargin = 14f;
+
+        /// <summary>
+        /// How much wider than the gap the feather is drawn. Its art is mostly falloff, so it has
+        /// to overhang generously for the soft part to cover where the strips meet.
+        /// </summary>
+        private const float FeatherSpread = 2.6f;
+
+        /// <summary>Matches the backdrop the menus already dim to, so the two never disagree.</summary>
+        private static readonly Color DimColor = new Color(0f, 0f, 0f, 0.78f);
 
         /// <summary>
         /// What the guide is asking for. Garage first, because the other two are only reachable
@@ -66,7 +84,8 @@ namespace GameJam.Gameplay.Flow
         private Canvas canvas;
 
         private RectTransform guideRoot;
-        private RectTransform dimRect;
+        private RectTransform[] blockStrips;
+        private RectTransform featherRect;
         private RectTransform panelRect;
         private TMP_Text label;
         private Image handImage;
@@ -154,26 +173,10 @@ namespace GameJam.Gameplay.Flow
         }
 
         /// <summary>
-        /// Whether clearing this map should hand the player back to the menu rather than continue
-        /// straight into the next one.
-        ///
-        /// True only for the map this lesson is armed on, and only while the lesson still has
-        /// something to say. The map that follows is authored to need the upgrades this teaches,
-        /// so continuing directly into it would spend the player's first attempt on a wall they
-        /// have not been shown the answer to. Once the guide is finished the flag is set and this
-        /// goes quiet, so a replay of the map continues normally.
-        /// </summary>
-        public static bool WantsMenuAfter(string mapId)
-        {
-            return !string.IsNullOrEmpty(mapId)
-                   && string.Equals(mapId, TargetMapId, System.StringComparison.Ordinal)
-                   && !UserData.Tutorial.upgradeGuideDone;
-        }
-
-        /// <summary>
-        /// Armed by progress, not by an event: reading the save is what makes a player who passed
-        /// map 1 before this shipped get the lesson too, and what makes it survive a quit halfway
-        /// through. <see cref="UserTutorialData.upgradeGuideDone"/> is the only thing that ends it.
+        /// Armed by progress, not by an event: reading the save is what makes a player who already
+        /// lost map 2 before this shipped get the lesson too, and what makes it survive a quit
+        /// halfway through. <see cref="UserTutorialData.upgradeGuideDone"/> is the only thing that
+        /// ends it.
         /// </summary>
         private bool ShouldOffer()
         {
@@ -188,7 +191,21 @@ namespace GameJam.Gameplay.Flow
             UserTutorialData tutorial = UserData.Tutorial;
             return tutorial.completed
                    && !tutorial.upgradeGuideDone
-                   && UserData.Maps.IsPassed(TargetMapId);
+                   && HasLost(TargetMapId);
+        }
+
+        /// <summary>
+        /// Whether the player has taken this map on and not beaten it.
+        ///
+        /// Read off the save with no new field: a map only gets a progress record when a run on it
+        /// is registered, so a record that is not yet passed IS an attempt that was lost. It also
+        /// answers correctly for someone who lost, quit and came back, and it stops answering the
+        /// moment they win - which is the right way round, because a player who beat map 2 without
+        /// upgrading has already proved they do not need the lesson.
+        /// </summary>
+        private static bool HasLost(string mapId)
+        {
+            return UserData.Maps.TryGet(mapId, out MapProgress progress) && !progress.passed;
         }
 
         /// <summary>
@@ -507,15 +524,49 @@ namespace GameJam.Gameplay.Flow
                 label.text = caption;
             }
 
-            Vector2 centre = CanvasPointOf(target);
-
-            if (dimRect != null)
-            {
-                dimRect.anchoredPosition = centre;
-            }
-
+            LayoutAroundTarget(target, out Vector2 centre);
             PlacePanel(centre);
             AnimateHand(centre);
+        }
+
+        /// <summary>
+        /// Fences the screen off around the control, leaving a gap the exact size of the control.
+        ///
+        /// The corners are read from the target every frame rather than cached: the garage's rows
+        /// live in a scroll view, so the thing being pointed at moves under the overlay. Working
+        /// from the target's own rect is also what makes the gap fit a small Buy button and a wide
+        /// tab equally well - the old single filter sprite was one size whatever it was over.
+        /// </summary>
+        private void LayoutAroundTarget(RectTransform target, out Vector2 centre)
+        {
+            Rect canvasRect = guideRoot.rect;
+
+            Vector3[] corners = new Vector3[4];
+            target.GetWorldCorners(corners);
+            Vector2 min = ToGuideSpace(corners[0]) - new Vector2(HoleMargin, HoleMargin);
+            Vector2 max = ToGuideSpace(corners[2]) + new Vector2(HoleMargin, HoleMargin);
+            centre = (min + max) * 0.5f;
+
+            TutorialOverlay.LayoutStripsAround(blockStrips, canvasRect, min, max);
+
+            if (featherRect != null)
+            {
+                float span = Mathf.Max(max.x - min.x, max.y - min.y) * FeatherSpread;
+                featherRect.anchoredPosition = centre;
+                featherRect.sizeDelta = new Vector2(span, span);
+            }
+        }
+
+        /// <summary>A world point in the overlay's own coordinates, via the screen.</summary>
+        private Vector2 ToGuideSpace(Vector3 world)
+        {
+            Camera uiCamera = canvas != null && canvas.renderMode != RenderMode.ScreenSpaceOverlay
+                ? canvas.worldCamera
+                : null;
+
+            Vector2 screen = RectTransformUtility.WorldToScreenPoint(uiCamera, world);
+            RectTransformUtility.ScreenPointToLocalPointInRectangle(guideRoot, screen, uiCamera, out Vector2 local);
+            return local;
         }
 
         /// <summary>
@@ -647,14 +698,16 @@ namespace GameJam.Gameplay.Flow
                 WarnAboutArtOnce("the drag hint has no dim or hand sprite to borrow");
             }
 
-            // Not a raycast wall. The whole point is that the control being lit can be pressed.
-            guideRoot = TutorialOverlay.CreateRoot(parent, "UpgradeGuide", blocksRaycasts: false);
+            // blocksRaycasts TRUE, which reads backwards until you know what the flag does: a
+            // CanvasGroup set false makes every graphic under it invisible to the raycaster, so
+            // the blocking strips would have been inert decoration and the lesson would have
+            // fenced nothing off. True only permits its children to be hit - it is not itself a
+            // wall. The strips are the wall, and the gap they leave has no graphic in it at all,
+            // so a tap there falls straight through to the control being taught.
+            guideRoot = TutorialOverlay.CreateRoot(parent, "UpgradeGuide", blocksRaycasts: true);
 
-            if (dimSprite != null)
-            {
-                dimRect = TutorialOverlay.CreateSpotlight(guideRoot, dimSprite);
-                dimRect.anchorMin = dimRect.anchorMax = new Vector2(0.5f, 0.5f);
-            }
+            blockStrips = TutorialOverlay.CreateBlockingStrips(guideRoot, DimColor);
+            featherRect = TutorialOverlay.CreateFeather(guideRoot, dimSprite);
 
             panelRect = TutorialOverlay.CreatePanel(guideRoot, panelSprite);
             panelRect.anchorMin = panelRect.anchorMax = new Vector2(0.5f, 0.5f);

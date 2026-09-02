@@ -87,6 +87,102 @@ namespace GameJam.Gameplay.Flow
         }
 
         /// <summary>
+        /// The four dark strips that fence a control off from the rest of the screen.
+        ///
+        /// A cut-out is built out of what surrounds it rather than out of the hole itself: the
+        /// strips tile the canvas ABOVE, BELOW, LEFT and RIGHT of the target, leaving an untouched
+        /// gap over the control. Unlike the spotlight above they DO take raycasts, so every tap
+        /// outside the gap dies on them and the only live thing on screen is the control the
+        /// lesson is pointing at. That is the difference between a lesson that suggests and one
+        /// that holds - and it is why the hole is always exactly the size of its target, where a
+        /// single pre-sized filter sprite can only ever be the size it was drawn.
+        ///
+        /// Pivoted at the bottom-left so a strip is positioned by its min corner and sized by the
+        /// span, which is the form the layout maths falls out in.
+        /// </summary>
+        public static RectTransform[] CreateBlockingStrips(RectTransform root, Color dimColor)
+        {
+            RectTransform[] strips = new RectTransform[4];
+            for (int i = 0; i < strips.Length; i++)
+            {
+                GameObject stripGo = new GameObject($"Block{i}", typeof(RectTransform));
+                RectTransform strip = (RectTransform)stripGo.transform;
+                strip.SetParent(root, false);
+                strip.anchorMin = new Vector2(0.5f, 0.5f);
+                strip.anchorMax = new Vector2(0.5f, 0.5f);
+                strip.pivot = Vector2.zero;
+
+                Image dim = stripGo.AddComponent<Image>();
+                dim.color = dimColor;
+                dim.raycastTarget = true;
+                strips[i] = strip;
+            }
+
+            return strips;
+        }
+
+        /// <summary>
+        /// The soft-edged filter laid over the gap the strips leave, purely to hide their corners.
+        ///
+        /// Four rectangles meeting around a hole read as four rectangles; the tutorial's filter art
+        /// has a feathered transparent middle, so scaling it over the gap turns the join into a
+        /// falloff. Visual only - it never takes a raycast, because the whole point of the gap is
+        /// that the control inside it is still pressable.
+        /// </summary>
+        public static RectTransform CreateFeather(RectTransform root, Sprite dimSprite)
+        {
+            if (dimSprite == null)
+            {
+                // No art is survivable: the strips alone still fence the control off, they just
+                // meet at hard corners. A missing sprite must not cost the lesson its blocking.
+                return null;
+            }
+
+            GameObject featherGo = new GameObject("Feather", typeof(RectTransform));
+            RectTransform feather = (RectTransform)featherGo.transform;
+            feather.SetParent(root, false);
+            feather.anchorMin = new Vector2(0.5f, 0.5f);
+            feather.anchorMax = new Vector2(0.5f, 0.5f);
+            feather.pivot = new Vector2(0.5f, 0.5f);
+
+            Image featherImage = featherGo.AddComponent<Image>();
+            featherImage.sprite = dimSprite;
+            featherImage.raycastTarget = false;
+            return feather;
+        }
+
+        /// <summary>
+        /// Lays the four strips around a rect, leaving it uncovered. Coordinates are in the
+        /// overlay root's own space, and a strip that comes out empty is switched off rather than
+        /// left as a zero-sized raycast target.
+        /// </summary>
+        public static void LayoutStripsAround(RectTransform[] strips, Rect canvas, Vector2 min, Vector2 max)
+        {
+            if (strips == null || strips.Length < 4)
+            {
+                return;
+            }
+
+            SetStrip(strips[0], new Vector2(canvas.xMin, max.y), new Vector2(canvas.xMax, canvas.yMax));
+            SetStrip(strips[1], new Vector2(canvas.xMin, canvas.yMin), new Vector2(canvas.xMax, min.y));
+            SetStrip(strips[2], new Vector2(canvas.xMin, min.y), new Vector2(min.x, max.y));
+            SetStrip(strips[3], new Vector2(max.x, min.y), new Vector2(canvas.xMax, max.y));
+        }
+
+        private static void SetStrip(RectTransform strip, Vector2 min, Vector2 max)
+        {
+            if (strip == null)
+            {
+                return;
+            }
+
+            Vector2 size = Vector2.Max(Vector2.zero, max - min);
+            strip.anchoredPosition = min;
+            strip.sizeDelta = size;
+            strip.gameObject.SetActive(size.x > 0.5f && size.y > 0.5f);
+        }
+
+        /// <summary>
         /// The rounded speech panel. With no art it is an empty rect that still positions the
         /// words, which is what a scene missing the sprite should show rather than a white slab.
         /// </summary>

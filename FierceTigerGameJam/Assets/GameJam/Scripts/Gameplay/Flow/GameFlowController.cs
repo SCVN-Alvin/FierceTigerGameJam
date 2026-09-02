@@ -798,24 +798,7 @@ namespace GameJam.Gameplay.Flow
                 return;
             }
 
-            // The upgrade lesson lives on the menu screens, and the map after this one is authored
-            // to need what it teaches. Diving straight into that map would hand the player their
-            // first failure and only then offer the shop, so this one map hands them back to the
-            // board instead. Every other map still continues straight into the next.
-            if (UpgradeGuideController.WantsMenuAfter(ResolveClearedMapId()))
-            {
-                EnterMapSelection();
-                return;
-            }
-
             EnterNextMap();
-        }
-
-        /// <summary>The map the cleared screen is reporting on, or empty when there is none.</summary>
-        private string ResolveClearedMapId()
-        {
-            MapInfo cleared = mapSelection != null ? mapSelection.Selected : null;
-            return cleared != null ? cleared.Id : string.Empty;
         }
 
         /// <summary>
