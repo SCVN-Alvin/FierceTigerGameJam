@@ -220,6 +220,12 @@ namespace GameJam.EditorTools
                     verdict));
 
                 report.AppendLine($"{string.Empty,15}{Composition(composition, stats)}");
+
+                string gateNote = GearCheckNote(composition, stats, rock, cannon, need, total);
+                if (!string.IsNullOrEmpty(gateNote))
+                {
+                    report.AppendLine($"{string.Empty,15}{gateNote}");
+                }
             }
 
             report.AppendLine(new string('-', 96));
@@ -312,6 +318,62 @@ namespace GameJam.EditorTools
             }
 
             return removed >= need ? shots : int.MaxValue;
+        }
+
+        /// <summary>
+        /// Whether a map that contains Rock-proof material actually gates on it.
+        ///
+        /// Owning the concrete-capable ammunition is meant to be the price of entry to the late
+        /// campaign, but the requirement is a share of the block count and concrete is only a
+        /// share of the blocks. Where the rest of the structure is by itself enough to reach the
+        /// requirement, a player can pass on Rock alone and never touch a concrete block, and the
+        /// gear check is decorative. That is a design question rather than a bug, so it is
+        /// reported with the number that decides it - the share the requirement would have to
+        /// exceed for the gate to bite - and nothing here changes it.
+        /// </summary>
+        private static string GearCheckNote(
+            Dictionary<string, int> composition,
+            Dictionary<string, BlockStats> stats,
+            BulletDefinition rock,
+            BulletDefinition cannon,
+            int need,
+            int total)
+        {
+            int bestRockLevel = Mathf.Max(1, rock.LevelCount);
+            int rockProof = 0;
+            foreach (KeyValuePair<string, int> entry in composition)
+            {
+                if (!stats.TryGetValue(entry.Key, out BlockStats block))
+                {
+                    continue;
+                }
+
+                bool rockCan = rock.CanDamage(bestRockLevel, block.materialId);
+                if (!rockCan && cannon.CanDamage(Mathf.Max(1, cannon.LevelCount), block.materialId))
+                {
+                    rockProof += entry.Value;
+                }
+            }
+
+            if (rockProof == 0)
+            {
+                return string.Empty;
+            }
+
+            int reachable = total - rockProof;
+            float gateShare = reachable / (float)total;
+            return reachable >= need
+                ? string.Format(
+                    CultureInfo.InvariantCulture,
+                    "GEAR CHECK DOES NOT BITE: {0} blocks here need the cannon, but the other {1} "
+                    + "already cover the {2} the requirement asks for. Rock alone passes without "
+                    + "touching them; the requirement would have to exceed {3:P0} to gate.",
+                    rockProof, reachable, need, gateShare)
+                : string.Format(
+                    CultureInfo.InvariantCulture,
+                    "Gear check bites: only {0} of {1} blocks are reachable without the cannon, "
+                    + "short of the {2} required.",
+                    reachable, total, need);
         }
 
         /// <summary>
