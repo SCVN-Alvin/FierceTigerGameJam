@@ -859,6 +859,58 @@ Falcon's machine, and in the `Falcon/UpdateMapData` branch history.
     clamps redone for the new pivot, caption goes under the hole (above the hand's body only
     when the hole hugs the bottom edge). No more per-stop cases - one layout everywhere.
 
+- **2026-09-03i** LEVEL 1 REBUILT (Falcon; user: map1 too hard to break even in brick -
+  wants brick + LOTS of glass only, easy, weak-legged like the blue glass tower reference).
+  `Maps/mission1_map1.json` REPLACED (old version lives in git history): 6x4 footprint,
+  6 layers, 62 blocks (28 glass / 34 brick, no concrete). Shape: 4 slim brick corner legs
+  two layers tall with a 2-wide glass panel mid-front (the weak base - shoot the legs and
+  the tower drops), a full brick_2x1 deck slab at L2, two hollow curtain-wall floors
+  (brick corners + glass_1x1 edges) at L3-L4, and a light brick_2x1 roof over the middle
+  rows at L5. Down from 77 blocks all-brick; glass is 45% of pieces at 1 HP each.
+  - v2 AXIS FIX (in-game screenshot showed the build rotated 90 deg, glass on the wrong
+    faces): first version treated layers as floors. In this format position.y is the row
+    going UP and layer.level is the DEPTH slice (0 nearest the cannon) - spec section
+    confirms. Rebuilt: 6 wide x 6 tall x 4 deep, 76 blocks (24 glass / 52 brick). Both
+    facades (levels 0 and 3) carry the glass: 2-wide glass panel in the leg zone (y0-1),
+    glass curtain x1..x4 at y3-4 with brick corners; inner slices are hollow - corner
+    columns + side deck/roof stubs only. Every block is supported within its own slice
+    (validated; 2x1 counts as supported when either cell has support), per the spec rule
+    that layers do not support each other. WATCH: mission3_map10 was authored under the
+    same wrong axis assumption - review before shipping it.
+  NEEDS RE-BAKE: Prefabs/Maps/Map_mission1_map1.prefab still holds the old build - user
+  re-bakes in the editor exactly like mission1_map8. No config changes (same map id).
+
+- **2026-09-03j** BACKGROUNDS RESTYLED (user generated via the img2img prompts from 03g's
+  batch): all three files in Assets/GameJam/Textures/ OVERWRITTEN IN PLACE - BG_New_01
+  (1373x1146), BG_Beach_01 (1448x1086), BG_Universe_01 (2000x1670) - same names, same
+  guids/metas, exact original dimensions, so the tuned background offsets are untouched.
+  New art is hyper-casual cartoon, composition identical to the old renders. Old versions
+  in git history. NOTE: Textures/BG/BG_New_01.png (a differently-sized old variant, guid
+  not referenced by MissionConfig) was left alone. Unity reimports on next focus.
+
+- **2026-09-03k** FLOORS RESTYLED TO MATCH (user's image tool was down, so these were drawn
+  PROCEDURALLY in Python - PIL + scipy wrap-mode noise - not AI-generated): the three floor
+  textures MissionConfig references were overwritten in place, same names/guids/sizes.
+  Floor_New_09 (1254px, mission 1): the old dark asphalt clashed with the new bright BG, so
+  it is now light warm concrete sampled from BG_New_01's own ground (avg 215/193/165), soft
+  mottling + faint stains. Floor_Sand_01 (1254px): pale cartoon sand, periodic ripple waves.
+  Floor_Space_01 (1024px): light gray-blue 2x2 metal panels, beveled seams + corner rivets,
+  toned to the station walls. All three are mathematically seamless (noise and stamps use
+  wrapped boundaries; verified with 2x2 tile previews). Old floors in git history. The
+  generator can be re-run with different colors on request.
+  - Floor_New_09 v3: the first light-concrete take was wrong twice over - mission 1 has
+    floorTiling 0 (the texture is STRETCHED once across the floor, so soft mottling smears
+    into featureless plastic), and the user confirmed the dark asphalt IS this map's
+    intended ground. Final version: cartoon asphalt at the original's dark tone (66/69/77),
+    bold aggregate grain that survives stretching, posterized repave patches, thin cracks,
+    tar blobs, tiny bright stones. Lesson for any future floor: author detail at
+    stretched-once scale for tiling-0 missions, tile scale for the others (32/20).
+  - Floor_Sand_01 v2 + Floor_Space_01 v2 (user: beach floor's edge did not match the BG at
+    the horizon): distant tiles minify to the texture's AVERAGE colour, so each floor's
+    average is now pinned EXACTLY to its BG's bottom-edge strip (beach 253/226/152, space
+    174/188/217) and all shading passes are zero-mean so they cannot drift it. Rule for
+    future floors: floor average colour == mean of the BG's bottom ~14 pixel rows.
+
 ---
 
 ## Audit appendix (2026-09-01g) — evidence, file:line
