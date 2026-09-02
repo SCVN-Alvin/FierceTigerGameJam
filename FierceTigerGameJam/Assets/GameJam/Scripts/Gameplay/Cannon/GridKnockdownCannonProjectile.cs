@@ -24,11 +24,12 @@ namespace GameJam.Gameplay.Cannon
                  + "watches rather than something that ends the instant it lands.")]
         [SerializeField] private float postImpactLifetime = 0.4f;
 
-        [Tooltip("Ceiling on the tumble a launched ball is given, in radians per second. Rolling "
-                 + "contact on a ball this small works out at hundreds of radians per second, "
-                 + "which is more than a turn per physics step and reads as a strobe, so this "
-                 + "clamp is what is actually seen on almost every shot.")]
-        [SerializeField] private float maxTumbleAngularSpeed = 20f;
+        [Tooltip("How much harder than the world this shot falls while it is flying. 1 is world "
+                 + "gravity, which makes the fixed-apex arc take about 1.6 seconds whatever the "
+                 + "distance and reads as floaty; the default pulls that under a second without "
+                 + "changing where the shot lands. The launch is solved against this same number, "
+                 + "so raising it steepens the arc rather than moving the impact point.")]
+        [SerializeField] private float gravityMultiplier = DefaultGravityMultiplier;
 
         [Header("Damage")]
         [Tooltip("Where the loaded ammunition and its level are read from. Without one, the flat "
@@ -62,10 +63,31 @@ namespace GameJam.Gameplay.Cannon
         private static readonly HashSet<KnockdownBlock> ProcessedBlocks = new HashSet<KnockdownBlock>();
 
         /// <summary>
-        /// Below this, the axis the tumble would turn about has collapsed - a shot fired straight
-        /// up, where there is no horizontal heading to roll over - and the ball flies unspun.
+        /// What a shot falls at when nobody has said otherwise. Public so the fire controller can
+        /// solve an arc for a projectile it has not built yet - the built-in debugging sphere -
+        /// against the very number that instance will end up flying at.
         /// </summary>
-        private const float MinTumbleAxisSqrMagnitude = 0.0001f;
+        public const float DefaultGravityMultiplier = 2.5f;
+
+        /// <summary>
+        /// Floor under the multiplier. At zero the shot would hang in the air and the launch solve
+        /// would answer with a near-infinite flight time, so an inspector typo cannot switch
+        /// gravity off.
+        /// </summary>
+        private const float MinGravityMultiplier = 0.1f;
+
+        /// <summary>
+        /// Below this speed the heading is noise - a ball rolling to a stop, or the instant at the
+        /// crest - and turning the nose to it would jitter, so the last heading is kept.
+        /// </summary>
+        private const float MinNoseAlignSpeedSqrMagnitude = 0.25f;
+
+        /// <summary>
+        /// How nearly vertical a heading may be before <see cref="Quaternion.LookRotation"/> is
+        /// given a different up axis: it is undefined when the two are parallel, and a shot fired
+        /// straight up is the one aim that gets there.
+        /// </summary>
+        private const float VerticalHeadingDotSqr = 0.998f;
 
         private Rigidbody projectileRigidbody;
         private Collider projectileCollider;
@@ -90,6 +112,15 @@ namespace GameJam.Gameplay.Cannon
         private bool hasHit;
         private float sinceHit;
         private float flightRemaining;
+
+        /// <summary>
+        /// True from launch until the shot hits something or goes home. Gates the two things this
+        /// shot does to itself in the air - the extra gravity that makes the arc snappy, and the
+        /// nose alignment - so that neither outlives the flight: after a hit the physics engine
+        /// owns the body, and a pooled ball that came back still boosted would fire visibly
+        /// differently the second time.
+        /// </summary>
+        private bool isFlying;
 
         private void Awake()
         {
@@ -120,7 +151,7 @@ namespace GameJam.Gameplay.Cannon
             neighborImpulseMultiplier = Mathf.Max(0f, neighborImpulseMultiplier);
             upwardForce = Mathf.Max(0f, upwardForce);
             postImpactLifetime = Mathf.Max(0f, postImpactLifetime);
-            maxTumbleAngularSpeed = Mathf.Max(0f, maxTumbleAngularSpeed);
+            gravityMultiplier = Mathf.Max(MinGravityMultiplier, gravityMultiplier);
             directHitDamage = Mathf.Max(0f, directHitDamage);
             splashDamage = Mathf.Max(0f, splashDamage);
             bulletLevelOverride = Mathf.Max(1, bulletLevelOverride);
@@ -337,7 +368,29 @@ namespace GameJam.Gameplay.Cannon
             damageMultiplier = Mathf.Max(0f, multiplier);
         }
 
+        /// <summary>
+        /// How much harder than the world this shot falls. Read by the fire controller off the
+        /// prefab, because the arc has to be solved before there is an instance to ask, and the
+        /// solve is only right if it uses the very number the shot will fly at.
+        /// </summary>
+        public float GravityMultiplier => Mathf.Max(MinGravityMultiplier, gravityMultiplier);
+
+        /// <summary>
+        /// The legacy entry point, kept for callers that only know a heading and a speed - the
+        /// cannon's own no-aim fallback. Delegates, so there is one launch path however a shot was
+        /// aimed.
+        /// </summary>
         public void Launch(Vector3 direction, float speed, float lifetime)
+        {
+            Launch(direction.normalized * speed, lifetime);
+        }
+
+        /// <summary>
+        /// Fires the shot along a velocity that was solved for where it should land, rather than a
+        /// heading and a speed. The whole arc is decided by this vector plus the gravity below, so
+        /// nothing after this point may push the ball around before it hits.
+        /// </summary>
+        public void Launch(Vector3 velocity, float lifetime)
         {
             if (projectileRigidbody == null)
             {
@@ -347,82 +400,74 @@ namespace GameJam.Gameplay.Cannon
             hasHit = false;
             sinceHit = 0f;
             flightRemaining = lifetime;
+            isFlying = true;
 
             // Back to the setting a shot in flight needs. A pooled ball was switched to Discrete
             // when its last shot landed, and would otherwise tunnel straight through thin glass.
             projectileRigidbody.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
-            Vector3 launchVelocity = direction.normalized * speed;
-            projectileRigidbody.linearVelocity = launchVelocity;
-            ApplyFlightTumble(launchVelocity, speed);
+            projectileRigidbody.linearVelocity = velocity;
+
+            // Where the tumble used to be set, and for the same reason it was set here: this is
+            // the one call every shot makes, pooled or freshly instantiated, so it is the only
+            // place that can guarantee a reused ball does not inherit the spin its last landing
+            // left it rolling with. Shots fly unspun now - the nose is pointed by Update instead.
+            projectileRigidbody.angularVelocity = Vector3.zero;
+
+            // Straight away rather than waiting for the first Update, so the shot is never drawn
+            // for a frame still wearing the rotation the pool handed it.
+            AlignNoseToHeading(velocity);
             IgnoreSpawnOverlaps();
         }
 
         /// <summary>
-        /// Spins the ball about the axis it is arcing over, so the slow flight the arc needs reads
-        /// as a heavy shot rather than a floating sphere. Set here rather than on the way back to
-        /// the pool because this is where the linear velocity is already established for the same
-        /// reason - it is the one call every shot makes, pooled or freshly instantiated - and it
-        /// unconditionally overwrites whatever the previous flight ended with, which is what stops
-        /// a reused ball inheriting spin. Nothing about a hit changes: both the damage and the
-        /// knock impulse are read from the linear velocity and the loaded ammunition, never from
-        /// the spin, and the ball is already done dealing damage by the time friction on a
-        /// spinning sphere could send its bounce anywhere new.
+        /// The extra pull that makes the arc snappy. World gravity alone would give the fixed-apex
+        /// flight the same lazy 1.6 seconds whatever the distance; the rest of the multiplier is
+        /// added here, as a velocity step ahead of the solver's own, so the total acceleration is
+        /// exactly the gravity the launch was solved against and the shot lands on the tap.
+        ///
+        /// Only while flying: after a hit the ball is the physics engine's, and a pooled ball must
+        /// not come back out still boosted.
         /// </summary>
-        private void ApplyFlightTumble(Vector3 launchVelocity, float speed)
+        private void FixedUpdate()
         {
-            // First, so every path out of this method leaves a defined spin rather than the last
-            // flight's.
-            projectileRigidbody.angularVelocity = Vector3.zero;
-
-            Vector3 tumbleAxis = Vector3.Cross(Vector3.up, launchVelocity);
-            if (speed <= 0f || maxTumbleAngularSpeed <= 0f || tumbleAxis.sqrMagnitude < MinTumbleAxisSqrMagnitude)
+            if (!isFlying || projectileRigidbody == null)
             {
                 return;
             }
 
-            float radius = ResolveBallRadius();
-            if (radius <= 0f)
+            // Whatever the solver is not already applying. A body with gravity switched off in the
+            // prefab gets the whole of it here, so the two can never quietly disagree.
+            float extraMultiplier = GravityMultiplier - (projectileRigidbody.useGravity ? 1f : 0f);
+            if (Mathf.Approximately(extraMultiplier, 0f))
             {
                 return;
             }
 
-            // Rolling contact would be speed / radius, which on a ball a few centimetres across is
-            // hundreds of radians per second - past a full turn per physics step, so it would read
-            // as a stutter. The clamp is therefore the rate normally seen; the rolling figure only
-            // matters for a ball big or slow enough to fall under it.
-            float tumbleRate = Mathf.Min(speed / radius, maxTumbleAngularSpeed);
-            projectileRigidbody.angularVelocity = tumbleAxis.normalized * tumbleRate;
+            projectileRigidbody.linearVelocity +=
+                Physics.gravity * (extraMultiplier * Time.fixedDeltaTime);
         }
 
         /// <summary>
-        /// The ball's radius in world units. Read per shot rather than cached, because a pooled
-        /// ball is reparented on every rent and its lossy scale is only settled at that point.
-        /// A non-sphere collider falls back to its largest extent, which is the same number for
-        /// the sphere case and merely approximate for anything else.
+        /// Points the shot the way it is going, so a rocket flies nose-first up the arc and tips
+        /// over the crest. Written to the transform rather than spun into the rigidbody because
+        /// this is a look, not a force: the ball carries no angular velocity at all now, so
+        /// nothing is being fought. Balls are radially symmetric and simply read as still.
         /// </summary>
-        private float ResolveBallRadius()
+        private void AlignNoseToHeading(Vector3 heading)
         {
-            if (projectileCollider == null)
+            float sqrSpeed = heading.sqrMagnitude;
+            if (sqrSpeed < MinNoseAlignSpeedSqrMagnitude)
             {
-                projectileCollider = GetComponent<Collider>();
+                return;
             }
 
-            if (projectileCollider == null)
-            {
-                return 0f;
-            }
-
-            if (projectileCollider is SphereCollider sphere)
-            {
-                Vector3 scale = sphere.transform.lossyScale;
-                float largestScale = Mathf.Max(
-                    Mathf.Abs(scale.x),
-                    Mathf.Max(Mathf.Abs(scale.y), Mathf.Abs(scale.z)));
-                return sphere.radius * largestScale;
-            }
-
-            Vector3 extents = projectileCollider.bounds.extents;
-            return Mathf.Max(extents.x, Mathf.Max(extents.y, extents.z));
+            // LookRotation is undefined when the heading and the up axis are parallel, which a
+            // shot fired straight up would hit; anything else keeps world up so the model does not
+            // roll along the arc.
+            Vector3 up = (heading.y * heading.y) > (VerticalHeadingDotSqr * sqrSpeed)
+                ? Vector3.forward
+                : Vector3.up;
+            transform.rotation = Quaternion.LookRotation(heading, up);
         }
 
         /// <summary>
@@ -441,6 +486,14 @@ namespace GameJam.Gameplay.Cannon
                 }
 
                 return;
+            }
+
+            // Ahead of the timeout, so the last frame of a flight is still pointed the right way.
+            // Only while flying: the moment something is hit this stops, and the tumble the
+            // collision gives the ball is left to the physics engine to draw.
+            if (isFlying && projectileRigidbody != null)
+            {
+                AlignNoseToHeading(projectileRigidbody.linearVelocity);
             }
 
             if (flightRemaining <= 0f)
@@ -462,6 +515,14 @@ namespace GameJam.Gameplay.Cannon
         private void OnDisable()
         {
             ClearIgnoredCollisions();
+
+            // Per-shot like everything else here. A ball retired mid-flight - timed out, or called
+            // home when the run ended - goes back to the pool still marked as flying, and would be
+            // re-enabled that way. Launch does set it again on the very next shot, and the rent and
+            // the launch happen in the same frame with no physics step between them, so this is
+            // belt and braces rather than a bug being fixed; it is here because "reset everything
+            // per shot on the way out" is the rule this class is easy to reason about by.
+            isFlying = false;
 
             // Per-shot, like the ignore pairs above, and cleared in the same place for the same
             // reason: the next shot out of this instance is told its multiplier before it is
@@ -516,6 +577,10 @@ namespace GameJam.Gameplay.Cannon
                 hasHit = true;
                 sinceHit = 0f;
 
+                // The arc is over: the ball rolls out its beat under plain world gravity, and
+                // nothing keeps writing its rotation while it does.
+                isFlying = false;
+
                 // The first floor contact of the flight, and only ever the first: the method has
                 // already returned above once hasHit is set, so a ball that rolls and touches the
                 // floor again is silent.
@@ -544,6 +609,10 @@ namespace GameJam.Gameplay.Cannon
             hasHit = true;
             sinceHit = 0f;
 
+            // Same as the floor branch: the flight is done, so the extra pull and the nose
+            // alignment both stop and the bounce is entirely the physics engine's.
+            isFlying = false;
+
             // The hit is accepted here, so this is where the ball is heard landing on the block.
             // Separate from the material hit/break sounds, which BreakableBlock raises from the
             // damage it actually took: this one is the ball, those are the block.
@@ -567,11 +636,12 @@ namespace GameJam.Gameplay.Cannon
 
         /// <summary>
         /// Damage comes from the loaded ammunition, looked up against the material that was hit,
-        /// rather than from the projectile's speed. Deliberately independent of it: the launch
-        /// speed is a feel setting that has already been changed by a factor of five to make the
-        /// arc visible, and damage that moved with it would silently re-tune every material
-        /// threshold in the game. How hard a shot lands is a design decision, not a physics
-        /// reading.
+        /// rather than from the projectile's speed. Deliberately independent of it, and more so
+        /// now the arc is solved for a fixed crest: the launch speed is whatever it takes to reach
+        /// the tap, so a far shot leaves the muzzle half again as fast as a near one. Damage that
+        /// moved with it would quietly make distant blocks easier than close ones and re-tune every
+        /// material threshold in the game. How hard a shot lands is a design decision, not a
+        /// physics reading.
         /// </summary>
         private void KnockBlocks(Vector3 impactPoint, Vector3 impulseDirection, KnockdownBlock directlyHitBlock)
         {
