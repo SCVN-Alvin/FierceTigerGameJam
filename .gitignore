@@ -62,3 +62,6 @@ mono_crash.*.json
 # Falcon's port pack: 21 MB of maps, textures and reference scripts staged for a
 # port that was decided against. Ignored so a merge cannot quietly bring it back.
 _port_pack/
+
+# A 464 KB zip of map JSON that the repo already carries unpacked.
+Map.zip
