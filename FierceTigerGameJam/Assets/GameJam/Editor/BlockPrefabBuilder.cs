@@ -194,6 +194,39 @@ namespace GameJam.EditorTools
                 MaxDamagePerImpact = 3f,
                 ShardChunks = new Vector3Int(3, 2, 2),
             },
+            // The upgrade gate, and the only block authored to need TWO purchases rather than one.
+            // Seven hit points sits in the gap between what the ammunition can do alone and what it
+            // does off an upgraded vehicle: Cannon Ball II is 6 and drops it in two, the same round
+            // fired from a level 2 cannon is 6 x 1.2 = 7.2 and drops it in one. Five would have been
+            // pointless (Cannon Ball II already one-shots that) and eight would put it out of reach
+            // of the pair entirely.
+            //
+            // Category stays "Brick" because the builder lowercases it into the block's materialId,
+            // and the damage tables are keyed on material: calling this anything else would make it
+            // immune to every round in the game.
+            new BlockSpec
+            {
+                BlockName = "brick_2x1_reinforced",
+                LegacyBlockName = "Block_Brick_2x1_Reinforced",
+                Category = "Brick",
+                ModelPath = "Assets/GameJam/FBX/Brick.fbx",
+                ShardNames = BrickBlockShardNames,
+                MaterialPathOverride = null,
+                LogicalSize = new Vector3Int(2, 1, 1),
+                Mass = 2.4f,
+                AllowCollisionCascade = true,
+                CollisionActivationVelocity = 1.75f,
+                SupportCascadeMode = KnockdownBlock.SupportCascadeMode.ColumnAbove,
+                SupportReleaseImpulse = 0.35f,
+                CountsTowardKnockdown = true,
+                MaxKnockHorizontalSpeed = 8.5f,
+                MaxKnockVerticalSpeed = 1.35f,
+                HitPoints = 7f,
+                MinimumImpactSpeed = 2.5f,
+                DamagePerImpactSpeed = 0.5f,
+                MaxDamagePerImpact = 3f,
+                ShardChunks = new Vector3Int(3, 2, 2),
+            },
         };
 
         [MenuItem("Tools/Smashdown/Build Block Prefabs")]
@@ -232,10 +265,92 @@ namespace GameJam.EditorTools
                 }
             }
 
+            RegisterInBlockDatabase();
+
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
 
             Debug.Log($"Built {built.Count} block prefab(s):\n{string.Join("\n", built)}");
+        }
+
+        /// <summary>
+        /// Gives every spec an entry in the block database, adding the ones that are missing.
+        ///
+        /// Without this a newly authored block builds fine and then cannot be placed: the map
+        /// loader resolves a block by looking its type up here, so an unregistered type makes
+        /// every map that uses it fail to bake. Existing entries are left exactly as they are -
+        /// this only ever fills gaps, so a hand-wired wallPanel or a deliberately re-pointed
+        /// prefab survives a rebuild.
+        /// </summary>
+        private static void RegisterInBlockDatabase()
+        {
+            string[] guids = AssetDatabase.FindAssets("t:BlockDatabase");
+            if (guids.Length == 0)
+            {
+                Debug.LogWarning($"{nameof(BlockPrefabBuilder)} found no BlockDatabase to register blocks in.");
+                return;
+            }
+
+            string databasePath = AssetDatabase.GUIDToAssetPath(guids[0]);
+            BlockDatabase database = AssetDatabase.LoadAssetAtPath<BlockDatabase>(databasePath);
+            if (database == null)
+            {
+                return;
+            }
+
+            SerializedObject serialized = new SerializedObject(database);
+            SerializedProperty entries = serialized.FindProperty("entries");
+            List<string> added = new List<string>();
+
+            for (int i = 0; i < Specs.Length; i++)
+            {
+                string type = Specs[i].BlockName;
+                bool present = false;
+                for (int e = 0; e < entries.arraySize; e++)
+                {
+                    SerializedProperty existing = entries.GetArrayElementAtIndex(e).FindPropertyRelative("type");
+                    if (existing != null && string.Equals(existing.stringValue, type, StringComparison.Ordinal))
+                    {
+                        present = true;
+                        break;
+                    }
+                }
+
+                if (present)
+                {
+                    continue;
+                }
+
+                string prefabPath = $"{ResolveBlockFolder(Specs[i])}/{type}.prefab";
+                GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
+                if (prefab == null)
+                {
+                    Debug.LogWarning($"{nameof(BlockPrefabBuilder)} built no prefab at {prefabPath} to register for \"{type}\".");
+                    continue;
+                }
+
+                entries.InsertArrayElementAtIndex(entries.arraySize);
+                SerializedProperty entry = entries.GetArrayElementAtIndex(entries.arraySize - 1);
+                entry.FindPropertyRelative("type").stringValue = type;
+                entry.FindPropertyRelative("prefab").objectReferenceValue = prefab;
+                SerializedProperty wallPanel = entry.FindPropertyRelative("wallPanel");
+                if (wallPanel != null)
+                {
+                    // Wall panels were retired with the wall feature; a new block has none.
+                    wallPanel.objectReferenceValue = null;
+                }
+
+                added.Add(type);
+            }
+
+            if (added.Count == 0)
+            {
+                return;
+            }
+
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(database);
+            Debug.Log($"Registered {added.Count} new block type(s) in {databasePath}: {string.Join(", ", added)}");
         }
 
         private static string BuildBlockPrefab(

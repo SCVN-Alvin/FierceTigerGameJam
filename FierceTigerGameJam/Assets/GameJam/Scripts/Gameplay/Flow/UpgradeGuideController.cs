@@ -154,6 +154,23 @@ namespace GameJam.Gameplay.Flow
         }
 
         /// <summary>
+        /// Whether clearing this map should hand the player back to the menu rather than continue
+        /// straight into the next one.
+        ///
+        /// True only for the map this lesson is armed on, and only while the lesson still has
+        /// something to say. The map that follows is authored to need the upgrades this teaches,
+        /// so continuing directly into it would spend the player's first attempt on a wall they
+        /// have not been shown the answer to. Once the guide is finished the flag is set and this
+        /// goes quiet, so a replay of the map continues normally.
+        /// </summary>
+        public static bool WantsMenuAfter(string mapId)
+        {
+            return !string.IsNullOrEmpty(mapId)
+                   && string.Equals(mapId, TargetMapId, System.StringComparison.Ordinal)
+                   && !UserData.Tutorial.upgradeGuideDone;
+        }
+
+        /// <summary>
         /// Armed by progress, not by an event: reading the save is what makes a player who passed
         /// map 1 before this shipped get the lesson too, and what makes it survive a quit halfway
         /// through. <see cref="UserTutorialData.upgradeGuideDone"/> is the only thing that ends it.
