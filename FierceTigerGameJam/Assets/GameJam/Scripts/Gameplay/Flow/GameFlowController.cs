@@ -6,6 +6,7 @@ using GameJam.Gameplay.Cannon;
 using GameJam.Gameplay.Combat;
 using GameJam.Gameplay.Wall;
 using GameJam.UI;
+using TMPro;
 using UnityEngine;
 using UnityEngine.Serialization;
 using UnityEngine.UI;
@@ -100,6 +101,15 @@ namespace GameJam.Gameplay.Flow
         [Tooltip("Shown when the run failed: the Continue? screen that offers to sell more rounds.")]
         [SerializeField] private GameObject failRoot;
 
+        /// <summary>
+        /// Failures since this map entry began. Drives what the fail screen sells: 1st failure a
+        /// by-the-round purchase, 2nd the flat continue, 3rd nothing. Reset by StartSelectedMap,
+        /// which every road into a run goes through.
+        /// </summary>
+        private int failsThisEntry;
+
+        private FailScreenView failView;
+
         [Tooltip("Shown when the run passed its map.")]
         [SerializeField] private GameObject clearedRoot;
 
@@ -113,6 +123,9 @@ namespace GameJam.Gameplay.Flow
 
         [Header("Buttons")]
         [SerializeField] private Button playButton;
+
+        [Tooltip("SDF font for the runtime TAP TO PLAY labels; the bitmap default blurs at size.")]
+        [SerializeField] private TMPro.TMP_FontAsset tapLabelFont;
         [SerializeField] private Button iapShopButton;
         [SerializeField] private Button homeButton;
         [FormerlySerializedAs("bulletShopButton")]
@@ -228,7 +241,7 @@ namespace GameJam.Gameplay.Flow
             Wire(clearedReplayButton, RetryMap);
             Wire(clearedContinueButton, EnterNextMap);
             Wire(clearedCloseButton, ReturnToMainMenu);
-            Wire(failContinueButton, ContinueRun);
+            Wire(failContinueButton, HandleFailContinuePressed);
             Wire(failCloseButton, ReturnToMainMenu);
         }
 
@@ -257,12 +270,14 @@ namespace GameJam.Gameplay.Flow
             Unwire(clearedReplayButton, RetryMap);
             Unwire(clearedContinueButton, EnterNextMap);
             Unwire(clearedCloseButton, ReturnToMainMenu);
-            Unwire(failContinueButton, ContinueRun);
+            Unwire(failContinueButton, HandleFailContinuePressed);
             Unwire(failCloseButton, ReturnToMainMenu);
         }
 
         private void Start()
         {
+            InstallTapToPlay();
+
             // Deviation from Brief 14, which has Start enter Loading unconditionally: a Loading
             // state with no screen wired under it switches every other root off and puts nothing
             // in their place, which is a black screen with no way out and nothing anywhere saying
@@ -317,6 +332,118 @@ namespace GameJam.Gameplay.Flow
         }
 
         [ContextMenu("Map Selection")]
+
+        /// <summary>
+        /// The menu asks for a tap, not a button: the PLAY pill stretches invisible over the
+        /// whole menu (first sibling, so the bottom bar's buttons still raycast in front), its
+        /// old labels are put away, and a fresh TAP TO PLAY stands in the middle of the lawn.
+        /// The shop hangs the same words just under its blue panel - the label itself is the
+        /// button, nothing is added inside the panel. Runtime-built stopgap UI throughout.
+        /// </summary>
+        private void InstallTapToPlay()
+        {
+            if (playButton != null)
+            {
+                RectTransform rect = (RectTransform)playButton.transform;
+                rect.SetAsFirstSibling();
+                rect.anchorMin = Vector2.zero;
+                rect.anchorMax = Vector2.one;
+                rect.offsetMin = Vector2.zero;
+                rect.offsetMax = Vector2.zero;
+
+                Image pill = playButton.GetComponent<Image>();
+                if (pill != null)
+                {
+                    Color clear = pill.color;
+                    clear.a = 0f;
+                    pill.color = clear;
+                }
+
+                // The pill's own labels live wherever the pill's authored parent puts them, which
+                // after the stretch is nowhere predictable - shelved, not reused.
+                foreach (TMP_Text label in playButton.GetComponentsInChildren<TMP_Text>(true))
+                {
+                    label.gameObject.SetActive(false);
+                }
+
+                if (mainMenuRoot != null)
+                {
+                    RectTransform menuLabel = MakeTapLabel(mainMenuRoot.transform, "TapToPlayLabel",
+                        new Vector2(0.5f, 0.22f), new Vector2(0.5f, 0.5f), Vector2.zero, 56f,
+                        null);
+
+                    // A soft breathing pop so the words read as an invitation, not a caption.
+                    StartCoroutine(PulseTapLabel(menuLabel));
+                }
+            }
+
+            if (shopRoot != null)
+            {
+                // The shop screen's own rect is a prefab child whose bounds are nothing like the
+                // screen, so the label is pinned by SCREEN fraction instead: parented under the
+                // shop (so it shows and hides with it) but positioned against the canvas - the
+                // strip between the blue panel's foot and the bottom bar.
+                RectTransform label = MakeTapLabel(shopRoot.transform, "TapToPlay",
+                    new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, 44f,
+                    EnterMapSelection);
+                Canvas canvas = shopRoot.GetComponentInParent<Canvas>(true);
+                RectTransform canvasRect = canvas != null ? canvas.transform as RectTransform : null;
+                if (canvasRect != null)
+                {
+                    Vector3[] corners = new Vector3[4];
+                    canvasRect.GetWorldCorners(corners);
+                    Vector3 position = (corners[0] + corners[3]) * 0.5f;   // giữa cạnh đáy
+                    position.y = Mathf.Lerp(corners[0].y, corners[1].y, 0.18f);
+                    label.position = position;
+                    label.SetAsLastSibling();
+                }
+            }
+        }
+
+        private System.Collections.IEnumerator PulseTapLabel(Transform label)
+        {
+            while (label != null)
+            {
+                float k = (Mathf.Sin(Time.unscaledTime * 3.6f) + 1f) * 0.5f;
+                label.localScale = Vector3.one * Mathf.Lerp(1f, 1.08f, k);
+                yield return null;
+            }
+        }
+
+        /// <summary>One TAP TO PLAY, optionally clickable. The label is its own hit area.</summary>
+        private RectTransform MakeTapLabel(Transform parent, string name, Vector2 anchor, Vector2 pivot,
+            Vector2 position, float fontSize, UnityEngine.Events.UnityAction onTap)
+        {
+            GameObject go = new GameObject(name, typeof(RectTransform));
+            RectTransform rect = (RectTransform)go.transform;
+            rect.SetParent(parent, false);
+            rect.anchorMin = rect.anchorMax = anchor;
+            rect.pivot = pivot;
+            rect.anchoredPosition = position;
+            rect.sizeDelta = new Vector2(560f, 90f);
+
+            TMP_Text label = go.AddComponent<TextMeshProUGUI>();
+            if (tapLabelFont != null)
+            {
+                label.font = tapLabelFont;
+            }
+
+            label.text = "TAP TO PLAY";
+            label.fontSize = fontSize;
+            label.fontStyle = FontStyles.Bold;
+            label.alignment = TextAlignmentOptions.Center;
+            label.raycastTarget = onTap != null;
+
+            if (onTap != null)
+            {
+                Button button = go.AddComponent<Button>();
+                button.targetGraphic = label;
+                button.onClick.AddListener(onTap);
+            }
+
+            return rect;
+        }
+
         public void EnterMapSelection()
         {
             // Cleared on the way in, not on the way out: re-picking the map just played has to
@@ -386,6 +513,7 @@ namespace GameJam.Gameplay.Flow
             // structure over the wreckage of the last one, with the pool still believing it owns
             // debris that was about to be destroyed underneath it.
             TearDownRun();
+            failsThisEntry = 0;
 
             // Before the auto-pick, because this is what reads the map's budget into
             // BulletPickLimit and clears whatever the last run left in the inventory.
@@ -491,6 +619,96 @@ namespace GameJam.Gameplay.Flow
             }
 
             mapSelection.SelectByIndex(next);
+        }
+
+        /// <summary>
+        /// Points the fail screen at the right offer for how deep in failures this entry is:
+        /// 1st -> buy rounds by the piece, suggested from how far the run fell short (about one
+        /// round per 2.5 percent missing); 2nd -> the flat continue; later -> nothing for sale.
+        /// </summary>
+        private void PresentFailOffer(LevelRunController.RunResult result)
+        {
+            if (failView == null && failRoot != null)
+            {
+                failView = failRoot.GetComponentInChildren<FailScreenView>(true);
+            }
+
+            if (failView == null)
+            {
+                return;                              // scene without the view: old behaviour
+            }
+
+            FailScreenView.FailMode mode = failsThisEntry <= 1
+                ? FailScreenView.FailMode.BuyBullets
+                : failsThisEntry == 2
+                    ? FailScreenView.FailMode.ClassicContinue
+                    : FailScreenView.FailMode.Final;
+
+            float required = runController != null ? runController.RequiredClearPercent : 1f;
+            float missing = Mathf.Max(0f, required - result.ClearPercent);
+            int max = economy != null ? economy.FirstLoseMaxBullets : 20;
+
+            // The wallet outranks the need. Suggesting what the shortfall wants is useless when
+            // the player cannot pay it - a 6,500 suggestion at 1,990 gold just reads as a wall.
+            // So: what they can afford first, capped by what the remaining blocks actually need.
+            int needed = Mathf.CeilToInt(missing * 40f);
+            int affordable = economy != null && economy.LoseBulletPrice > 0
+                ? economy.Gold / economy.LoseBulletPrice
+                : max;
+            int suggested = Mathf.Clamp(Mathf.Min(needed, affordable), 1, max);
+
+            failView.Present(mode, suggested, max);
+        }
+
+        private void HandleFailContinuePressed()
+        {
+            if (failView != null && failView.Mode == FailScreenView.FailMode.BuyBullets)
+            {
+                ContinueRunWithPurchase();
+                return;
+            }
+
+            ContinueRun();
+        }
+
+        /// <summary>
+        /// The first-failure purchase: the dialled-in number of rounds at per-round price. Mirrors
+        /// ContinueRun's order exactly - every check first, the charge last, the resume only after
+        /// the charge succeeded.
+        /// </summary>
+        private void ContinueRunWithPurchase()
+        {
+            if (State != GameState.Result || runController == null || !runController.CanContinueRun())
+            {
+                return;
+            }
+
+            int count = failView != null ? failView.PurchaseCount : 0;
+            string bulletId = ResolveContinueBulletId();
+            if (economy == null || count <= 0 || string.IsNullOrEmpty(bulletId))
+            {
+                return;
+            }
+
+            if (!economy.TryPayLoseBullets(count))
+            {
+                AudioService.Play(AudioSlot.Denied);
+                return;
+            }
+
+            if (!runController.ContinueRun(bulletId, count))
+            {
+                Debug.LogError(
+                    $"{name}: the purchase was paid for but the run refused to resume, so "
+                    + $"{count * economy.LoseBulletPrice} gold was spent for nothing.",
+                    this);
+                return;
+            }
+
+            SetRootActive(failRoot, false);
+            SetRootActive(hudRoot, true);
+            State = GameState.Playing;
+            StateChanged?.Invoke(State);
         }
 
         /// <summary>
@@ -604,6 +822,12 @@ namespace GameJam.Gameplay.Flow
             // Which of the two results is up is decided here rather than inside a screen, because
             // a pass and a failure ask different questions and only the flow knows which was
             // asked. Both still hear RunFinished; each screen draws only its own kind.
+            if (!result.Passed)
+            {
+                failsThisEntry++;
+                PresentFailOffer(result);
+            }
+
             SetRootActive(result.Passed ? clearedRoot : failRoot, true);
             SetRootActive(hudRoot, false);
 

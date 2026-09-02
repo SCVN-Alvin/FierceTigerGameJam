@@ -13,6 +13,12 @@ MonoBehaviour:
   m_Name: RewardConfig
   m_EditorClassIdentifier: Assembly-CSharp::GameJam.Config.RewardConfig
   entries:
+  - rewardId: two_star_bonus
+    gold: 75
+  - rewardId: replay_pass_bonus
+    gold: 25
+  - rewardId: tutorial_complete
+    gold: 100
   - rewardId: pass_map_1
     gold: 100
   - rewardId: clear_map_1
@@ -49,3 +55,79 @@ MonoBehaviour:
     gold: 500
   - rewardId: clear_map_9
     gold: 750
+  - rewardId: pass_map_10
+    gold: 550
+  - rewardId: clear_map_10
+    gold: 800
+  - rewardId: pass_map_11
+    gold: 600
+  - rewardId: clear_map_11
+    gold: 850
+  - rewardId: pass_map_12
+    gold: 650
+  - rewardId: clear_map_12
+    gold: 900
+  - rewardId: pass_map_13
+    gold: 700
+  - rewardId: clear_map_13
+    gold: 950
+  - rewardId: pass_map_14
+    gold: 750
+  - rewardId: clear_map_14
+    gold: 1000
+  - rewardId: pass_map_15
+    gold: 800
+  - rewardId: clear_map_15
+    gold: 1050
+  - rewardId: pass_map_16
+    gold: 850
+  - rewardId: clear_map_16
+    gold: 1100
+  - rewardId: pass_map_17
+    gold: 900
+  - rewardId: clear_map_17
+    gold: 1150
+  - rewardId: pass_map_18
+    gold: 950
+  - rewardId: clear_map_18
+    gold: 1200
+  - rewardId: pass_map_19
+    gold: 1000
+  - rewardId: clear_map_19
+    gold: 1250
+  - rewardId: pass_map_20
+    gold: 1050
+  - rewardId: clear_map_20
+    gold: 1300
+  - rewardId: pass_map_21
+    gold: 1100
+  - rewardId: clear_map_21
+    gold: 1350
+  - rewardId: pass_map_22
+    gold: 1150
+  - rewardId: clear_map_22
+    gold: 1400
+  - rewardId: pass_map_23
+    gold: 1200
+  - rewardId: clear_map_23
+    gold: 1450
+  - rewardId: pass_map_24
+    gold: 1250
+  - rewardId: clear_map_24
+    gold: 1500
+  - rewardId: pass_map_25
+    gold: 1300
+  - rewardId: clear_map_25
+    gold: 1550
+  - rewardId: pass_map_26
+    gold: 1350
+  - rewardId: clear_map_26
+    gold: 1600
+  - rewardId: pass_map_27
+    gold: 1400
+  - rewardId: clear_map_27
+    gold: 1650
+  - rewardId: pass_map_28
+    gold: 1450
+  - rewardId: clear_map_28
+    gold: 1700

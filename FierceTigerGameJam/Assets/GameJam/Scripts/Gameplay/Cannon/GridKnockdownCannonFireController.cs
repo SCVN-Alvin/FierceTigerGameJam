@@ -22,6 +22,10 @@ namespace GameJam.Gameplay.Cannon
 
         [SerializeField] private GridKnockdownCannonProjectile projectilePrefab;
 
+        /// <summary>The ball every bullet without its own prefab flies as. The shop's preview
+        /// table reads this so an unconfigured bullet still has something to photograph.</summary>
+        public GridKnockdownCannonProjectile DefaultProjectilePrefab => projectilePrefab;
+
         [Tooltip("Optional. Hands out warm cannon balls instead of instantiating one per shot. "
                  + "Without one the cannon still fires, it just pays for the ball at the moment "
                  + "the player taps.")]
@@ -50,6 +54,27 @@ namespace GameJam.Gameplay.Cannon
         [SerializeField] private float apexHeight = 0.8f;
         [SerializeField] private float projectileLifetime = 5f;
         [SerializeField] private float muzzleSpawnOffset = 0.28f;
+
+        [Header("Burst Experiment")]
+        [Tooltip("RETIRED EXPERIMENT (2026-09-02), kept as a quick switch: ON = one tap fires as "
+                 + "many rounds as the equipped cannon's LEVEL, damage split evenly, and ONE "
+                 + "bullet pays for the whole burst. OFF (shipping default) = one tap, one "
+                 + "round; multi-shot now comes only from an armed Double/Triple Shoot charge "
+                 + "(ArmShotBoost - free intro popup now, ads/shop items later), where EACH "
+                 + "round costs its own bullet.")]
+        [SerializeField] private bool burstPerVehicleLevel = false;
+
+        [Tooltip("Seconds between the rounds of one burst. They leave the muzzle in order, "
+                 + "never together.")]
+        [Min(0.02f)] [SerializeField] private float burstInterval = 0.09f;
+
+        [Tooltip("How far, in world units, the burst's later rounds spawn to the sides of the "
+                 + "centre muzzle - round one flies from the middle, round two from one side "
+                 + "barrel, round three from the other. Tune it to match where the equipped "
+                 + "model's outer barrels sit.")]
+        [Min(0f)] [SerializeField] private float burstMuzzleSpacing = 0.35f;
+
+        private Coroutine burstRoutine;
 
         private const float MinFireDirectionSqrMagnitude = 0.0001f;
         private const int FallbackPoolSize = 10;
@@ -103,6 +128,10 @@ namespace GameJam.Gameplay.Cannon
         /// </summary>
         public void PrepareForRun()
         {
+            reloadReadyAt = 0f;                            // a fresh run never starts mid-reload
+            armedBoostRounds = 0;                          // nor with a stale boost charge
+            muzzleCycle = 0;                               // first shot leaves barrel one (top/left)
+
             if (projectilePool == null)
             {
                 return;
@@ -158,8 +187,52 @@ namespace GameJam.Gameplay.Cannon
         /// </summary>
         public event System.Action Fired;
 
+        // Reload gate: a paid shot arms it for the equipped vehicle level's reloadSeconds, and
+        // taps land silently until it expires. A level authored at 0 never arms it, which is
+        // exactly the pre-reload fire-on-every-tap behaviour.
+        private float reloadReadyAt;
+        private float reloadDuration;
+
+        /// <summary>True while the reload timer is running; taps are refused.</summary>
+        public bool IsReloading => Time.time < reloadReadyAt;
+
+        /// <summary>Seconds until the next shot is allowed; 0 = ready.</summary>
+        public float ReloadRemaining => Mathf.Max(0f, reloadReadyAt - Time.time);
+
+        /// <summary>Length of the reload currently running (or the last one), for progress bars.</summary>
+        public float ReloadDuration => reloadDuration;
+
+        // A Double/Triple Shoot charge armed by UI (the one-time free intro popup today; the
+        // ads/shop items later). Consumed by the next paid tap: that tap fires this many rounds
+        // with the damage split evenly, and - unlike the retired per-level burst - EACH round
+        // spends its own bullet (Falcon 2026-09-02: "moi vien ton 1 dan").
+        private int armedBoostRounds;
+
+        // Which authored barrel fires next. Single shots on a multi-barrel cannon walk the
+        // authored muzzleOffsets in order - left then right, top then bottom, exactly as the
+        // asset lists them - instead of always leaving barrel one (Falcon 2026-09-02: shots
+        // looked like they had no fixed origin). A burst advances it by its round count so
+        // the rotation stays continuous, and every run starts back at barrel one.
+        private int muzzleCycle;
+
+        /// <summary>Arm the NEXT shot to fire this many rounds (2 = Double, 3 = Triple).</summary>
+        public void ArmShotBoost(int rounds)
+        {
+            armedBoostRounds = Mathf.Clamp(rounds, 0, 3);
+        }
+
+        /// <summary>Rounds the next shot will fire if a charge is armed; 0/1 = plain single.</summary>
+        public int ArmedBoostRounds => armedBoostRounds;
+
         public bool TryFireAtScreenPoint(Vector2 screenPosition)
         {
+            // Silent on purpose - mid-reload the player sees the bar filling, and a refusal
+            // popup on every eager tap would punish exactly the tap rhythm we ask for.
+            if (IsReloading)
+            {
+                return false;
+            }
+
             // Checked before aiming so an empty cannon refuses immediately, and spent only at the
             // moment a shot actually leaves: an aim that fails validation must not cost a bullet.
             if (!HasAmmunition())
@@ -274,28 +347,98 @@ namespace GameJam.Gameplay.Cannon
         }
 
         /// <summary>
-        /// The aimed shot: a rocket arc that crests <see cref="apexHeight"/> above the higher of
-        /// the muzzle and the tap and comes down on the tap itself. Solved twice, as the old
-        /// fixed-speed path was, because the ball does not actually leave the muzzle point - it is
-        /// pushed forward along its own heading first, and re-solving from where it really starts
-        /// is what keeps that offset from becoming a miss.
+        /// The aimed tap, whole: how many rounds it fires, what each of them costs, and the
+        /// reload it starts. One round is the shipping default; a Double/Triple charge makes it
+        /// two or three, spread over time rather than fired together.
+        ///
+        /// Falcon's burst structure and the fixed-apex arc compose rather than compete - the
+        /// burst decides how many shots and what they cost, the arc decides the velocity of each
+        /// one - so both are kept.
         /// </summary>
         private void FireAtAimPoint(Vector3 muzzlePosition, Vector3 aimPoint)
+        {
+            // An armed Double/Triple charge outranks everything: its rounds each pay a bullet.
+            // Otherwise the retired per-level burst (if switched back on) fires level rounds on
+            // one bullet; the shipping default is a plain single.
+            int rounds;
+            bool spendPerRound;
+            if (armedBoostRounds > 1)
+            {
+                rounds = armedBoostRounds;
+                spendPerRound = true;
+            }
+            else
+            {
+                rounds = burstPerVehicleLevel && vehicleLoadout != null
+                    ? Mathf.Max(1, vehicleLoadout.SelectedLevel)
+                    : 1;
+                spendPerRound = false;
+            }
+
+            armedBoostRounds = 0;                           // one tap consumes the charge
+            float share = 1f / rounds;
+            Vector3[] spawns = ResolveBurstSpawns(muzzlePosition, aimPoint, rounds);
+
+            if (!FireRound(spawns[0], aimPoint, share, true))
+            {
+                return;
+            }
+
+            muzzleCycle += rounds;                          // the paid tap used these barrels
+
+            // The tap is paid: start this level's reload. Burst rounds after the first belong
+            // to the same shot and are never gated.
+            VehicleDefinition equipped = vehicleLoadout != null ? vehicleLoadout.Selected : null;
+            float reload = equipped != null
+                ? equipped.ResolveReloadSeconds(vehicleLoadout.SelectedLevel)
+                : 0f;
+            if (reload > 0f)
+            {
+                reloadDuration = reload;
+                reloadReadyAt = Time.time + reload;
+            }
+
+            if (rounds > 1)
+            {
+                if (burstRoutine != null)
+                {
+                    StopCoroutine(burstRoutine);
+                }
+
+                burstRoutine = StartCoroutine(FireBurstRest(spawns, aimPoint, share, spendPerRound));
+            }
+        }
+
+        /// <summary>
+        /// One round of a tap, solved and launched at the moment it leaves.
+        ///
+        /// The arc is solved per round from THAT round's barrel, not once from the centre. The
+        /// branch this came from solved once and yawed each offset round's heading to converge on
+        /// the tap; that fixed the sideways drift but, as its own comment admitted, left a stacked
+        /// barrel's height offset in. Solving from the barrel removes both at once, because the
+        /// solve's whole promise is that the shot lands on the point it was given, wherever it
+        /// started. That is why the yaw helper is gone rather than merged.
+        ///
+        /// Solved twice, as the single shot always was: the ball does not leave the barrel point
+        /// itself, it is pushed forward along its own heading first, and re-solving from where it
+        /// really starts is what keeps that offset from becoming a miss.
+        /// </summary>
+        private bool FireRound(Vector3 barrelPosition, Vector3 aimPoint, float damageShare, bool spendAmmo)
         {
             BulletDefinition ammunition = ResolveShotAmmunition();
             GridKnockdownCannonProjectile prefab = ResolveProjectilePrefab(ammunition);
             float gravity = ResolveLaunchGravity(prefab);
 
             Vector3 launchVelocity = CannonBallisticAimMath.GetLobVelocity(
-                muzzlePosition,
+                barrelPosition,
                 aimPoint,
                 apexHeight,
                 gravity);
 
-            Vector3 spawnPosition = muzzlePosition;
+            Vector3 spawnPosition = barrelPosition;
             if (muzzleSpawnOffset > 0f && launchVelocity.sqrMagnitude >= MinFireDirectionSqrMagnitude)
             {
-                spawnPosition = muzzlePosition + (launchVelocity.normalized * muzzleSpawnOffset);
+                spawnPosition = barrelPosition + (launchVelocity.normalized * muzzleSpawnOffset);
                 launchVelocity = CannonBallisticAimMath.GetLobVelocity(
                     spawnPosition,
                     aimPoint,
@@ -303,13 +446,102 @@ namespace GameJam.Gameplay.Cannon
                     gravity);
             }
 
-            Fire(ammunition, prefab, spawnPosition, launchVelocity);
+            return Fire(ammunition, prefab, spawnPosition, launchVelocity, damageShare, spendAmmo);
+        }
+
+        /// <summary>
+        /// The rounds after the first, one every <see cref="burstInterval"/> seconds - they leave
+        /// in order, never together. Each solves its own arc as it fires, so the burst walks the
+        /// barrels instead of copying one velocity across all three.
+        /// </summary>
+        private System.Collections.IEnumerator FireBurstRest(
+            Vector3[] spawns, Vector3 aimPoint, float share, bool spendPerRound)
+        {
+            for (int i = 1; i < spawns.Length; i++)
+            {
+                yield return new WaitForSeconds(burstInterval);
+
+                // A boosted round pays for itself; when the pouch runs dry mid-burst, FireRound
+                // refuses and the remaining rounds simply never leave.
+                FireRound(spawns[i], aimPoint, share, spendPerRound);
+            }
+
+            burstRoutine = null;
+        }
+
+        /// <summary>Stops a burst mid-flight with its owner; rounds not yet out stay unfired.</summary>
+        private void OnDisable()
+        {
+            if (burstRoutine != null)
+            {
+                StopCoroutine(burstRoutine);
+                burstRoutine = null;
+            }
+        }
+
+        /// <summary>
+        /// One spawn point per round, matched to the equipped model's barrels. Authored offsets on
+        /// the vehicle level win outright - two stacked barrels are (0,+y)(0,-y), two side-by-side
+        /// are (-x,0)(+x,0), in whatever order the rounds should leave. Without authoring the
+        /// spread is symmetric about the centre: a two-round burst takes half a spacing to each
+        /// side (never centre-plus-one-side, which read as a three-barrel cannon missing one), a
+        /// three-round burst takes centre, left, right.
+        ///
+        /// The sideways axis is taken from the horizontal line to the tap rather than from a
+        /// launch heading. The lob leaves steeply, and hanging the barrel spread off that heading
+        /// would roll a side-by-side pair further towards vertical the steeper the shot got.
+        /// </summary>
+        private Vector3[] ResolveBurstSpawns(Vector3 muzzlePosition, Vector3 aimPoint, int rounds)
+        {
+            Vector3 heading = aimPoint - muzzlePosition;
+            heading.y = 0f;
+            heading = heading.sqrMagnitude >= MinFireDirectionSqrMagnitude
+                ? heading.normalized
+                : Vector3.forward;
+
+            Vector3 right = Vector3.Cross(Vector3.up, heading).normalized;
+
+            VehicleDefinition vehicle = vehicleLoadout != null ? vehicleLoadout.Selected : null;
+            Vector2[] authored = vehicle != null
+                ? vehicle.ResolveMuzzleOffsets(vehicleLoadout.SelectedLevel)
+                : null;
+
+            Vector3[] spawns = new Vector3[rounds];
+            for (int i = 0; i < rounds; i++)
+            {
+                Vector2 offset;
+                if (authored != null && authored.Length > 0)
+                {
+                    // The cycle makes single taps alternate barrels; inside one burst the rounds
+                    // still walk the barrels in authored order from wherever the cycle stands,
+                    // wrapping if the burst outnumbers the barrels.
+                    offset = authored[(muzzleCycle + i) % authored.Length];
+                }
+                else if (rounds == 2)
+                {
+                    offset = new Vector2((i == 0 ? -0.5f : 0.5f) * burstMuzzleSpacing, 0f);
+                }
+                else if (rounds >= 3)
+                {
+                    offset = new Vector2(
+                        i == 0 ? 0f : (i == 1 ? -burstMuzzleSpacing : burstMuzzleSpacing), 0f);
+                }
+                else
+                {
+                    offset = Vector2.zero;
+                }
+
+                spawns[i] = muzzlePosition + (right * offset.x) + (Vector3.up * offset.y);
+            }
+
+            return spawns;
         }
 
         /// <summary>
         /// The unaimed shot, kept for the wiring that has no aim controller at all: a straight
         /// push at <see cref="projectileSpeed"/> along the given heading, with no promise about
-        /// where it comes down.
+        /// where it comes down. Single by design - a burst needs an aim point to solve each round
+        /// against, and this path has none.
         /// </summary>
         private void FireInDirection(Vector3 muzzlePosition, Vector3 direction)
         {
@@ -318,7 +550,9 @@ namespace GameJam.Gameplay.Cannon
                 ammunition,
                 ResolveProjectilePrefab(ammunition),
                 muzzlePosition + (direction * muzzleSpawnOffset),
-                direction * projectileSpeed);
+                direction * projectileSpeed,
+                1f,
+                true);
         }
 
         /// <summary>
@@ -341,15 +575,21 @@ namespace GameJam.Gameplay.Cannon
             return Physics.gravity.magnitude * multiplier;
         }
 
-        private void Fire(
+        /// <summary>
+        /// Spawns and launches one ball. Returns false when the shot was refused - no bullet to
+        /// pay with, or nothing to rent - which is what stops a burst that outruns the pouch.
+        /// </summary>
+        private bool Fire(
             BulletDefinition ammunition,
             GridKnockdownCannonProjectile prefab,
             Vector3 spawnPosition,
-            Vector3 launchVelocity)
+            Vector3 launchVelocity,
+            float damageShare,
+            bool spendAmmo)
         {
-            if (ammunition != null && !bulletInventory.TrySpend(ammunition.Id))
+            if (spendAmmo && ammunition != null && !bulletInventory.TrySpend(ammunition.Id))
             {
-                return;
+                return false;
             }
 
             Vector3 direction = launchVelocity.sqrMagnitude >= MinFireDirectionSqrMagnitude
@@ -369,7 +609,7 @@ namespace GameJam.Gameplay.Cannon
                 direction);
             if (projectile == null)
             {
-                return;
+                return false;
             }
 
             // Told what fired it before launching, since the damage it deals is looked up from
@@ -383,7 +623,11 @@ namespace GameJam.Gameplay.Cannon
             // vehicle in the shop between runs, and the cannon is not re-enabled in between.
             if (vehicleLoadout != null)
             {
-                projectile.SetDamageMultiplier(vehicleLoadout.SelectedDamageMultiplier);
+                projectile.SetDamageMultiplier(vehicleLoadout.SelectedDamageMultiplier * damageShare);
+            }
+            else if (damageShare < 1f)
+            {
+                projectile.SetDamageMultiplier(damageShare);
             }
 
             // The velocity, not a heading and a speed: how fast this shot leaves is part of the
@@ -401,8 +645,15 @@ namespace GameJam.Gameplay.Cannon
             AudioService.Play(AudioSlot.Fire);
 
             // Last, so a listener that tears something down cannot run before the shot it is
-            // answering has actually been launched and presented.
-            Fired?.Invoke();
+            // answering has actually been launched and presented. Once per PAID tap: the
+            // burst's follow-up rounds are the same logical shot, and a listener counting
+            // shots (the tutorial) must not count one tap three times.
+            if (spendAmmo)
+            {
+                Fired?.Invoke();
+            }
+
+            return true;
         }
 
         /// <summary>

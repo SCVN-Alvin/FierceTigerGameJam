@@ -36,6 +36,8 @@ MonoBehaviour:
   - {fileID: 8300000, guid: f39dd546e1e9d4abcb56ae0aa0cfedde, type: 3}
   coin:
   - {fileID: 8300000, guid: 74f0ff539eca0410c9f908293a3182d5, type: 3}
+  starLand:
+  - {fileID: 8300000, guid: a1b77c58955c0417383fa25aee40bb37, type: 3}
   stageClear:
   - {fileID: 8300000, guid: e24f642ae5c114aa6b5d29bb87af01bd, type: 3}
   stageFailed:

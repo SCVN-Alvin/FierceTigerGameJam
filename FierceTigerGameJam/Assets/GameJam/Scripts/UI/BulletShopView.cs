@@ -228,6 +228,16 @@ namespace GameJam.UI
 
             // First, because whether it worked is what decides if the icon is drawn at all.
             GridKnockdownCannonProjectile projectile = selected != null ? selected.ProjectilePrefab : null;
+            if (projectile == null)
+            {
+                // An ammunition with no prefab of its own is photographed as the fire controller's
+                // default ball, because that is what firing it actually launches. Showing nothing
+                // here would advertise an empty table for a round that does exist.
+                GridKnockdownCannonFireController fire =
+                    FindFirstObjectByType<GridKnockdownCannonFireController>(FindObjectsInactive.Include);
+                projectile = fire != null ? fire.DefaultProjectilePrefab : null;
+            }
+
             bool showingModel = preview3D != null
                 && preview3D.Show(projectile != null ? projectile.gameObject : null, level);
 

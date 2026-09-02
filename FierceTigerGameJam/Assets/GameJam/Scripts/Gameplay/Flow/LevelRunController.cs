@@ -267,7 +267,7 @@ namespace GameJam.Gameplay.Flow
                 MapId = mapId,
                 ClearPercent = clearPercent,
                 Passed = clearPercent >= RequiredClearPercent,
-                FullyCleared = clearPercent >= 1f,
+                FullyCleared = clearPercent >= UserMapProgressData.ClearRewardPercent,
                 GoldAwarded = 0,
             };
 
@@ -289,6 +289,13 @@ namespace GameJam.Gameplay.Flow
         /// actually been handed over, so a run interrupted between earning and being paid can
         /// still be paid next time rather than losing the reward silently.
         /// </summary>
+        /// <summary>One shared RewardConfig entry pays every map's 2-star bonus.</summary>
+        private const string TwoStarRewardId = "two_star_bonus";
+
+        /// <summary>Paid on EVERY pass after the map's own pass reward was claimed - the small
+        /// "worth replaying" trickle (Falcon 2026-09-02: 25 gold). Not claim-once by design.</summary>
+        private const string ReplayPassRewardId = "replay_pass_bonus";
+
         private int GrantRewards(string mapId, MapAttemptResult attempt)
         {
             if (economy == null || !TryGetRules(mapId, out MapProgressionConfig.Entry rules))
@@ -303,11 +310,33 @@ namespace GameJam.Gameplay.Flow
                 awarded += passGold;
                 UserData.Maps.MarkPassRewardClaimed(mapId);
             }
+            else if (attempt.Passed
+                     && !string.IsNullOrEmpty(rules.clearMapRewardId)
+                     && economy.TryGrantReward(ReplayPassRewardId, out int replayGold))
+            {
+                // A replayed pass is never worth 0: the big pass reward stays claim-once, but
+                // each repeat pays the small trickle. Maps outside the economy (tutorial) skip
+                // it, same gate as the 2-star bonus.
+                awarded += replayGold;
+            }
 
             if (attempt.NewlyCleared && economy.TryGrantReward(rules.clearMapRewardId, out int clearGold))
             {
                 awarded += clearGold;
                 UserData.Maps.MarkClearRewardClaimed(mapId);
+            }
+
+            // The 2-star milestone pays a flat bonus from one shared reward entry; the once-only
+            // is per map (twoStarRewardClaimed), like the others. The gate is clearMapRewardId:
+            // the tutorial authors a pass reward (its 100-gold completion prize, shown on the
+            // cleared screen like any other) but no clear reward, so it stays out of the star
+            // and replay trickles.
+            if (attempt.NewlyTwoStar
+                && !string.IsNullOrEmpty(rules.clearMapRewardId)
+                && economy.TryGrantReward(TwoStarRewardId, out int starGold))
+            {
+                awarded += starGold;
+                UserData.Maps.MarkTwoStarRewardClaimed(mapId);
             }
 
             return awarded;

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using GameJam.Data;
 using GameJam.Economy;
 using TMPro;
 using UnityEngine;
@@ -164,7 +165,68 @@ namespace GameJam.UI
                 spawnedRows.Add(row);
             }
 
+            AddMissionUnlockDevRow(parent);
             Refresh();
+        }
+
+        /// <summary>
+        /// DEV ONLY (Falcon, for recording review videos): one tap marks every campaign map
+        /// passed, which is what unlocks every mission. It lives on this screen precisely
+        /// because the screen is already a placeholder that cannot ship as-is - when the real
+        /// IAP store replaces this view, the button dies with it. Named with RowNamePrefix so
+        /// ClearRows sweeps it like any other generated row.
+        /// </summary>
+        private void AddMissionUnlockDevRow(Transform parent)
+        {
+            GameObject rowGo = new GameObject(RowNamePrefix + "DevUnlockMissions", typeof(RectTransform));
+            RectTransform rect = (RectTransform)rowGo.transform;
+            rect.SetParent(parent, false);
+
+            LayoutElement layout = rowGo.AddComponent<LayoutElement>();
+            layout.preferredHeight = 64f;
+            layout.flexibleWidth = 1f;
+
+            Image back = rowGo.AddComponent<Image>();
+            back.color = new Color(0.85f, 0.3f, 0.25f, 0.9f);  // unmistakably a dev control
+
+            Button button = rowGo.AddComponent<Button>();
+            button.targetGraphic = back;
+            button.onClick.AddListener(UnlockAllMissionsForReview);
+
+            GameObject labelGo = new GameObject("Label", typeof(RectTransform));
+            RectTransform labelRect = (RectTransform)labelGo.transform;
+            labelRect.SetParent(rect, false);
+            labelRect.anchorMin = Vector2.zero;
+            labelRect.anchorMax = Vector2.one;
+            labelRect.offsetMin = Vector2.zero;
+            labelRect.offsetMax = Vector2.zero;
+            TMP_Text label = labelGo.AddComponent<TextMeshProUGUI>();
+            label.text = "UNLOCK ALL MISSIONS (DEV)";
+            label.fontSize = 28f;
+            label.fontStyle = FontStyles.Bold;
+            label.color = Color.white;
+            label.alignment = TextAlignmentOptions.Center;
+            label.raycastTarget = false;
+        }
+
+        /// <summary>Marks every campaign map passed at 50%; rewards stay unclaimed.</summary>
+        private void UnlockAllMissionsForReview()
+        {
+            for (int mission = 1; mission <= 3; mission++)
+            {
+                for (int map = 1; map <= 9; map++)
+                {
+                    MapProgress progress = UserData.Maps.GetOrCreate($"mission{mission}_map{map}");
+                    progress.passed = true;
+                    if (progress.bestClearPercent < 0.5f)
+                    {
+                        progress.bestClearPercent = 0.5f;
+                    }
+                }
+            }
+
+            UserData.Save();
+            Debug.Log("DEV: all 27 campaign maps marked passed - every mission is open.");
         }
 
         /// <summary>

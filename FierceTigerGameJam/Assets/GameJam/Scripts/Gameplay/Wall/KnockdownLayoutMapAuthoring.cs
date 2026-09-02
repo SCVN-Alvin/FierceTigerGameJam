@@ -599,11 +599,76 @@ namespace GameJam.Gameplay.Wall
                 return Vector3.zero;
             }
 
+            // Centred on the cells the map actually FILLS, not on the declared grid. A map whose
+            // content sits in one corner of a generous grid used to come out with its mass off
+            // the orbit axis, which read as "the rotation is off-centre on some maps" - the
+            // camera was orbiting the grid's middle, not the structure's.
+            if (TryResolveContentBounds(map, out int minX, out int maxX, out int minLevel, out int maxLevel))
+            {
+                return new Vector3(
+                    -(minX + maxX) * 0.5f * map.grid.cellSize,
+                    0f,
+                    -(minLevel + maxLevel) * 0.5f * map.grid.layerDepth);
+            }
+
+            // Nothing readable in the map, so fall back to the declared grid.
             return new Vector3(
                 -((map.grid.width - 1) * map.grid.cellSize) * 0.5f,
                 0f,
                 -(map.MaxLevel() * map.grid.layerDepth) * 0.5f);
         }
+
+        /// <summary>
+        /// The span of cells the map actually fills, in cell addresses: the first and last column
+        /// any block occupies, and the first and last layer. Blocks are measured by footprint, so
+        /// a 2x1 lying along X counts both of its columns.
+        ///
+        /// Deliberately forgiving: a block this cannot read is skipped rather than reported. The
+        /// real placement pass runs straight after and reports every one of them properly; two
+        /// copies of the same error would only make the console harder to read.
+        /// </summary>
+        private bool TryResolveContentBounds(
+            KnockdownMapDefinition map, out int minX, out int maxX, out int minLevel, out int maxLevel)
+        {
+            minX = int.MaxValue;
+            maxX = int.MinValue;
+            minLevel = int.MaxValue;
+            maxLevel = int.MinValue;
+
+            if (map?.layers == null || blockDatabase == null)
+            {
+                return false;
+            }
+
+            for (int layerIndex = 0; layerIndex < map.layers.Length; layerIndex++)
+            {
+                KnockdownMapLayer layer = map.layers[layerIndex];
+                if (layer?.blocks == null)
+                {
+                    continue;
+                }
+
+                for (int blockIndex = 0; blockIndex < layer.blocks.Length; blockIndex++)
+                {
+                    KnockdownMapBlock block = layer.blocks[blockIndex];
+                    if (block?.position == null
+                        || !IsQuarterTurnMultiple(block.rotation)
+                        || !blockDatabase.TryGetPrefab(block.type, out GameObject prefab))
+                    {
+                        continue;
+                    }
+
+                    Vector3Int footprint = ResolveFootprint(prefab, block.rotation);
+                    minX = Mathf.Min(minX, block.position.x);
+                    maxX = Mathf.Max(maxX, block.position.x + footprint.x - 1);
+                    minLevel = Mathf.Min(minLevel, layer.level);
+                    maxLevel = Mathf.Max(maxLevel, layer.level + footprint.z - 1);
+                }
+            }
+
+            return maxX >= minX && maxLevel >= minLevel;
+        }
+
 
         /// <summary>
         /// Block pivots are centred, so a block is offset by half its own footprint. Row 0 of

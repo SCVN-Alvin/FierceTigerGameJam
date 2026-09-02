@@ -81,6 +81,8 @@ namespace GameJam.UI
 
         private void OnEnable()
         {
+            EnsureScroll();
+
             // A finished run saves, and saving raises this, so the board is current the moment the
             // player is back on it without the screen having to be rebuilt.
             UserData.Changed += Refresh;
@@ -95,8 +97,10 @@ namespace GameJam.UI
                 nextMissionButton.onClick.AddListener(SelectNextMission);
             }
 
-            // Always opens on mission 1, the campaign in progress. The rest is one tap away.
-            missionIndex = 0;
+            // Opens on the campaign frontier: the furthest mission the player has earned.
+            // Opening on mission 1 forever meant a player two missions in paged across the
+            // whole campaign every time the board came up.
+            missionIndex = FurthestUnlockedMission();
 
             // Rebuilt rather than refreshed: the slots may have been re-authored, and cards do
             // not survive an assembly reload.
@@ -193,6 +197,11 @@ namespace GameJam.UI
             }
 
             bool missionLocked = !IsMissionUnlocked(missionIndex);
+            ApplyBackgroundMood(missionLocked);
+            if (boardScroller != null)
+            {
+                boardScroller.ResetToTop();
+            }
             string[] slots = ResolveSlots(missionIndex);
             int firstNumber = FirstSlotNumber(missionIndex);
 
@@ -209,7 +218,8 @@ namespace GameJam.UI
 
                 // The number the player sees, not the map's id: ids are authoring data and need
                 // not be the order the levels are played in.
-                item.Bind($"LEVEL {firstNumber + i}", ResolveState(config, slots[i], missionLocked));
+                item.Bind($"LEVEL {firstNumber + i}", ResolveState(config, slots[i], missionLocked),
+                    ResolveStars(slots[i]));
                 SetItemGreyed(item, missionLocked);
             }
 
@@ -227,6 +237,26 @@ namespace GameJam.UI
             {
                 nextMissionButton.gameObject.SetActive(missionIndex < MissionCount() - 1);
             }
+        }
+
+        /// <summary>
+        /// The last mission in order the unlock rule lets the player into. Walks forward and
+        /// stops at the first locked one, so a gap can never be jumped.
+        /// </summary>
+        private int FurthestUnlockedMission()
+        {
+            int furthest = 0;
+            for (int m = 0; m < MissionCount(); m++)
+            {
+                if (!IsMissionUnlocked(m))
+                {
+                    break;
+                }
+
+                furthest = m;
+            }
+
+            return furthest;
         }
 
         private int MissionCount()
@@ -303,6 +333,20 @@ namespace GameJam.UI
         /// Passed maps read as cleared whatever comes after them, so a player who goes back for a
         /// better score never sees a level they have beaten offered as new.
         /// </summary>
+        /// <summary>The best star count this level has ever earned, straight off the save.</summary>
+        private int ResolveStars(string slotMapId)
+        {
+            if (string.IsNullOrEmpty(slotMapId) || missionConfig == null)
+            {
+                return 0;
+            }
+
+            UserMapProgressData progress = UserData.Maps;
+            return missionConfig.StarsFor(
+                progress.IsPassed(slotMapId),
+                progress.GetBestClearPercent(slotMapId));
+        }
+
         private MissionItemState ResolveState(MapConfig config, string slotMapId, bool missionLocked)
         {
             bool isReal = !string.IsNullOrEmpty(slotMapId) && config.TryGet(slotMapId, out _);
@@ -330,6 +374,96 @@ namespace GameJam.UI
             int position = realMapSequence.IndexOf(slotMapId);
             bool open = position <= 0 || progress.IsPassed(realMapSequence[position - 1]);
             return open ? MissionItemState.Current : MissionItemState.Locked;
+        }
+
+        /// <summary>
+        /// The board scrolls via MissionBoardScroller (see that file's header for why the
+        /// prefab's own horizontal-only ScrollRect is left completely alone). Here we only
+        /// prepare the geometry: top-anchor the grid without moving its first row, give it a
+        /// real height (ContentSizeFitter over the GridLayoutGroup), make sure the viewport
+        /// clips and has a raycast surface, then hand the grid to the scroller.
+        /// </summary>
+        private MissionBoardScroller boardScroller;
+
+        private void EnsureScroll()
+        {
+            if (boardScroller != null || container == null
+                || container.parent is not RectTransform viewport)
+            {
+                return;
+            }
+
+            // Fitted height must grow DOWNWARD from where the prefab drew the first row.
+            Vector3[] corners = new Vector3[4];
+            container.GetWorldCorners(corners);
+            float topWorldY = corners[1].y;
+            container.anchorMin = new Vector2(container.anchorMin.x, 1f);
+            container.anchorMax = new Vector2(container.anchorMax.x, 1f);
+            container.pivot = new Vector2(container.pivot.x, 1f);
+            container.GetWorldCorners(corners);
+            container.position += new Vector3(0f, topWorldY - corners[1].y, 0f);
+
+            // The prefab SHIPS a ContentSizeFitter on the grid - horizontal Preferred,
+            // vertical UNCONSTRAINED. Left like that the grid's rect height stays 0, the
+            // scroll range computes to 0 and every drag clamps dead (the "do luon" freeze:
+            // checking merely for the component's existence skipped this). Vertical must be
+            // Preferred so the GridLayoutGroup's real 4-row height becomes the content size.
+            ContentSizeFitter fitter = container.GetComponent<ContentSizeFitter>();
+            if (fitter == null)
+            {
+                fitter = container.gameObject.AddComponent<ContentSizeFitter>();
+            }
+
+            fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+            if (viewport.GetComponent<RectMask2D>() == null)
+            {
+                viewport.gameObject.AddComponent<RectMask2D>();
+            }
+
+            // Drags on the blue between cards must still reach the scroller.
+            if (viewport.GetComponent<Graphic>() == null)
+            {
+                Image surface = viewport.gameObject.AddComponent<Image>();
+                surface.color = Color.clear;
+                surface.raycastTarget = true;
+            }
+
+            boardScroller = viewport.gameObject.AddComponent<MissionBoardScroller>();
+            boardScroller.Init(container);
+        }
+
+        private Image moodBackground;
+        private Color moodNormalColor = Color.white;
+
+        /// <summary>
+        /// A locked mission darkens the board art itself, not only the cards, so paging onto
+        /// mission 2/3 before they open reads as "not yet" at a glance (Falcon 2026-09-02; a
+        /// real blur needs a shader pass, so the mood is carried by the tint). The Image is
+        /// found by name under the panel - the prefab's "Background" - and its authored colour
+        /// is restored the moment the mission is open.
+        /// </summary>
+        private void ApplyBackgroundMood(bool locked)
+        {
+            if (moodBackground == null && container != null && container.parent != null)
+            {
+                Transform background = container.parent.Find("Background");
+                if (background != null)
+                {
+                    moodBackground = background.GetComponent<Image>();
+                    if (moodBackground != null)
+                    {
+                        moodNormalColor = moodBackground.color;
+                    }
+                }
+            }
+
+            if (moodBackground != null)
+            {
+                moodBackground.color = locked
+                    ? moodNormalColor * new Color(0.45f, 0.45f, 0.52f, 1f)
+                    : moodNormalColor;
+            }
         }
 
         /// <summary>A locked mission's card is dimmed and deaf; everything else is drawn plainly.</summary>

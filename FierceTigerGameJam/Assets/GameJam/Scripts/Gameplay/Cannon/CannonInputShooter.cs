@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
+using GameJam.Gameplay.Flow;
 using GameJam.Gameplay.Wall;
 
 namespace GameJam.Gameplay.Cannon
@@ -38,12 +39,6 @@ namespace GameJam.Gameplay.Cannon
             }
         }
 
-        /// <summary>
-        /// Whether the gesture in progress began on a UI element. The cannon ignores the whole of
-        /// such a gesture: no aim, no rotation, no shot.
-        /// </summary>
-        private bool pressStartedOverUi;
-
         private void Update()
         {
             Pointer pointer = Pointer.current;
@@ -57,28 +52,7 @@ namespace GameJam.Gameplay.Cannon
 
             if (pointer.press.wasPressedThisFrame)
             {
-                // A press that starts on a screen belongs to that screen. Judged once, here, and
-                // remembered for the whole gesture: testing again on release would let a drag that
-                // began on the gear end as a shot the moment the finger left the button, and a drag
-                // that began on the playfield die the moment it crossed one.
-                if (IsPointerOverUi(currentScreenPosition))
-                {
-                    pressStartedOverUi = true;
-                    return;
-                }
-
-                pressStartedOverUi = false;
                 BeginPress(currentScreenPosition);
-            }
-
-            if (pressStartedOverUi)
-            {
-                if (pointer.press.wasReleasedThisFrame)
-                {
-                    pressStartedOverUi = false;
-                }
-
-                return;
             }
 
             if (isPointerDown && pointer.press.isPressed)
@@ -136,6 +110,21 @@ namespace GameJam.Gameplay.Cannon
 
         private void BeginPress(Vector2 screenPosition)
         {
+            // A gesture that starts on UI belongs to the UI, whole. Without this, every HUD
+            // button tap also fired the cannon, and a drag across a screen spun the orbit
+            // behind it.
+            if (IsPointerOverUi(screenPosition))
+            {
+                return;
+            }
+
+            // The Double/Triple Shoot intro owns the whole screen: no rotating the board
+            // behind it, no gesture banked for a shot after it closes.
+            if (ShotBoostIntroController.BlockingInput)
+            {
+                return;
+            }
+
             isPointerDown = true;
             isDragging = false;
             pressScreenPosition = screenPosition;
@@ -164,8 +153,13 @@ namespace GameJam.Gameplay.Cannon
             {
                 UpdateStructureRotation(screenPosition);
             }
-            else
+            else if (!IsPointerOverUi(screenPosition) && !DragHintController.BlockingFire
+                     && !ShotBoostIntroController.BlockingInput)
             {
+                // Checked again at release: a screen (Cleared, Fail) can have appeared while the
+                // finger was down, and the tap that dismisses it must not also fire a shot. And
+                // while the drag lesson is up, taps buy nothing - the cannon waits until the
+                // player has actually held and dragged.
                 FireAtScreenPosition(screenPosition);
             }
 
