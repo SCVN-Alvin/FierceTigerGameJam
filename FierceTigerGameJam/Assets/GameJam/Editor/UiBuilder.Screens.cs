@@ -214,6 +214,20 @@ namespace GameJam.EditorTools
         /// the settings buttons used because MAIN MENU and CLOSE are the only two things on that
         /// panel a player can act on, and they were the least visible things on it.
         /// </summary>
+        /// <summary>
+        /// Shrinks the button art's borders so they fit the rect we give it.
+        ///
+        /// The Layer Lab button is a 64x225 strip whose borders consume the whole sprite - the
+        /// stretchable middle is a single column and a single row, so it reproduces the button
+        /// body by smearing one line of pixels. Their own prefab uses it at 374x225: stretched
+        /// wide, never squashed short. Our settings button is about 383x92 in canvas units, so
+        /// 225px of vertical border does not fit and the art would fold over itself. Raising the
+        /// pixels-per-unit multiplier scales the borders down uniformly, which is the supported
+        /// way to reuse a chunky nine-slice at a smaller size: at 3 the border needs 75 units and
+        /// the button keeps roughly the reference proportions.
+        /// </summary>
+        private const float PanelButtonPixelsPerUnit = 3f;
+
         private const string PanelButtonSprite =
             "Assets/Layer Lab/GUI Pro-CasualGame/ResourcesData/Sprites/Components/Button/Button01_225_Sky.png";
 
@@ -257,22 +271,27 @@ namespace GameJam.EditorTools
         {
             RectTransform root = EnsureRect("SettingsOverlay", canvas, Vector2.zero, Vector2.one);
 
-            // The same black the garage and the mission board dim to, rather than Filter.png. That
-            // sprite is the tutorial spotlight - it carries a transparent ellipse punched through
-            // the middle, so the settings panel sat in a hole in its own dim.
-            EnsureColorImage("Dim", root, BackdropColor, Vector2.zero, Vector2.one);
+            // The same black the garage and the mission board dim to.
+            EnsureBackdrop("Dim", root);
 
-            RectTransform panel = EnsureRect("Panel", root, new Vector2(0.12f, 0.32f), new Vector2(0.88f, 0.68f));
+            // Taller and a touch wider than it was: the frame's decorated top rim is 163px of a
+            // 1436px sprite and nine-slicing keeps it at that thickness, so a short panel would be
+            // a third banner. This gives it something to be a rim around.
+            RectTransform panel = EnsureRect("Panel", root, new Vector2(0.10f, 0.24f), new Vector2(0.90f, 0.76f));
             EnsureSlicedImage("PanelBackground", panel, PanelFrameSprite, Vector2.zero, Vector2.one);
+            // Everything below lives inside the frame's flat interior. Nine-slicing holds the
+            // rim at its authored thickness, so on a 665-unit-tall panel the decorated top eats
+            // the upper ~25% and the base ~10%; the interior is roughly 0.10 to 0.75. Anchoring
+            // the title where it used to sit would have printed it across the decoration.
             EnsureLabel("Title", panel, "SETTINGS", 48, TextAlignmentOptions.Center,
-                new Vector2(0.05f, 0.78f), new Vector2(0.95f, 0.95f));
+                new Vector2(0.05f, 0.62f), new Vector2(0.95f, 0.74f));
             EnsureLabel("Note", panel, "Nothing to configure yet.", 26, TextAlignmentOptions.Center,
-                new Vector2(0.05f, 0.6f), new Vector2(0.95f, 0.75f));
+                new Vector2(0.05f, 0.51f), new Vector2(0.95f, 0.60f));
 
             mainMenuButton = EnsureSlicedButton("MainMenuButton", panel, "MAIN MENU",
-                new Vector2(0.15f, 0.30f), new Vector2(0.85f, 0.46f));
+                new Vector2(0.15f, 0.31f), new Vector2(0.85f, 0.48f));
             closeButton = EnsureSlicedButton("CloseButton", panel, "CLOSE",
-                new Vector2(0.15f, 0.08f), new Vector2(0.85f, 0.24f));
+                new Vector2(0.15f, 0.12f), new Vector2(0.85f, 0.29f));
 
             SettingsPanelView view = Ensure<SettingsPanelView>(root.gameObject);
             SerializedObject serialized = new SerializedObject(view);
@@ -338,6 +357,13 @@ namespace GameJam.EditorTools
         /// A sprite drawn nine-sliced, so a panel frame keeps its corners and its rim at whatever
         /// size the rect is. Sliced rather than Simple is the whole reason the frame art was given
         /// a border - stretched Simple is what makes a reused frame look melted.
+        ///
+        /// Unlike the create-only helpers around it, this one re-asserts the look every run. The
+        /// screens it dresses already existed as prefabs, so a create-only version silently did
+        /// nothing to them - which is exactly how the settings panel kept its old flat background
+        /// after being told to wear the frame. Layout is deliberately not re-asserted: anchors get
+        /// nudged by hand in the editor and that work is worth keeping, but the sprite is named
+        /// right here in the call, so it is ours to enforce.
         /// </summary>
         internal static RectTransform EnsureSlicedImage(
             string name,
@@ -346,26 +372,16 @@ namespace GameJam.EditorTools
             Vector2 anchorMin,
             Vector2 anchorMax)
         {
-            bool created = parent.Find(name) == null;
             RectTransform rect = EnsureSpriteImage(name, parent, spritePath, anchorMin, anchorMax);
-
-            Image image = rect != null ? rect.GetComponent<Image>() : null;
-            if (image != null && created)
-            {
-                image.type = Image.Type.Sliced;
-
-                // The frame is the panel, so it has to take the taps that are not on a control -
-                // otherwise a press lands on whatever is behind the screen.
-                image.raycastTarget = true;
-            }
-
+            ApplySlicedSprite(rect != null ? rect.GetComponent<Image>() : null, spritePath, true);
             return rect;
         }
 
         /// <summary>
         /// A button wearing sliced art with a caption on top, for the two controls the settings
-        /// panel actually offers. Built from the sprite button helper so the label placement and
-        /// the transition match every other authored button in the game.
+        /// panel actually offers. Built from the sprite button helper so the click sound and the
+        /// transition match every other authored button in the game, then restyled on every run
+        /// for the same reason <see cref="EnsureSlicedImage"/> is.
         /// </summary>
         internal static Button EnsureSlicedButton(
             string name,
@@ -374,26 +390,92 @@ namespace GameJam.EditorTools
             Vector2 anchorMin,
             Vector2 anchorMax)
         {
-            bool created = parent.Find(name) == null;
             Button button = EnsureSpriteButton(name, parent, PanelButtonSprite, anchorMin, anchorMax);
             if (button == null)
             {
                 return null;
             }
 
-            if (created && button.targetGraphic is Image image)
-            {
-                image.type = Image.Type.Sliced;
-
-                // preserveAspect off on purpose: the art is 64x225 and these buttons are wide, so
-                // preserving it would letterbox them into a sliver.
-                image.preserveAspect = false;
-            }
-
-            EnsureLabel("Label", (RectTransform)button.transform, caption, 34, TextAlignmentOptions.Center,
+            ApplySlicedSprite(button.targetGraphic as Image, PanelButtonSprite, true, PanelButtonPixelsPerUnit);
+            EnsureLabel("Label", (RectTransform)button.transform, caption, 36, TextAlignmentOptions.Center,
                 new Vector2(0.05f, 0.15f), new Vector2(0.95f, 0.85f));
 
             return button;
+        }
+
+        /// <summary>
+        /// Puts the named sprite on an image and draws it nine-sliced, in white.
+        ///
+        /// White matters: an image keeps whatever tint it was built with, and these two were built
+        /// as flat coloured rectangles - a dark slab and a sky-blue one. Left alone, that tint
+        /// multiplies the new art and the frame arrives muddy or blue. The colour was standing in
+        /// for art that now exists, so it goes.
+        /// </summary>
+        private static void ApplySlicedSprite(
+            Image image,
+            string spritePath,
+            bool raycastTarget,
+            float pixelsPerUnitMultiplier = 1f)
+        {
+            if (image == null)
+            {
+                return;
+            }
+
+            Sprite sprite = LoadSprite(spritePath);
+            if (sprite == null)
+            {
+                // LoadSprite already warned. Keep whatever is there rather than blanking the
+                // screen to an untextured white box.
+                return;
+            }
+
+            if (image.sprite == sprite
+                && image.type == Image.Type.Sliced
+                && image.color == Color.white
+                && Mathf.Approximately(image.pixelsPerUnitMultiplier, pixelsPerUnitMultiplier)
+                && image.raycastTarget == raycastTarget)
+            {
+                // Already right. Bailing matters because these screens are prefab instances:
+                // writing a value that equals the prefab's still records a scene override, and a
+                // pile of those is what makes a prefab stop meaning anything.
+                return;
+            }
+
+            Undo.RecordObject(image, "Style panel sprite");
+            image.sprite = sprite;
+            image.type = Image.Type.Sliced;
+            image.color = Color.white;
+            image.preserveAspect = false;
+            image.raycastTarget = raycastTarget;
+            image.pixelsPerUnitMultiplier = pixelsPerUnitMultiplier;
+            EditorUtility.SetDirty(image);
+        }
+
+        /// <summary>
+        /// The full-screen dim behind a modal. Re-asserted like the sliced art above, and it drops
+        /// any sprite it finds: this one used to wear the tutorial spotlight, which has a hole
+        /// punched through its middle, so the panel sat in a gap in its own backdrop.
+        ///
+        /// It takes raycasts on purpose - a tap on the dim is a tap on the screen that owns it,
+        /// not a shot through it at the playfield.
+        /// </summary>
+        internal static RectTransform EnsureBackdrop(string name, Transform parent)
+        {
+            RectTransform rect = EnsureColorImage(name, parent, BackdropColor, Vector2.zero, Vector2.one);
+            Image image = rect != null ? rect.GetComponent<Image>() : null;
+            if (image != null
+                && !(image.sprite == null && image.color == BackdropColor && image.raycastTarget))
+            {
+                Undo.RecordObject(image, "Style backdrop");
+                image.sprite = null;
+                image.type = Image.Type.Simple;
+                image.color = BackdropColor;
+                image.raycastTarget = true;
+                EditorUtility.SetDirty(image);
+            }
+
+            return rect;
         }
 
         internal static RectTransform EnsureColorImage(string name, Transform parent, Color color, Vector2 anchorMin, Vector2 anchorMax)
