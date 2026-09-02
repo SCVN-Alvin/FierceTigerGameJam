@@ -144,7 +144,7 @@ namespace GameJam.EditorTools
             report.AppendLine(AppendDamageLegend(rock, cannon, stats));
             report.AppendLine();
             report.AppendLine(
-                "map            blocks  need  budget  cap  blk/shot | Rock         Cannon       gate");
+                "map            blocks  need  budget  cap  blk/shot | CannonBall   Rocket       gate");
             report.AppendLine(new string('-', 96));
 
             int redRows = 0;
@@ -214,8 +214,8 @@ namespace GameJam.EditorTools
                     budget,
                     cap,
                     need / (float)Mathf.Max(1, budget),
-                    Cell(rockShots, cap, budget, rockLevel, "Rock"),
-                    Cell(cannonShots, cap, budget, cannonLevel, "Cannon"),
+                    Cell(rockShots, cap, budget, rockLevel, "CannonBall"),
+                    Cell(cannonShots, cap, budget, cannonLevel, "Rocket"),
                     gateName,
                     verdict));
 
@@ -321,12 +321,12 @@ namespace GameJam.EditorTools
         }
 
         /// <summary>
-        /// Whether a map that contains Rock-proof material actually gates on it.
+        /// Whether a map that contains Cannon-Ball-proof material actually gates on it.
         ///
         /// Owning the concrete-capable ammunition is meant to be the price of entry to the late
         /// campaign, but the requirement is a share of the block count and concrete is only a
         /// share of the blocks. Where the rest of the structure is by itself enough to reach the
-        /// requirement, a player can pass on Rock alone and never touch a concrete block, and the
+        /// requirement, a player can pass on Cannon Ball alone and never touch a concrete block, and the
         /// gear check is decorative. That is a design question rather than a bug, so it is
         /// reported with the number that decides it - the share the requirement would have to
         /// exceed for the gate to bite - and nothing here changes it.
@@ -366,7 +366,7 @@ namespace GameJam.EditorTools
                 ? string.Format(
                     CultureInfo.InvariantCulture,
                     "GEAR CHECK DOES NOT BITE: {0} blocks here need the cannon, but the other {1} "
-                    + "already cover the {2} the requirement asks for. Rock alone passes without "
+                    + "already cover the {2} the requirement asks for. Cannon Ball alone passes without "
                     + "touching them; the requirement would have to exceed {3:P0} to gate.",
                     rockProof, reachable, need, gateShare)
                 : string.Format(
@@ -527,8 +527,8 @@ namespace GameJam.EditorTools
         private static string PlaytestExpectation()
         {
             return
-                "Before playing: concrete is unreachable with Rock at any level, so map 7 onward "
-                + "must fail on a Rock-only loadout - that is the gear check working, not a bug. "
+                "Before playing: concrete is unreachable with Cannon Ball at any level, so map 7 onward "
+                + "must fail on a Cannon-Ball-only loadout - that is the gear check working, not a bug. "
                 + "Everywhere else the shot count above is a ceiling nobody should approach: the "
                 + "brief asks each of maps 1, 4, 7 and 9 to pass with 30% of the budget unspent, "
                 + "and reaching that depends on collapse, so aim at supports low in the structure "
@@ -584,8 +584,8 @@ namespace GameJam.EditorTools
 
             return
                 $"Economy: pass rewards for maps 1-6 ({string.Join("+", counted)}) = {earned} gold. "
-                + $"Cannon Ball unlock costs {cannonPrice}, so the gear check is {verdict} with "
-                + $"{earned - cannonPrice} to spare. The ladder also expects Rock II by map 4 "
+                + $"Rocket unlock costs {cannonPrice}, so the gear check is {verdict} with "
+                + $"{earned - cannonPrice} to spare. The ladder also expects Cannon Ball II by map 4 "
                 + $"({rockUpgrade} gold); buying both leaves {earned - cannonPrice - rockUpgrade} "
                 + $"and is {ladderVerdict}. Clear rewards are on top of this and are not counted.";
         }

@@ -13,9 +13,9 @@ MonoBehaviour:
   m_Name: Cannon
   m_EditorClassIdentifier: Assembly-CSharp::GameJam.Gameplay.Combat.BulletDefinition
   id: cannon_type
-  displayName: Cannon Ball
+  displayName: Rocket
   levels:
-  - displayName: Cannon I
+  - displayName: Rocket I
     damage:
     - materialId: glass
       blockDamage: 6
@@ -28,7 +28,7 @@ MonoBehaviour:
       wallDamage: 2
     splashShare: 0.4
     icon: {fileID: 21300000, guid: 666059beb35774806af2a54f2a4a518d, type: 3}
-  - displayName: Cannon II
+  - displayName: Rocket II
     damage:
     - materialId: glass
       blockDamage: 8

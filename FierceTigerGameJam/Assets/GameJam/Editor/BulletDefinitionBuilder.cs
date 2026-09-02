@@ -15,8 +15,8 @@ namespace GameJam.EditorTools
     /// what a rebuild has to reproduce. They are authored against measured block hit points -
     /// glass 1, brick_1x1 3, brick_2x1 5, concrete 6 - under three rules:
     ///
-    /// - a tier one-shots what it is about (Rock I takes a 1x1 brick, Rock II takes a 2x1,
-    ///   Cannon II takes concrete);
+    /// - a tier one-shots what it is about (Cannon Ball I takes a 1x1 brick, Cannon Ball II
+    ///   takes a 2x1, Rocket II takes concrete);
     /// - splash finishes glass neighbours, so every level's splashShare times its glass damage
     ///   clears glass's single hit point;
     /// - concrete stays flatly Rock-proof at 0. It is the unlock gate the campaign is built
@@ -45,7 +45,7 @@ namespace GameJam.EditorTools
             BulletDefinition rock = CreateBullet(
                 "Rock",
                 "rock_type",
-                "Rock",
+                "Cannon Ball",
                 RockProjectilePath,
                 new[]
                 {
@@ -54,14 +54,14 @@ namespace GameJam.EditorTools
                     // glass is 3 x 0.35 = 1.05, over glass's single hit point: at 0.3 it landed
                     // on 0.9 and a glass neighbour survived by a tenth, which is the difference
                     // between a pane that chains and one that does not.
-                    Level("Rock I", 0.35f,
+                    Level("Cannon Ball I", 0.35f,
                         Damage("glass", 3f, 5f),
                         Damage("brick", 3f, 1f),
                         Damage("concrete", 0f, 0f)),
 
                     // 6 clears brick_2x1's 5 in one shot, which is what the level is bought for.
                     // Concrete is still untouchable, whatever vehicle it is fired from.
-                    Level("Rock II", 0.35f,
+                    Level("Cannon Ball II", 0.35f,
                         Damage("glass", 4f, 6f),
                         Damage("brick", 6f, 3f),
                         Damage("concrete", 0f, 0f)),
@@ -70,20 +70,20 @@ namespace GameJam.EditorTools
             BulletDefinition cannon = CreateBullet(
                 "Cannon",
                 "cannon_type",
-                "Cannon Ball",
+                "Rocket",
                 CannonProjectilePath,
                 new[]
                 {
                     // Concrete at 3 against 6 hit points is two shots bare, and one from a
                     // vehicle at x2 or better. That is the upsell made visible: the unlock buys
                     // the matchup, the vehicle buys the speed of it.
-                    Level("Cannon I", 0.4f,
+                    Level("Rocket I", 0.4f,
                         Damage("glass", 6f, 8f),
                         Damage("brick", 6f, 5f),
                         Damage("concrete", 3f, 2f)),
 
                     // 6 takes concrete in a single shot, and 8 covers every brick going.
-                    Level("Cannon II", 0.45f,
+                    Level("Rocket II", 0.45f,
                         Damage("glass", 8f, 10f),
                         Damage("brick", 8f, 7f),
                         Damage("concrete", 6f, 5f)),
