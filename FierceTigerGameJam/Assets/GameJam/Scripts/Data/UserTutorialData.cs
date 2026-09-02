@@ -30,5 +30,18 @@ namespace GameJam.Data
 
         /// <summary>Same for "1 FREE Triple Shoot" (first level after a cannon reaches level 3).</summary>
         public bool tripleShotIntroDone;
+
+        /// <summary>
+        /// The guided walk through the garage - one vehicle upgrade, then one ammunition upgrade -
+        /// offered once mission1_map1 has been passed, is finished with.
+        ///
+        /// Set when the player buys both, when they tap SKIP, and when there was nothing left to
+        /// teach because both were already at their ceiling. NOT set merely by having seen it: a
+        /// player who wanders off mid-lesson should meet it again rather than be left in front of
+        /// a map they cannot beat. Appended to this record rather than given one of its own, the
+        /// way dragTaught and the two shot-boost flags were: an old save reads it as false and is
+        /// offered the guide, which is the right answer for anyone who already passed map 1.
+        /// </summary>
+        public bool upgradeGuideDone;
     }
 }
