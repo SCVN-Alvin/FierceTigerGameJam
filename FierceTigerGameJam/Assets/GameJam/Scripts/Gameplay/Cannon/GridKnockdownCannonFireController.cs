@@ -43,8 +43,11 @@ namespace GameJam.Gameplay.Cannon
 
         [Tooltip("How far above the higher of the muzzle and the tapped point the shot crests. "
                  + "This is what makes every shot arc: raise it for a loopier lob, lower it for a "
-                 + "flatter rocket. The impact point does not move either way.")]
-        [SerializeField] private float apexHeight = 2.5f;
+                 + "flatter rocket. The impact point does not move either way. 0.8 is matched to "
+                 + "the flight this replaced - the old fixed-speed solve crested about 1.2 above "
+                 + "the muzzle on a mid-structure shot, and this lands near that while still "
+                 + "guaranteeing a visible arc on the flat close shots that used to be dead level.")]
+        [SerializeField] private float apexHeight = 0.8f;
         [SerializeField] private float projectileLifetime = 5f;
         [SerializeField] private float muzzleSpawnOffset = 0.28f;
 
