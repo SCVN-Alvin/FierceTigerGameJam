@@ -70,6 +70,15 @@ namespace GameJam.EditorTools
         private static readonly Vector2 FrameSize = new Vector2(660f, 972f);
 
         /// <summary>
+        /// The board as a fraction of its screen root - the old 660x972 divided by the 720x1280
+        /// reference, so the design is unchanged there and keeps its proportions on taller phones
+        /// instead of shrinking into the top of them.
+        /// </summary>
+        private static readonly Vector2 FrameAnchorMin = new Vector2(0.041667f, 0.078757f);
+
+        private static readonly Vector2 FrameAnchorMax = new Vector2(0.958333f, 0.956647f);
+
+        /// <summary>
         /// Hangs the frame off the top of the screen. It used to duck under a row of chips and a
         /// close button; with those gone the board can start higher and simply be bigger.
         /// </summary>
@@ -281,28 +290,10 @@ namespace GameJam.EditorTools
                 RectTransform frame = EnsureImage("Frame", rect, FrameSprite,
                     Vector2.zero, Vector2.one, Image.Type.Simple, false);
 
-                if (!frameCreated
-                    && frame.sizeDelta == PreviousFrameSize
-                    && frame.anchoredPosition == PreviousFrameOffset)
-                {
-                    // Grown into the space the retired chips used to occupy. Guarded on the old
-                    // numbers so this fires once, on a board that has not been touched since.
-                    frame.sizeDelta = FrameSize;
-                    frame.anchoredPosition = FrameOffset;
-                }
-
-                if (frameCreated)
-                {
-                    // Pinned to the top edge at a fixed size rather than stretched: the frame art
-                    // has one aspect, and a taller phone should leave more room under it, not a
-                    // taller frame. The same placement as the garage's, so switching between the
-                    // two screens does not move the panel.
-                    frame.anchorMin = new Vector2(0.5f, 1f);
-                    frame.anchorMax = new Vector2(0.5f, 1f);
-                    frame.pivot = new Vector2(0.5f, 1f);
-                    frame.sizeDelta = FrameSize;
-                    frame.anchoredPosition = FrameOffset;
-                }
+                // Proportional now, so the board keeps its share of a taller screen. The two
+                // retired fixed sizes (600x884, then 660x972) are both absorbed by PlaceFrame,
+                // which recognises the old placement by its collapsed vertical anchors.
+                PlaceFrame(frame, frameCreated, FrameAnchorMin, FrameAnchorMax);
 
                 // The word MISSION used to be painted into the frame art; the tab is blank now so
                 // the board can say which mission it is showing. Same white bold as the art had.
@@ -745,6 +736,39 @@ namespace GameJam.EditorTools
         /// leave what was already there alone; that one flag is the whole of this tool's promise
         /// that running it twice is safe.
         /// </summary>
+
+        /// <summary>
+        /// Stretches a screen's frame across the fractions it was designed at, and converts a
+        /// frame still carrying the retired fixed-size placement.
+        ///
+        /// The migration is recognised by the anchors rather than by an exact pixel size: any
+        /// frame whose vertical anchors sit on a single point is fixed-height by definition,
+        /// whatever numbers a hand-tune left in the size. Matching on a remembered size instead is
+        /// how an earlier migration silently did nothing to a prefab that had been nudged in the
+        /// editor.
+        /// </summary>
+        private static void PlaceFrame(RectTransform frame, bool created, Vector2 anchorMin, Vector2 anchorMax)
+        {
+            if (frame == null)
+            {
+                return;
+            }
+
+            bool pinnedToAPoint = Mathf.Approximately(frame.anchorMin.y, frame.anchorMax.y);
+            if (!created && !pinnedToAPoint)
+            {
+                // Already proportional - leave whatever tuning it has been given.
+                return;
+            }
+
+            frame.anchorMin = anchorMin;
+            frame.anchorMax = anchorMax;
+            frame.pivot = new Vector2(0.5f, 0.5f);
+            frame.sizeDelta = Vector2.zero;
+            frame.anchoredPosition = Vector2.zero;
+            EditorUtility.SetDirty(frame);
+        }
+
         private static RectTransform EnsureRect(string name, Transform parent, Vector2 anchorMin, Vector2 anchorMax, out bool created)
         {
             created = parent.Find(name) == null;

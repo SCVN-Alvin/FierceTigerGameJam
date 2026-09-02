@@ -99,6 +99,21 @@ namespace GameJam.EditorTools
         /// </summary>
         private static readonly Vector2 FrameSize = new Vector2(600f, 884f);
 
+        /// <summary>
+        /// The frame as a fraction of its screen root, replacing the fixed 600x884 pinned to the
+        /// top edge.
+        ///
+        /// The old placement reasoned that "a taller phone should leave more room under it, not a
+        /// taller frame". On a device that reads as a bug: the canvas matches width, so a 720x1612
+        /// phone gets a 1394-unit-tall root while the frame stays 884 - dropping it from 80% of
+        /// the screen to 63% and stranding the panel above a field of empty background. These
+        /// fractions are the old geometry divided by the 720x1280 reference, so the design is
+        /// pixel-identical there and merely keeps its proportions elsewhere.
+        /// </summary>
+        private static readonly Vector2 FrameAnchorMin = new Vector2(0.083333f, 0.114884f);
+
+        private static readonly Vector2 FrameAnchorMax = new Vector2(0.916667f, 0.913295f);
+
         /// <summary>Hangs the frame off the top of the screen, clear of the gold chip and the X.</summary>
         private static readonly Vector2 FrameOffset = new Vector2(0f, -96f);
 
@@ -535,17 +550,7 @@ namespace GameJam.EditorTools
                 RectTransform frame = EnsureImage("Frame", rect, FrameSprite,
                     Vector2.zero, Vector2.one, Image.Type.Simple, false);
 
-                if (frameCreated)
-                {
-                    // Pinned to the top edge at a fixed size rather than stretched: the frame art
-                    // has one aspect, and a taller phone should leave more room under it, not a
-                    // taller frame.
-                    frame.anchorMin = new Vector2(0.5f, 1f);
-                    frame.anchorMax = new Vector2(0.5f, 1f);
-                    frame.pivot = new Vector2(0.5f, 1f);
-                    frame.sizeDelta = FrameSize;
-                    frame.anchoredPosition = FrameOffset;
-                }
+                PlaceFrame(frame, frameCreated, FrameAnchorMin, FrameAnchorMax);
 
                 RectTransform tabs = EnsureRect("Tabs", frame,
                     new Vector2(0.048f, 0.847f), new Vector2(0.956f, 0.907f));
@@ -1382,6 +1387,39 @@ namespace GameJam.EditorTools
         /// leave what was already there alone; that one flag is the whole of this tool's promise
         /// that running it twice is safe.
         /// </summary>
+
+        /// <summary>
+        /// Stretches a screen's frame across the fractions it was designed at, and converts a
+        /// frame still carrying the retired fixed-size placement.
+        ///
+        /// The migration is recognised by the anchors rather than by an exact pixel size: any
+        /// frame whose vertical anchors sit on a single point is fixed-height by definition,
+        /// whatever numbers a hand-tune left in the size. Matching on a remembered size instead is
+        /// how an earlier migration silently did nothing to a prefab that had been nudged in the
+        /// editor.
+        /// </summary>
+        private static void PlaceFrame(RectTransform frame, bool created, Vector2 anchorMin, Vector2 anchorMax)
+        {
+            if (frame == null)
+            {
+                return;
+            }
+
+            bool pinnedToAPoint = Mathf.Approximately(frame.anchorMin.y, frame.anchorMax.y);
+            if (!created && !pinnedToAPoint)
+            {
+                // Already proportional - leave whatever tuning it has been given.
+                return;
+            }
+
+            frame.anchorMin = anchorMin;
+            frame.anchorMax = anchorMax;
+            frame.pivot = new Vector2(0.5f, 0.5f);
+            frame.sizeDelta = Vector2.zero;
+            frame.anchoredPosition = Vector2.zero;
+            EditorUtility.SetDirty(frame);
+        }
+
         private static RectTransform EnsureRect(string name, Transform parent, Vector2 anchorMin, Vector2 anchorMax, out bool created)
         {
             created = parent.Find(name) == null;

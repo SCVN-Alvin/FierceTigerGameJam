@@ -243,7 +243,20 @@ namespace GameJam.EditorTools
             // The menu's own ground, then the frame on top of it - the same two layers the garage
             // and the mission board stand on, so the gold shop stops being the one screen you can
             // see the playfield through.
-            EnsureSpriteImage("Background", root, $"{MenuTextures}/UI_MainMenu_BG.png", Vector2.zero, Vector2.one);
+            RectTransform background =
+                EnsureSpriteImage("Background", root, $"{MenuTextures}/UI_MainMenu_BG.png", Vector2.zero, Vector2.one);
+
+            // Forced opaque every run. This object began life as a translucent dark panel, and the
+            // sprite helper only paints an Image it creates - so the sprite arrived while the old
+            // 0.85 alpha stayed, and the cannon showed through its own shop screen. The garage and
+            // the mission board carry the same art at full alpha; this is the odd one out.
+            Image backgroundImage = background != null ? background.GetComponent<Image>() : null;
+            if (backgroundImage != null && backgroundImage.color != Color.white)
+            {
+                Undo.RecordObject(backgroundImage, "Make shop background opaque");
+                backgroundImage.color = Color.white;
+                EditorUtility.SetDirty(backgroundImage);
+            }
 
             RectTransform frame = EnsureSlicedImage("Frame", root, PanelFrameSprite,
                 new Vector2(0.06f, 0.10f), new Vector2(0.94f, 0.92f));
